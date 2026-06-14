@@ -1778,11 +1778,25 @@ function renderProcessFlow(){
   const pf=DATA.processFlow||{};
   const steps=pf.steps||[];
   emit('ORCHESTRATOR','Process Flow','mapping agent-by-agent close timeline · computing time savings','act');
-  // Group steps by phase
   const phases=[...new Set(steps.map(s=>s.phase))];
+  const phColor={'Data Ingestion':'#4A90D9','Mapping & Quality':'#F08C1E','Analysis':'#8B5CF6','Controller Review':'#1E5F8E','Pack & Sign-off':'#2EA86D'};
   const agentColor={system:'var(--ink-3)',agent:'var(--orange)',human:'#1E5F8E'};
   const agentBg={system:'var(--panel-3)',agent:'var(--orange-tint)',human:'rgba(30,95,142,.10)'};
-  const phaseDot={'Data Ingestion':'#4A90D9','Mapping & Quality':'var(--orange)','Analysis':'#8B5CF6','Controller Review':'#1E5F8E','Pack & Sign-off':'var(--ok)'};
+  const phIcon={
+    'Data Ingestion':'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    'Mapping & Quality':'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    'Analysis':'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    'Controller Review':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    'Pack & Sign-off':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+  };
+  // Steps that link to a CloseIQ view
+  const navMap={
+    2:{view:'sources',label:'Open Sources'},3:{view:'sources',label:'Open Sources'},
+    6:{view:'je',label:'Open JE Process'},7:{view:'modC',label:'Open IC Recon'},
+    8:{view:'modB',label:'Open Variance'},9:{view:'modA',label:'Open Scrutiny'},
+    11:{view:'p13',label:'Open P13'},12:{view:'exec',label:'Open Exec Summary'},
+    13:{view:'exec',label:'Open CFO Pack'}
+  };
   const autoRate=Math.round(((pf.stepsAuto||0)/(pf.stepsTotal||1))*100);
   const kpis=[
     {label:'AI Close Duration',val:pf.aiDuration||'—',sub:'end-to-end wall clock',icon:'<path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/>',color:'var(--ok)'},
@@ -1797,45 +1811,54 @@ function renderProcessFlow(){
       <div class="pf-kpi-label">${k.label}</div>
       <div class="pf-kpi-sub">${k.sub}</div>
     </div>`).join('');
-  let stepCounter=0;
-  const timelineHtml=phases.map(ph=>{
+  // Phase pipeline header
+  const pipelineHtml=phases.map((ph,i)=>{
+    const c=phColor[ph]||'var(--orange)';
     const phSteps=steps.filter(s=>s.phase===ph);
-    const phDot=phaseDot[ph]||'var(--line-2)';
+    const arr=i<phases.length-1?`<div class="pf-pipe-arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>`:'';
+    return `<div class="pf-pipe-phase">
+      <div class="pf-pipe-box" style="border-top:3px solid ${c}">
+        <div class="pf-pipe-icon" style="background:${c}22;color:${c}"><svg viewBox="0 0 24 24">${phIcon[ph]||''}</svg></div>
+        <div class="pf-pipe-label">${ph}</div>
+        <div class="pf-pipe-count">${phSteps.length} step${phSteps.length>1?'s':''}</div>
+      </div>
+    </div>${arr}`;
+  }).join('');
+  // Step card columns
+  const columnsHtml=phases.map(ph=>{
+    const c=phColor[ph]||'var(--orange)';
+    const phSteps=steps.filter(s=>s.phase===ph);
     const stepsHtml=phSteps.map(s=>{
-      stepCounter++;
+      const nav=navMap[s.id];
       const isHuman=s.agentType==='human';
       const aColor=agentColor[s.agentType]||'var(--ink-2)';
       const aBg=agentBg[s.agentType]||'var(--panel-2)';
-      return `<div class="pf-step${isHuman?' pf-human':''}">
-        <div class="pf-step-num" style="background:${phDot};color:#fff">${stepCounter}</div>
-        <div class="pf-step-body">
-          <div class="pf-step-top">
-            <span class="pf-agent-badge" style="background:${aBg};color:${aColor}">${s.agent}</span>
-            ${isHuman?'<span class="chip risk" style="font-size:9px;padding:1px 7px;margin-left:4px">HUMAN</span>':''}
-            <span class="pf-step-name">${s.name}</span>
-          </div>
-          <div class="pf-step-meta">
-            <span class="pf-meta-item"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></svg>${s.dur}</span>
-            ${s.savedH>0?`<span class="pf-meta-item pf-saved"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${s.savedH}h saved</span>`:''}
-            <span class="pf-meta-item pf-output" title="${s.output}">${s.output}</span>
-          </div>
+      return `<div class="pf-cs${isHuman?' pf-cs-human':''}${nav?' pf-cs-link':''}" ${nav?`onclick="go('${nav.view}')" title="Click to open ${nav.label.replace('Open ','')}"`:''}>
+        <div class="pf-cs-top">
+          <div class="pf-cs-num" style="background:${c}">${s.id}</div>
+          <span class="pf-cs-badge" style="background:${aBg};color:${aColor}">${s.agent}</span>
+          ${isHuman?'<span class="chip risk" style="font-size:8px;padding:1px 5px">HUMAN</span>':''}
         </div>
+        <div class="pf-cs-name">${s.name}</div>
+        <div class="pf-cs-meta">
+          <span class="pf-cs-dur"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></svg>${s.dur}</span>
+          ${s.savedH>0?`<span class="pf-cs-saved"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${s.savedH}h saved</span>`:''}
+        </div>
+        <div class="pf-cs-out" title="${s.output}">${s.output}</div>
+        ${nav?`<div class="pf-cs-nav" style="color:${c}">${nav.label}<svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>`:''}
       </div>`;
     }).join('');
-    return `<div class="pf-phase">
-      <div class="pf-phase-head">
-        <div class="pf-phase-dot" style="background:${phDot}"></div>
-        <span class="pf-phase-name">${ph}</span>
-        <span class="pf-phase-count">${phSteps.length} step${phSteps.length>1?'s':''}</span>
-      </div>
-      <div class="pf-steps">${stepsHtml}</div>
+    return `<div class="pf-col">
+      <div class="pf-col-bar" style="background:${c}"></div>
+      ${stepsHtml}
     </div>`;
   }).join('');
   el('content').innerHTML=`
     <div class="pf-wrap">
       <div class="pf-kpi-row">${kpiHtml}</div>
-      <div class="pf-section-label">MONTH-END CLOSE TIMELINE</div>
-      <div class="pf-timeline">${timelineHtml}</div>
+      <div class="pf-section-label">MONTH-END CLOSE PIPELINE · 5 PHASES · 13 STEPS · CLICK ANY HIGHLIGHTED STEP TO DRILL IN</div>
+      <div class="pf-pipeline">${pipelineHtml}</div>
+      <div class="pf-columns">${columnsHtml}</div>
       <div class="pf-commentary">
         <div class="pf-comm-head">
           <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>

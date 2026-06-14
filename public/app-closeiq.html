@@ -526,7 +526,7 @@ body{background:var(--bg)}
 .cust-pct-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 
 /* ====== PROCESS FLOW ====== */
-.pf-wrap{max-width:860px;margin:0 auto;padding-bottom:40px}
+.pf-wrap{padding-bottom:40px}
 .pf-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 .pf-kpi{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .pf-kpi-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
@@ -535,28 +535,36 @@ body{background:var(--bg)}
 .pf-kpi-label{font-size:11.5px;font-weight:600;color:var(--ink);margin-top:2px}
 .pf-kpi-sub{font-size:10.5px;color:var(--ink-3)}
 .pf-section-label{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--ink-3);margin-bottom:14px;text-transform:uppercase}
-.pf-timeline{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
-.pf-phase{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;overflow:hidden}
-.pf-phase-head{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--panel-2);border-bottom:1px solid var(--line)}
-.pf-phase-dot{width:10px;height:10px;border-radius:50%;flex:none}
-.pf-phase-name{font-size:12px;font-weight:700;color:var(--ink);flex:1}
-.pf-phase-count{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
-.pf-steps{display:flex;flex-direction:column;gap:0}
-.pf-step{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);transition:background .15s}
-.pf-step:last-child{border-bottom:none}
-.pf-step:hover{background:var(--panel-2)}
-.pf-step.pf-human{background:rgba(30,95,142,.04);border-left:3px solid #1E5F8E}
-.pf-step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;flex:none;margin-top:1px}
-.pf-step-body{flex:1;min-width:0}
-.pf-step-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
-.pf-step-name{font-size:12.5px;font-weight:600;color:var(--ink)}
-.pf-agent-badge{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;letter-spacing:.2px;white-space:nowrap}
-.pf-step-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.pf-meta-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3)}
-.pf-meta-item svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.pf-saved{color:var(--ok);font-weight:600}
-.pf-saved svg{stroke:var(--ok)}
-.pf-output{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Pipeline header */
+.pf-pipeline{display:flex;align-items:center;margin-bottom:18px}
+.pf-pipe-phase{flex:1;min-width:0}
+.pf-pipe-box{border-radius:11px;padding:14px 10px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;border:1.5px solid var(--line-2);background:var(--panel)}
+.pf-pipe-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.pf-pipe-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pf-pipe-label{font-size:10.5px;font-weight:700;color:var(--ink);line-height:1.25}
+.pf-pipe-count{font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:2px}
+.pf-pipe-arr{flex:none;padding:0 5px;color:var(--line-2);display:flex;align-items:center}
+.pf-pipe-arr svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+/* Step columns */
+.pf-columns{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px}
+.pf-col{display:flex;flex-direction:column;gap:7px}
+.pf-col-bar{height:3px;border-radius:3px;margin-bottom:2px}
+.pf-cs{background:var(--panel);border:1px solid var(--line-2);border-radius:10px;padding:11px 11px;display:flex;flex-direction:column;gap:6px;transition:.15s}
+.pf-cs.pf-cs-link{cursor:pointer}
+.pf-cs.pf-cs-link:hover{box-shadow:0 4px 14px rgba(0,0,0,.16);transform:translateY(-1px)}
+.pf-cs.pf-cs-human{border-left:3px solid #1E5F8E}
+.pf-cs-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pf-cs-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:#fff;flex:none}
+.pf-cs-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;white-space:nowrap}
+.pf-cs-name{font-size:11px;font-weight:600;color:var(--ink);line-height:1.3}
+.pf-cs-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pf-cs-dur{font-family:var(--mono);font-size:9px;color:var(--ink-3);display:flex;align-items:center;gap:3px}
+.pf-cs-dur svg{width:9px;height:9px;fill:none;stroke:currentColor;stroke-width:2}
+.pf-cs-saved{font-size:9px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:3px}
+.pf-cs-saved svg{width:9px;height:9px;fill:none;stroke:var(--ok);stroke-width:2}
+.pf-cs-out{font-size:9.5px;color:var(--ink-3);line-height:1.35;border-top:1px solid var(--line);padding-top:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pf-cs-nav{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;margin-top:1px}
+.pf-cs-nav svg{width:9px;height:9px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
 .pf-commentary{background:var(--panel-2);border:1px solid var(--line-2);border-radius:12px;padding:18px 20px}
 .pf-comm-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px}
 .pf-comm-head svg{width:18px;height:18px;fill:none;stroke:var(--orange);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -583,22 +591,22 @@ body{background:var(--bg)}
     <div class="logo">T</div>
     <button class="nav-btn active" data-view="sources" onclick="go('sources')">
       <svg viewBox="0 0 24 24"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Sources</button>
-    <button class="nav-btn" data-view="exec" onclick="go('exec')">
-      <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 3h4v18h-4zM17 9h4v12h-4z"/></svg>CFO</button>
+    <button class="nav-btn" data-view="flow" onclick="go('flow')">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h10M5 8v8M19 8v8M7 18h10"/></svg>Flow</button>
+    <button class="nav-btn" data-view="je" onclick="go('je')">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>JE</button>
+    <button class="nav-btn" data-view="modC" onclick="go('modC')">
+      <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6M3 4h18v16H3z"/></svg>Recon</button>
     <button class="nav-btn" data-view="modB" onclick="go('modB')">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Pack</button>
     <button class="nav-btn" data-view="modA" onclick="go('modA')">
       <svg viewBox="0 0 24 24"><path d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3"/></svg>Scrutiny</button>
-    <button class="nav-btn" data-view="modC" onclick="go('modC')">
-      <svg viewBox="0 0 24 24"><path d="M7 8h10M7 12h10M7 16h6M3 4h18v16H3z"/></svg>Recon</button>
-    <button class="nav-btn" data-view="je" onclick="go('je')">
-      <svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>JE</button>
-    <button class="nav-btn" data-view="fc" onclick="go('fc')">
-      <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg>Forecast</button>
     <button class="nav-btn" data-view="p13" onclick="go('p13')">
       <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>P13</button>
-    <button class="nav-btn" data-view="flow" onclick="go('flow')">
-      <svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h10M5 8v8M19 8v8M7 18h10"/></svg>Flow</button>
+    <button class="nav-btn" data-view="exec" onclick="go('exec')">
+      <svg viewBox="0 0 24 24"><path d="M3 13h4v8H3zM10 3h4v18h-4zM17 9h4v12h-4z"/></svg>CFO</button>
+    <button class="nav-btn" data-view="fc" onclick="go('fc')">
+      <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg>Forecast</button>
     <div class="nav-sp"></div>
     <div class="ver-chip">v2.4.1</div>
     <button class="nav-btn" onclick="toggleRail()">
@@ -2590,11 +2598,25 @@ function renderProcessFlow(){
   const pf=DATA.processFlow||{};
   const steps=pf.steps||[];
   emit('ORCHESTRATOR','Process Flow','mapping agent-by-agent close timeline · computing time savings','act');
-  // Group steps by phase
   const phases=[...new Set(steps.map(s=>s.phase))];
+  const phColor={'Data Ingestion':'#4A90D9','Mapping & Quality':'#F08C1E','Analysis':'#8B5CF6','Controller Review':'#1E5F8E','Pack & Sign-off':'#2EA86D'};
   const agentColor={system:'var(--ink-3)',agent:'var(--orange)',human:'#1E5F8E'};
   const agentBg={system:'var(--panel-3)',agent:'var(--orange-tint)',human:'rgba(30,95,142,.10)'};
-  const phaseDot={'Data Ingestion':'#4A90D9','Mapping & Quality':'var(--orange)','Analysis':'#8B5CF6','Controller Review':'#1E5F8E','Pack & Sign-off':'var(--ok)'};
+  const phIcon={
+    'Data Ingestion':'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    'Mapping & Quality':'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    'Analysis':'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    'Controller Review':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    'Pack & Sign-off':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+  };
+  // Steps that link to a CloseIQ view
+  const navMap={
+    2:{view:'sources',label:'Open Sources'},3:{view:'sources',label:'Open Sources'},
+    6:{view:'je',label:'Open JE Process'},7:{view:'modC',label:'Open IC Recon'},
+    8:{view:'modB',label:'Open Variance'},9:{view:'modA',label:'Open Scrutiny'},
+    11:{view:'p13',label:'Open P13'},12:{view:'exec',label:'Open Exec Summary'},
+    13:{view:'exec',label:'Open CFO Pack'}
+  };
   const autoRate=Math.round(((pf.stepsAuto||0)/(pf.stepsTotal||1))*100);
   const kpis=[
     {label:'AI Close Duration',val:pf.aiDuration||'—',sub:'end-to-end wall clock',icon:'<path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/>',color:'var(--ok)'},
@@ -2609,45 +2631,54 @@ function renderProcessFlow(){
       <div class="pf-kpi-label">${k.label}</div>
       <div class="pf-kpi-sub">${k.sub}</div>
     </div>`).join('');
-  let stepCounter=0;
-  const timelineHtml=phases.map(ph=>{
+  // Phase pipeline header
+  const pipelineHtml=phases.map((ph,i)=>{
+    const c=phColor[ph]||'var(--orange)';
     const phSteps=steps.filter(s=>s.phase===ph);
-    const phDot=phaseDot[ph]||'var(--line-2)';
+    const arr=i<phases.length-1?`<div class="pf-pipe-arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>`:'';
+    return `<div class="pf-pipe-phase">
+      <div class="pf-pipe-box" style="border-top:3px solid ${c}">
+        <div class="pf-pipe-icon" style="background:${c}22;color:${c}"><svg viewBox="0 0 24 24">${phIcon[ph]||''}</svg></div>
+        <div class="pf-pipe-label">${ph}</div>
+        <div class="pf-pipe-count">${phSteps.length} step${phSteps.length>1?'s':''}</div>
+      </div>
+    </div>${arr}`;
+  }).join('');
+  // Step card columns
+  const columnsHtml=phases.map(ph=>{
+    const c=phColor[ph]||'var(--orange)';
+    const phSteps=steps.filter(s=>s.phase===ph);
     const stepsHtml=phSteps.map(s=>{
-      stepCounter++;
+      const nav=navMap[s.id];
       const isHuman=s.agentType==='human';
       const aColor=agentColor[s.agentType]||'var(--ink-2)';
       const aBg=agentBg[s.agentType]||'var(--panel-2)';
-      return `<div class="pf-step${isHuman?' pf-human':''}">
-        <div class="pf-step-num" style="background:${phDot};color:#fff">${stepCounter}</div>
-        <div class="pf-step-body">
-          <div class="pf-step-top">
-            <span class="pf-agent-badge" style="background:${aBg};color:${aColor}">${s.agent}</span>
-            ${isHuman?'<span class="chip risk" style="font-size:9px;padding:1px 7px;margin-left:4px">HUMAN</span>':''}
-            <span class="pf-step-name">${s.name}</span>
-          </div>
-          <div class="pf-step-meta">
-            <span class="pf-meta-item"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></svg>${s.dur}</span>
-            ${s.savedH>0?`<span class="pf-meta-item pf-saved"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${s.savedH}h saved</span>`:''}
-            <span class="pf-meta-item pf-output" title="${s.output}">${s.output}</span>
-          </div>
+      return `<div class="pf-cs${isHuman?' pf-cs-human':''}${nav?' pf-cs-link':''}" ${nav?`onclick="go('${nav.view}')" title="Click to open ${nav.label.replace('Open ','')}"`:''}>
+        <div class="pf-cs-top">
+          <div class="pf-cs-num" style="background:${c}">${s.id}</div>
+          <span class="pf-cs-badge" style="background:${aBg};color:${aColor}">${s.agent}</span>
+          ${isHuman?'<span class="chip risk" style="font-size:8px;padding:1px 5px">HUMAN</span>':''}
         </div>
+        <div class="pf-cs-name">${s.name}</div>
+        <div class="pf-cs-meta">
+          <span class="pf-cs-dur"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></svg>${s.dur}</span>
+          ${s.savedH>0?`<span class="pf-cs-saved"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${s.savedH}h saved</span>`:''}
+        </div>
+        <div class="pf-cs-out" title="${s.output}">${s.output}</div>
+        ${nav?`<div class="pf-cs-nav" style="color:${c}">${nav.label}<svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>`:''}
       </div>`;
     }).join('');
-    return `<div class="pf-phase">
-      <div class="pf-phase-head">
-        <div class="pf-phase-dot" style="background:${phDot}"></div>
-        <span class="pf-phase-name">${ph}</span>
-        <span class="pf-phase-count">${phSteps.length} step${phSteps.length>1?'s':''}</span>
-      </div>
-      <div class="pf-steps">${stepsHtml}</div>
+    return `<div class="pf-col">
+      <div class="pf-col-bar" style="background:${c}"></div>
+      ${stepsHtml}
     </div>`;
   }).join('');
   el('content').innerHTML=`
     <div class="pf-wrap">
       <div class="pf-kpi-row">${kpiHtml}</div>
-      <div class="pf-section-label">MONTH-END CLOSE TIMELINE</div>
-      <div class="pf-timeline">${timelineHtml}</div>
+      <div class="pf-section-label">MONTH-END CLOSE PIPELINE · 5 PHASES · 13 STEPS · CLICK ANY HIGHLIGHTED STEP TO DRILL IN</div>
+      <div class="pf-pipeline">${pipelineHtml}</div>
+      <div class="pf-columns">${columnsHtml}</div>
       <div class="pf-commentary">
         <div class="pf-comm-head">
           <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>
