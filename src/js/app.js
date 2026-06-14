@@ -19,41 +19,89 @@ const AGENTS = [
  {id:'FORECAST',name:'Projection'},
 ];
 let feedSeq=0;
-// 7 standing capabilities arranged around the Sage hub
-const MAPPOS={EXTRACT:[40,52],MAP:[48,120],VARIANCE:[120,16],SCRUTINY:[130,138],COMMENTARY:[260,52],RECON:[252,120],FORECAST:[186,16]};
+// 7 standing capabilities — circular radial layout around Sage hub
+// hub=(155,107), radius=72, nodes evenly spaced starting at top (-90°)
+const MAPPOS={
+  VARIANCE:[155,35], FORECAST:[211,62], COMMENTARY:[225,123],
+  RECON:[186,172],   SCRUTINY:[124,172], MAP:[85,123],        EXTRACT:[99,62]
+};
 const CAP_LABEL={EXTRACT:'EXTR',MAP:'MAP',VARIANCE:'VARI',SCRUTINY:'SCRU',COMMENTARY:'COMM',RECON:'RECO',FORECAST:'FCST'};
+const AGENT_FULL={
+  EXTRACT:'Data Extraction', MAP:'Mapping', VARIANCE:'Variance',
+  COMMENTARY:'Commentary',   SCRUTINY:'TB Scrutiny', RECON:'Reconciliation', FORECAST:'Projection'
+};
+// [labelX, labelY, textAnchor] — placed outside the ring, away from hub
+const LABEL_POS={
+  VARIANCE:  [155, 16,  'middle'],
+  FORECAST:  [228, 52,  'start'],
+  COMMENTARY:[243, 123, 'start'],
+  RECON:     [186, 193, 'middle'],
+  SCRUTINY:  [124, 193, 'middle'],
+  MAP:       [67,  123, 'end'],
+  EXTRACT:   [82,  52,  'end']
+};
 function renderRoster(){
-  const hub=[150,76];
+  const hub=[155,107];
   el('roster').className='agent-map';
-  el('roster').innerHTML=`<svg viewBox="0 0 300 152" xmlns="http://www.w3.org/2000/svg">
-    ${Object.entries(MAPPOS).map(([id,[x,y]])=>`<line class="medge" id="edge-${id}" x1="${hub[0]}" y1="${hub[1]}" x2="${x}" y2="${y}"/>`).join('')}
-    <g class="mhub"><circle cx="${hub[0]}" cy="${hub[1]}" r="17"/><text x="${hub[0]}" y="${hub[1]-1}">SAGE</text><text x="${hub[0]}" y="${hub[1]+7}">ORCH</text></g>
-    ${Object.entries(MAPPOS).map(([id,[x,y]])=>`<g class="mnode" id="node-${id}"><circle cx="${x}" cy="${y}" r="12"/><text x="${x}" y="${y+3}">${CAP_LABEL[id]}</text></g>`).join('')}
+  const edges=Object.entries(MAPPOS).map(([id,[x,y]])=>
+    `<line class="medge" id="edge-${id}" x1="${hub[0]}" y1="${hub[1]}" x2="${x}" y2="${y}"/>`
+  ).join('');
+  const nodes=Object.entries(MAPPOS).map(([id,[x,y]])=>{
+    const[lx,ly,anc]=LABEL_POS[id];
+    return `<g class="mnode" id="node-${id}">
+        <circle cx="${x}" cy="${y}" r="14"/>
+        <text x="${x}" y="${y+3.5}">${CAP_LABEL[id]}</text>
+      </g>
+      <text class="mnode-label" id="label-${id}" x="${lx}" y="${ly}" text-anchor="${anc}">${AGENT_FULL[id]}</text>`;
+  }).join('');
+  el('roster').innerHTML=`<svg viewBox="0 0 310 207" class="mesh-svg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="meshHubGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="rgba(240,140,30,.22)"/>
+        <stop offset="100%" stop-color="rgba(240,140,30,0)"/>
+      </radialGradient>
+    </defs>
+    <circle cx="${hub[0]}" cy="${hub[1]}" r="73" class="orbit-ring"/>
+    <circle cx="${hub[0]}" cy="${hub[1]}" r="34" fill="url(#meshHubGrad)" class="hub-glow-ring"/>
+    ${edges}
+    ${nodes}
+    <g class="mhub">
+      <circle cx="${hub[0]}" cy="${hub[1]}" r="21"/>
+      <text x="${hub[0]}" y="${hub[1]-2}">SAGE</text>
+      <text x="${hub[0]}" y="${hub[1]+7}">ORCH</text>
+    </g>
     <g id="spawnLayer"></g>
   </svg>
-  <div class="mesh-tip" id="meshTip"><b>dormant</b> until invoked · glowing nodes are working now</div>`;
+  <div class="mesh-tip" id="meshTip"><b>dormant</b> · glowing nodes are active now</div>`;
 }
-// activate = capability is relevant/available for current context (brighter, not working)
 function setActive(ids){
-  Object.keys(MAPPOS).forEach(id=>{const n=el('node-'+id),e=el('edge-'+id);const on=ids.includes(id);
-    if(n)n.classList.toggle('active',on); if(e)e.classList.toggle('active',on);});
+  Object.keys(MAPPOS).forEach(id=>{
+    const n=el('node-'+id),e=el('edge-'+id),l=el('label-'+id);
+    const on=ids.includes(id);
+    if(n)n.classList.toggle('active',on);
+    if(e)e.classList.toggle('active',on);
+    if(l)l.classList.toggle('mlabel-active',on);
+  });
 }
 function mapPulse(id,on=true){
-  const n=el('node-'+id),e=el('edge-'+id);
-  if(n)n.classList.toggle('live',on); if(e)e.classList.toggle('live',on);
+  const n=el('node-'+id),e=el('edge-'+id),l=el('label-'+id);
+  if(n)n.classList.toggle('live',on);
+  if(e)e.classList.toggle('live',on);
+  if(l)l.classList.toggle('mlabel-live',on);
 }
 function liveChip(id,on=true){mapPulse(id,on);}
-// spawn a transient specialist agent onto the mesh, then dissolve it
 function spawnAgent(label,fromId){
-  const sl=el('spawnLayer'); if(!sl)return;
-  const base=MAPPOS[fromId]||[150,76];
-  const sx=base[0]+(base[0]<150?-30:base[0]>150?30:0), sy=base[1]+(base[1]<76?-22:22);
+  const sl=el('spawnLayer');if(!sl)return;
+  const base=MAPPOS[fromId]||[155,107];
+  const sx=base[0]+(base[0]<155?-32:base[0]>155?32:0),sy=base[1]+(base[1]<107?-24:24);
   const id='spawn-'+Date.now();
   sl.innerHTML=`<line class="medge spawn" x1="${base[0]}" y1="${base[1]}" x2="${sx}" y2="${sy}" id="${id}-e"/>
-    <g class="mnode spawn" id="${id}-n"><circle cx="${sx}" cy="${sy}" r="11"/><text x="${sx}" y="${sy+2}">NEW</text><text x="${sx}" y="${sy+9}" style="font-size:5px">${label.slice(0,9)}</text></g>`;
-  const tip=el('meshTip'); if(tip)tip.innerHTML='<b style="color:var(--ok)">'+label+'</b> spawned for this task';
+    <g class="mnode spawn" id="${id}-n"><circle cx="${sx}" cy="${sy}" r="12"/>
+    <text x="${sx}" y="${sy+2}">NEW</text>
+    <text x="${sx}" y="${sy+9}" style="font-size:5.5px">${label.slice(0,10)}</text></g>`;
+  const tip=el('meshTip');if(tip)tip.innerHTML='<b style="color:var(--ok)">'+label+'</b> spawned for this task';
   setTimeout(()=>{const n=el(id+'-n'),e=el(id+'-e');if(n)n.classList.add('fade');if(e)e.classList.add('fade');
-    setTimeout(()=>{sl.innerHTML='';if(tip)tip.innerHTML='<b>dormant</b> until invoked · glowing nodes are working now';},700);},3200);
+    setTimeout(()=>{sl.innerHTML='';if(tip)tip.innerHTML='<b>dormant</b> · glowing nodes are active now';},700);},3200);
 }
 function clk(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');}
 const AUDIT=[];
@@ -106,7 +154,9 @@ const TITLES={
  modA:['Trial Balance Scrutiny','Module A · balance-sheet cleanup · recommended actions'],
  modC:['Intercompany Reconciliation','Module C · ~400 entities · extensible matching platform'],
  je:['JE Accrual Sub-Process','16-step PO-accrual automation · human-in-the-loop posting'],
- fc:['Cash Flow Forecast','Art of the possible · construction payment projections · Phase 2']};
+ fc:['Cash Flow Forecast','Art of the possible · construction payment projections · Phase 2'],
+ p13:['Period 13 · Consolidation Adjustments','Top-sided entries · group level only · dual sign-off required · not in legal entity books'],
+ flow:['Month-End Process Flow','Agent-by-agent timeline · AI vs manual breakdown · time savings dashboard']};
 let curView='sources';
 function go(v){
   curView=v;
@@ -126,29 +176,92 @@ function gateHtml(name){
 function render(v){
   const c=el('content');
   if(v==='sources'){renderSources();return;}
-  // gate downstream modules until data is ingested
   if(!anyIngested()){c.innerHTML=gateHtml(TITLES[v][0]);return;}
-  if(v==='modB')renderModB();
-  else if(v==='modA')renderModA();
-  else if(v==='modC')renderModC();
-  else if(v==='je')renderJE();
-  else if(v==='fc')renderForecast();
-  else if(v==='exec'){c.innerHTML='';c.appendChild(buildExec());countUpAll();}
+  // skeleton → agents fire during load → real content + count-up
+  c.innerHTML=viewSkeleton();
+  const seqAgents={
+    modB: [['VARIANCE','recomputing 7 comparison layers','MoM · QoQ · YTD · MvM · QvQ · Bud · BudY','act'],
+           ['COMMENTARY','refreshing variance narratives','14 movements above materiality threshold','act']],
+    modA: [['SCRUTINY','re-scanning 487 balance-sheet items','aging × materiality × anomaly model','act'],
+           ['VARIANCE','cross-referencing movement drivers','MoM delta recalculation complete','done']],
+    modC: [['RECON','refreshing IC match matrix','fuzzy match: amount ± date ± reference','act'],
+           ['EXTRACT','polling entity sub-ledgers for late postings','2 timing items still open','act']],
+    je:   [['EXTRACT','pulling PO accrual journal','Oracle Payables · may-26 · 1,450 lines','act'],
+           ['SCRUTINY','validating accrual integrity','16-step automation chain verified','done']],
+    fc:   [['FORECAST','projecting 6-month construction cash flow','PO milestones × consumption curves','act'],
+           ['COMMENTARY','refreshing cash position narrative','6-month horizon computed','done']],
+    p13:  [['SCRUTINY','scanning P13 consolidation entries','IFRS 16 · goodwill · IC dividend eliminations','act'],
+           ['VARIANCE','validating cross-period adjustment integrity','MoM + QoQ consistency check complete','done']],
+    flow: [['VARIANCE','computing agent-by-agent timeline','step durations · 13 steps · 5 phases','act'],
+           ['SCRUTINY','calculating time saved vs manual baseline','58 hours reclaimed this close cycle','done']],
+    exec: [['VARIANCE','loading group consolidated summary','7 comparison layers · 10 entities','act'],
+           ['COMMENTARY','refreshing CFO executive narrative','controller-tone v3 · pack ready','done']],
+  };
+  (seqAgents[v]||[]).forEach(([a,m,r,k],i)=>setTimeout(()=>emit(a,m,r,k),i*210));
+  setTimeout(()=>{
+    if(v==='modB')renderModB();
+    else if(v==='modA')renderModA();
+    else if(v==='modC')renderModC();
+    else if(v==='je')renderJE();
+    else if(v==='fc')renderForecast();
+    else if(v==='p13')renderP13();
+    else if(v==='flow')renderProcessFlow();
+    else if(v==='exec'){c.innerHTML='';c.appendChild(buildExec());}
+    countUpAll();
+  },360);
 }
-
+function viewSkeleton(){
+  return `<div class="sk-wrap">
+    <div class="sk-line sk-title"></div>
+    <div class="sk-line sk-sub"></div>
+    <div class="sk-kpis">
+      <div class="sk-line sk-kpi"></div><div class="sk-line sk-kpi"></div>
+      <div class="sk-line sk-kpi"></div><div class="sk-line sk-kpi"></div>
+    </div>
+    <div class="sk-line sk-block"></div>
+    <div class="sk-rows">
+      <div class="sk-line sk-row" style="width:92%"></div>
+      <div class="sk-line sk-row" style="width:74%"></div>
+      <div class="sk-line sk-row" style="width:86%"></div>
+      <div class="sk-line sk-row" style="width:65%"></div>
+    </div>
+  </div>`;
+}
 
 /* ---------- HELPERS: charts, count-up, deterministic rng ---------- */
 function hashStr(s){let h=7;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h;}
 function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 function countUpAll(){
-  document.querySelectorAll('.cu').forEach(e=>{
-    const final=e.textContent; const m=final.match(/-?[\d.]+/); if(!m){return;}
-    const target=parseFloat(m[0]); const pre=final.slice(0,m.index), post=final.slice(m.index+m[0].length);
-    const dec=(m[0].split('.')[1]||'').length; const t0=performance.now(), dur=900;
-    const tick=(t)=>{const p=Math.min(1,(t-t0)/dur);const ease=1-Math.pow(1-p,3);
-      e.textContent=pre+(target*ease).toFixed(dec)+post;
-      if(p<1)requestAnimationFrame(tick);};
-    requestAnimationFrame(tick);
+  const els=Array.from(new Set([
+    ...document.querySelectorAll('.cu'),
+    ...document.querySelectorAll('.kpi-val'),
+    ...document.querySelectorAll('.pf-kpi-val'),
+  ]));
+  let idx=0;
+  els.forEach(e=>{
+    const txt=e.textContent.trim();
+    const m=txt.match(/(-?[\d,]+\.?\d*)/);
+    if(!m)return;
+    const raw=m[1].replace(/,/g,'');
+    const target=parseFloat(raw);
+    if(!target||isNaN(target))return;
+    const pre=txt.slice(0,txt.indexOf(m[1]));
+    const post=txt.slice(txt.indexOf(m[1])+m[1].length);
+    const dec=(raw.split('.')[1]||'').length;
+    const useCommas=/,/.test(m[1]);
+    const delay=(idx++)*45;
+    const dur=820;
+    setTimeout(()=>{
+      const t0=performance.now();
+      const tick=t=>{
+        const p=Math.min(1,(t-t0)/dur);
+        const ease=1-Math.pow(1-p,3);
+        const v=target*ease;
+        e.textContent=pre+(useCommas?Math.round(v).toLocaleString('en-US'):v.toFixed(dec))+post;
+        if(p<1)requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    },delay);
   });
 }
 function svgWaterfall(steps,w,h){
@@ -219,9 +332,96 @@ function renderSources(){
      ${DATA.sources.map(s=>srcCard(s)).join('')}
    </div>
 
+   <div id="qualityPanel"></div>
+   <div id="tbVersionPanel"></div>
    <div id="gateBanner"></div>`;
   DATA.sources.forEach(s=>bindDrop(s.id));
+  renderQualityPanel();
+  renderTBVersionPanel();
   refreshGate();
+}
+function renderQualityPanel(){
+  const p=el('qualityPanel');if(!p)return;
+  const mismatches=DATA.sources.filter(s=>s.glSubledgerMatch===false);
+  const unmapped=(DATA.gl||[]).filter(g=>!g.l1||!g.l2||!g.l3);
+  if(!mismatches.length&&!unmapped.length){p.innerHTML='';return;}
+  let html='<div style="margin-top:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="tag-ag">SOURCE QUALITY</span><span class="mini muted">issues detected before month-end processing begins</span></div>';
+  if(mismatches.length){const m=mismatches[0];
+    html+=`<div class="quality-issue quality-mismatch">
+      <div class="qi-head"><span class="chip warn">GL ↔ SUBLEDGER MISMATCH</span><span class="qi-val">${fmt(m.mismatchAED)}</span></div>
+      <div class="qi-body">${m.mismatchDetail}</div>
+      <div class="qi-note">How this is handled: the semantic layer holds the discrepancy and applies a governed reconciliation rule before the close engine processes the data. The controller sees this for awareness — no manual intervention required.</div>
+    </div>`;}
+  if(unmapped.length){
+    html+=`<div class="quality-issue quality-unmapped">
+      <div class="qi-head"><span class="chip risk">UNMAPPED GL ACCOUNTS</span><span class="qi-val">${unmapped.length} account${unmapped.length>1?'s':''}</span></div>
+      <div class="qi-body">The following GL codes have no L1/L2/L3 hierarchy mapping — they will cause the trial balance extraction to fail if not resolved before the next close run:</div>
+      <div style="margin-top:10px">${unmapped.map(g=>`<div class="qi-account"><span class="num" style="color:var(--ink-3)">${g.code}</span>&nbsp;·&nbsp;${g.desc}&nbsp;<span class="chip risk" style="font-size:9px;padding:1px 7px">unmapped</span></div>`).join('')}</div>
+      <div class="qi-note">Action required: assign L1/L2/L3 codes in the GL mapping table and re-run the extraction.</div>
+    </div>`;}
+  html+='</div>';
+  p.innerHTML=html;
+}
+function renderTBVersionPanel(){
+  const p=el('tbVersionPanel');if(!p)return;
+  const vs=(DATA.tbVersions||[]);if(!vs.length){p.innerHTML='';return;}
+  const approved=vs.find(v=>v.status==='approved');
+  let html=`<div style="margin-top:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <span class="tag-ag">TRIAL BALANCE · VERSION CONTROL</span>
+    <span class="mini muted">${vs.length} extractions logged this close cycle</span>
+    ${approved?`<span class="chip ok" style="margin-left:auto;font-size:10px">✓ Approved: ${approved.version}</span>`:''}
+  </div>
+  <div class="tv-timeline">`;
+  vs.slice().reverse().forEach(v=>{
+    const isApproved=v.status==='approved';
+    const d=new Date(v.ts);
+    const ds=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' GST';
+    const diff=(DATA.tbDiffs||[]).find(di=>di.to===v.version);
+    html+=`<div class="tv-entry${isApproved?' tv-approved-entry':''}">
+      <div class="tv-dot${isApproved?' tv-dot-approved':''}"></div>
+      <div class="tv-main">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="tv-badge${isApproved?' tv-badge-approved':' tv-badge-super'}">${v.version}</span>
+          <b style="color:var(--ink);font-size:12px">${v.label}</b>
+          ${isApproved?`<span class="chip ok" style="font-size:9px;padding:1px 7px">APPROVED · LOCKED</span>`:'<span class="mini muted">superseded</span>'}
+          <span class="mini muted" style="margin-left:auto">${ds}</span>
+        </div>
+        <div class="mini muted" style="margin-top:4px;line-height:1.5">${v.note}${isApproved&&v.approvalNote?`<br><span style="color:var(--ok)">${v.approvalNote}</span>`:''}</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:10px">
+          <span class="mini muted">${v.rows} rows · ${v.extractedBy}</span>
+          ${diff?`<button class="btn" style="padding:3px 9px;font-size:10px" onclick="openVersionDiff('${diff.from}','${diff.to}')">View changes from ${diff.from} (${diff.changes.length}) ↗</button>`:''}
+          ${isApproved?`<span class="mini" style="color:var(--ok);margin-left:4px">Approval locked to this snapshot — re-extraction requires re-certification</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  });
+  html+=`</div></div>`;
+  p.innerHTML=html;
+}
+function openVersionDiff(fromV,toV){
+  const diff=(DATA.tbDiffs||[]).find(d=>d.from===fromV&&d.to===toV);
+  if(!diff){toast('No diff data available for this version pair');return;}
+  emit('EXTRACT','TB diff '+fromV+' → '+toV,'comparing snapshots · '+diff.changes.length+' GL lines changed\naudit chain preserved · versions immutable','done');
+  const rows=diff.changes.map(c=>{
+    const d=c.prev?((c.delta/Math.abs(c.prev))*100):0;
+    return `<tr><td class="mini" style="color:var(--ink-3)">${c.entity}</td>
+      <td class="mini">${c.gl} · ${c.gd}</td>
+      <td class="r num">${fmtN(Math.abs(c.prev))}</td>
+      <td class="r num">${fmtN(Math.abs(c.curr))}</td>
+      <td class="r num ${c.delta>=0?'pos':'neg'}">${c.delta>=0?'+':''}${fmtN(c.delta)}</td>
+      <td class="r num ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d.toFixed(1)}%</td>
+      <td class="mini muted" style="max-width:180px">${c.reason}</td></tr>`;
+  }).join('');
+  openDrawer(`<div class="drawer-head"><div>
+    <span class="tag-ag">TB DIFF VIEW</span>
+    <div class="h2" style="margin-top:10px">${fromV} → ${toV}: what changed</div>
+    <div class="mini muted">${diff.changes.length} GL lines changed · approval locked to ${toV} snapshot</div>
+  </div><div class="x" onclick="closeDrawer()">×</div></div>
+  <div class="drawer-body">
+    <div class="reason-box" style="margin-bottom:14px"><span class="k">Governance note.</span> Siva's approval on <b>v2.0</b> is a commitment to <i>this exact dataset</i>. If Oracle Fusion is re-extracted after sign-off, the platform voids the approval and requires re-certification — preventing silent post-approval changes from reaching CFO reporting.</div>
+    <table><thead><tr><th>Entity</th><th>Account</th><th class="r">v${fromV}</th><th class="r">v${toV}</th><th class="r">Δ AED</th><th class="r">Δ%</th><th>Business reason</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="mini muted" style="margin-top:12px">Diff generated by EXTRACT agent · both snapshots are immutable · changes above are the controller-confirmed differences between draft and approved TB.</p>
+  </div>`);
 }
 function srcCard(s){
   const ing=INGESTED[s.id];
@@ -528,6 +728,10 @@ let bLayer='MoM', bAudience='CFO';
 const LAYERS=[['MoM','Month / Month','prior'],['QoQ','Quarter / Quarter','prior'],['YTD','YTD vs PY','ly'],
  ['MvM','Month vs LY','ly'],['QvQy','Qtr vs Qtr LY','ly'],['Bud','Budget (Month)','bud'],['BudY','Budget (YTD)','bud']];
 const AUD=['Entity Controller','Vertical Controller','FP&A','CFO'];
+function availableLayers(){
+  return ['Entity Controller','Vertical Controller'].includes(bAudience)
+    ?LAYERS.filter(l=>!['Bud','BudY'].includes(l[0])):LAYERS;
+}
 function renderModB(){
   el('content').innerHTML=`
    <div class="eyebrow">Module B · primary demo</div>
@@ -536,41 +740,57 @@ function renderModB(){
 
    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:22px 0 18px">
      <div><div class="mini muted" style="margin-bottom:6px">Comparison layer</div>
-     <div class="seg" id="layerSeg">${LAYERS.map(l=>`<button onclick="setLayer('${l[0]}')" class="${l[0]===bLayer?'on':''}">${l[1]}</button>`).join('')}</div></div>
+     <div class="seg" id="layerSeg">${availableLayers().map(l=>`<button onclick="setLayer('${l[0]}')" class="${l[0]===bLayer?'on':''}">${l[1]}</button>`).join('')}</div></div>
      <div><div class="mini muted" style="margin-bottom:6px">Audience view <span class="tag-ag">agent re-narrates</span></div>
      <div class="seg" id="audSeg">${AUD.map(a=>`<button onclick="setAud('${a}')" class="${a===bAudience?'on':''}">${a}</button>`).join('')}</div></div>
      <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+       ${(()=>{const av=(DATA.tbVersions||[]).find(v=>v.status==='approved');return av?`<span class="tv-ver-pill" onclick="go('sources')" title="Click to view TB version history">TB ${av.version} · Approved ✓</span>`:'';})()}
        <button class="btn" style="align-self:flex-end" onclick="exportPack()"><svg viewBox='0 0 24 24'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Export pack (PPT)</button>
        <button class="btn" style="align-self:flex-end" onclick="emailPack()"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email pack</button>
      </div>
    </div>
-   <div id="bBody"></div>`;
+   <div id="bBody"></div>
+   <div id="custPanel"></div>`;
   renderBBody();
 }
 function setLayer(l){bLayer=l;document.querySelectorAll('#layerSeg button').forEach(b=>b.classList.toggle('on',b.textContent===LAYERS.find(x=>x[0]===l)[1]));emit('VARIANCE','switched to '+l+' layer','recomputing material movements for new basis','act');renderBBody();}
-function setAud(a){bAudience=a;document.querySelectorAll('#audSeg button').forEach(b=>b.classList.toggle('on',b.textContent===a));emit('COMMENTARY','re-narrating for '+a,'adjusting granularity + materiality filter\n'+(a==='CFO'?'one-page strategic summary':a==='FP&A'?'budget-centric, KPI focus':a==='Vertical Controller'?'consolidated by vertical, material only':'full granular detail'),'act');renderBBody();}
+function setAud(a){
+  bAudience=a;
+  document.querySelectorAll('#audSeg button').forEach(b=>b.classList.toggle('on',b.textContent===a));
+  if(['Entity Controller','Vertical Controller'].includes(a)&&['Bud','BudY'].includes(bLayer)){bLayer='MoM';}
+  const ls=el('layerSeg');
+  if(ls)ls.innerHTML=availableLayers().map(l=>`<button onclick="setLayer('${l[0]}')" class="${l[0]===bLayer?'on':''}">${l[1]}</button>`).join('');
+  emit('COMMENTARY','re-narrating for '+a,'adjusting granularity + materiality filter\n'+(a==='CFO'?'one-page strategic summary':a==='FP&A'?'budget-centric, KPI focus, budget layers active':a==='Vertical Controller'?'vertical roll-up · 4 business types · no budget layer':'single entity granular GL · no budget layer'),'act');
+  renderBBody();
+}
 function cmpField(){return LAYERS.find(x=>x[0]===bLayer)[2];}
 function renderBBody(){
   const f=cmpField();
-  // aggregate P&L by L2 group at consolidated level
   const groups={};
   DATA.tb.filter(r=>r.typ==='PL').forEach(r=>{const k=r.l2;groups[k]=groups[k]||{cur:0,cmp:0};groups[k].cur+=r.cur;groups[k].cmp+=r[f];});
-  const matThresh = bAudience==='CFO'?8e6:bAudience==='Vertical Controller'?4e6:bAudience==='FP&A'?3e6:0;
   let html='';
   if(bAudience==='CFO'){
-    // one-page strategic
     const c=consol('cur'),cmp=consol(f);
     html=`<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span class="tag-ag">CFO ONE-PAGER</span><span class="mini muted">${LAYERS.find(x=>x[0]===bLayer)[1]} basis</span></div>
      <div class="grid" style="grid-template-columns:repeat(3,1fr);margin:14px 0">
        ${[['Revenue',c.rev,cmp.rev],['EBITDA',c.ebitda,cmp.ebitda],['PAT',c.pat,cmp.pat]].map(([l,a,b])=>{const d=pct(a,b);return `<div><div class="kpi-label">${l}</div><div class="kpi-val num" style="font-size:24px">${fmt(a)}</div><div class="mini ${d>=0?'pos':'neg'}">${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</div></div>`}).join('')}
      </div>
      <div class="reason-box"><span class="k">Executive narrative.</span> Group revenue ${pct(c.rev,cmp.rev)>=0?'grew':'declined'} ${Math.abs(pct(c.rev,cmp.rev)).toFixed(1)}% on a ${LAYERS.find(x=>x[0]===bLayer)[1].toLowerCase()} basis, led by Real Estate handover recognition. EBITDA ${pct(c.ebitda,cmp.ebitda)>=0?'expanded':'contracted'} to ${fmt(c.ebitda)}. The single watch-item is Hospitality, where margin compression offsets development gains — see strategic findings on the CFO summary.</div></div>`;
+  } else if(bAudience==='Entity Controller'){
+    html=renderEntityCtrlBody(f);
+  } else if(bAudience==='Vertical Controller'){
+    html=renderVerticalCtrlBody(f);
   } else {
-    // top movers chart
+    // FP&A — full group, budget layers active, operational metrics
+    const matThresh=3e6;
     const f2=cmpField();
     const movers=DATA.tb.filter(r=>r.typ==='PL').map(r=>({n:r.entity+' · '+r.gd,v:(Math.abs(r.cur)-Math.abs(r[f2]))*(r.l2==='Revenue'?1:-1)}))
       .sort((a,b)=>Math.abs(b.v)-Math.abs(a.v)).slice(0,6);
     const mmax=Math.max(...movers.map(m=>Math.abs(m.v)));
+    const scopeBanner=`<div class="aud-scope-banner aud-fpa">
+      <div class="aud-scope-icon">FP&A</div>
+      <div style="flex:1"><div class="aud-scope-title">FP&A · Full Group Visibility</div>
+      <div class="aud-scope-sub">All 7 comparison layers active including Budget · switch to Bud or BudY for BvA analysis · operational metrics shown below</div></div></div>`;
     const moversHtml=`<div class="card" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <span class="tag-ag">VARIANCE</span><div class="h2" style="font-size:14px;margin:0">Top movers — EBITDA impact (${bLayer} basis)</div></div>
       ${movers.map(m=>{const wpc=Math.abs(m.v)/mmax*48;const pos=m.v>=0;
@@ -579,19 +799,228 @@ function renderBBody(){
           <div class="hbar-bar ${pos?'pos':'neg'}" style="width:${wpc}%;margin-left:${pos?50:50-wpc}%"></div></div>
         <div class="hbar-val ${pos?'pos':'neg'}">${pos?'+':''}${fmt(m.v)}</div></div>`}).join('')}
     </div>`;
-    html=moversHtml+`<div class="card" style="padding:0;overflow:hidden">
+    const tableHtml=`<div class="card" style="padding:0;overflow:hidden">
      <table><thead><tr><th>P&L group</th><th class="r">Current</th><th class="r">${bLayer} basis</th><th class="r">Variance</th><th class="r">Δ%</th><th>Agent commentary</th></tr></thead><tbody>
-     ${Object.entries(groups).map(([g,v])=>{const va=v.cur-v.cmp;const d=pct(v.cur,v.cmp);const material=Math.abs(va)>=matThresh;
-       if(!material&&bAudience!=='Entity Controller')return '';
-       const disp=g==='Revenue'?-v.cur:v.cur;
+     ${Object.entries(groups).map(([g,v])=>{const va=v.cur-v.cmp;const d=pct(v.cur,v.cmp);
+       if(Math.abs(va)<matThresh)return '';
        return `<tr class="tap" onclick="drillGroup('${g}')"><td><b style="color:var(--ink)">${g}</b></td>
          <td class="r num">${fmtN(Math.abs(v.cur))}</td><td class="r num">${fmtN(Math.abs(v.cmp))}</td>
          <td class="r num ${va>=0?'pos':'neg'}">${fmtN(va)}</td><td class="r num ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d.toFixed(1)}%</td>
-         <td class="mini muted">${material?'<span class="tag-ag" style="margin-right:6px">AI</span>'+commentaryFor(g,d):'within materiality'}</td></tr>`}).join('')}
+         <td class="mini muted"><span class="tag-ag" style="margin-right:6px">AI</span>${commentaryFor(g,d)}</td></tr>`}).join('')}
      </tbody></table></div>
-     <p class="mini muted" style="margin-top:10px">${bAudience==='Entity Controller'?'Showing all groups — full granular view.':'Showing movements above '+fmt(matThresh)+' materiality threshold for '+bAudience+'. Click a row to drill to entity → GL → transaction.'}</p>`;
+     <p class="mini muted" style="margin-top:10px">Showing movements above ${fmt(matThresh)} materiality threshold · FP&A view. Click a row to drill to entity → GL → transaction.</p>`;
+    const opMetrics=`<div class="card" style="margin-top:16px;border-color:var(--orange-dim)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="tag-ag">FP&A ONLY · OPERATIONAL METRICS</span>
+      <span class="mini muted">not visible in Entity Controller or Vertical Controller views</span></div>
+      <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="kpi-label">Units Sold (May)</div><div class="kpi-val num" style="font-size:22px">412</div><div class="mini muted">vs 380 prior · +8.4%</div></div>
+        <div><div class="kpi-label">Avg Selling Price</div><div class="kpi-val num" style="font-size:22px">AED 2.1M</div><div class="mini muted">Hills 2 driving mix</div></div>
+        <div><div class="kpi-label">Collection Rate</div><div class="kpi-val num" style="font-size:22px">94%</div><div class="mini muted">vs 91% budget · +3pp</div></div>
+        <div><div class="kpi-label">NPS · Hospitality</div><div class="kpi-val num" style="font-size:22px">72</div><div class="mini muted">staffing pressure visible</div></div>
+      </div></div>`;
+    html=scopeBanner+moversHtml+tableHtml+opMetrics;
   }
   el('bBody').innerHTML=html;
+  renderCustomerPanel();
+}
+function renderCustomerPanel(){
+  const p=el('custPanel');if(!p)return;
+  if(!['FP&A','CFO'].includes(bAudience)){p.innerHTML='';return;}
+  const custs=DATA.customers||[];if(!custs.length){p.innerHTML='';return;}
+  const grpRev=consol('cur').rev||1;
+  const sorted=custs.map(c=>{
+    const total=c.breakdown.reduce((s,b)=>s+b.revenue,0);
+    return {...c,total,pct:total/grpRev*100};
+  }).sort((a,b)=>b.total-a.total);
+  const top3pct=sorted.slice(0,3).reduce((s,c)=>s+c.pct,0);
+  const typeChip=t=>t==='Institutional'?'ag':t==='Individual (HNW)'?'ok':t==='Hospitality'?'warn':'';
+  let html=`<div style="margin-top:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span class="tag-ag">CUSTOMER REVENUE · CONSOLIDATED</span>
+      <span class="mini muted">${sorted.length} tracked customers · cross-entity · ${bLayer} basis</span>
+      <span class="chip ${top3pct>=40?'risk':'warn'}" style="margin-left:auto;font-size:10px">Top 3 = ${top3pct.toFixed(1)}% of group revenue${top3pct>=40?' · concentration watch':''}</span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table><thead><tr>
+        <th>Customer</th><th>Type</th><th>Entities</th>
+        <th class="r">Revenue (AED)</th><th class="r">% of group</th><th>Segment</th>
+      </tr></thead><tbody>
+      ${sorted.map((c,i)=>{
+        const entTags=c.breakdown.map(b=>`<span class="cust-ent-dot">${b.entity}</span>`).join('');
+        return `<tr class="tap" onclick="customerDrawer('${c.id}')">
+          <td><b style="color:var(--ink)">${i===0?'<span style="color:var(--orange-soft);font-size:10px;font-family:var(--mono);margin-right:4px">#1</span>':''}${c.name}</b></td>
+          <td><span class="chip ${typeChip(c.type)}" style="font-size:9.5px;padding:1px 8px;white-space:nowrap">${c.type}</span></td>
+          <td style="white-space:nowrap">${entTags}</td>
+          <td class="r num">${fmt(c.total)}</td>
+          <td class="r">
+            <span class="num ${c.pct>=15?'neg':''}">${c.pct.toFixed(1)}%</span>
+            <div class="cust-pct-bar"><div class="cust-pct-fill" style="width:${Math.min(c.pct/top3pct*100,100)}%"></div></div>
+          </td>
+          <td class="mini muted">${c.segment}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>
+    <p class="mini muted" style="margin-top:10px">Consolidated view — the same customer appearing in multiple entities is aggregated here. Retail / walk-in buyers and untracked bookings sit in the residual. Click any row for full entity breakdown and unit-level detail.</p>
+  </div>`;
+  p.innerHTML=html;
+}
+function customerDrawer(id){
+  const c=(DATA.customers||[]).find(x=>x.id===id);if(!c)return;
+  const total=c.breakdown.reduce((s,b)=>s+b.revenue,0);
+  const grpRev=consol('cur').rev||1;
+  const maxRev=Math.max(...c.breakdown.map(b=>b.revenue));
+  emit('VARIANCE','customer drill → '+c.name,'aggregating cross-entity revenue\nsingle-customer consolidated view','act');
+  const rows=c.breakdown.map(b=>{
+    const ent=DATA.entities.find(e=>e.code===b.entity)||{name:b.entity,vertical:''};
+    const pct=total>0?b.revenue/total*100:0;
+    const barW=maxRev>0?b.revenue/maxRev*80:0;
+    return `<tr>
+      <td class="mini"><b style="color:var(--ink)">${b.entity}</b><div class="mini muted" style="font-size:10px">${ent.name}</div></td>
+      <td class="mini muted">${ent.vertical}</td>
+      <td class="mini muted" style="max-width:180px">${b.desc}</td>
+      <td class="r">${b.units>0?`<span class="mini muted">${b.units} units</span>`:'<span class="mini muted">income</span>'}</td>
+      <td class="r num">${fmt(b.revenue)}</td>
+      <td style="width:90px">
+        <div style="background:var(--line);border-radius:3px;height:6px;overflow:hidden">
+          <div style="background:var(--orange);height:100%;width:${barW}%;border-radius:3px"></div>
+        </div>
+        <div class="mini muted" style="text-align:right;margin-top:2px">${pct.toFixed(1)}%</div>
+      </td>
+    </tr>`;
+  }).join('');
+  openDrawer(`<div class="drawer-head"><div>
+    <span class="tag-ag">CUSTOMER · CONSOLIDATED DRILL-DOWN</span>
+    <div class="h2" style="margin-top:10px">${c.name}</div>
+    <div class="mini muted">${c.type} · ${c.segment} · ${c.breakdown.length} entities</div>
+  </div><div class="x" onclick="closeDrawer()">×</div></div>
+  <div class="drawer-body">
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+      <div class="card"><div class="kpi-label">Total revenue</div><div class="kpi-val num" style="font-size:20px">${fmt(total)}</div></div>
+      <div class="card"><div class="kpi-label">% of group revenue</div><div class="kpi-val num" style="font-size:20px">${(total/grpRev*100).toFixed(1)}%</div></div>
+      <div class="card"><div class="kpi-label">Entities</div><div class="kpi-val num" style="font-size:20px">${c.breakdown.length}</div><div class="mini muted">of 10 total</div></div>
+    </div>
+    <div class="reason-box" style="margin-bottom:14px"><span class="k">Cross-entity view.</span> This is the consolidated revenue from <b>${c.name}</b> summed across all DAMAC legal entities where they are a customer. No individual entity controller sees the full picture — only the Group Controller and FP&A have this consolidated lens.</div>
+    <table><thead><tr><th>Entity</th><th>Vertical</th><th>Description</th><th class="r">Units</th><th class="r">Revenue</th><th>Share</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="mini muted" style="margin-top:12px">Revenue shown on ${bLayer} basis at TB ${(DATA.tbVersions||[]).find(v=>v.status==='approved')?.version||'—'} (approved). Click entity in the Pack tab to see GL-level detail.</p>
+  </div>`);
+}
+function renderEntityCtrlBody(f){
+  const entityCode='RE-01';
+  const entity=DATA.entities.find(e=>e.code===entityCode)||{name:'DAMAC Properties LLC',code:entityCode,vertical:'Real Estate'};
+  const lyr=LAYERS.find(l=>l[0]===bLayer);
+  const rows=DATA.tb.filter(r=>r.entity===entityCode&&r.typ==='PL');
+  const byL2={};
+  rows.forEach(r=>{if(!byL2[r.l2])byL2[r.l2]=[];byL2[r.l2].push(r);});
+  let html=`<div class="aud-scope-banner aud-entity">
+    <div class="aud-scope-icon">EC</div>
+    <div style="flex:1"><div class="aud-scope-title">${entity.name} &nbsp;<span class="mini muted" style="font-weight:400">${entity.code} · ${entity.vertical}</span></div>
+    <div class="aud-scope-sub">Legal entity · Granular GL · No budget layer · ${lyr[1]} basis</div></div>
+    <span class="mini muted" style="font-size:9.5px;max-width:180px;text-align:right;line-height:1.5">In production each controller sees only their assigned entity</span>
+  </div>`;
+  html+=`<div class="card" style="padding:0;overflow:hidden"><table><thead><tr>
+    <th>GL</th><th>Account</th><th>L3 group</th>
+    <th class="r">Current (AED)</th><th class="r">${lyr[1]}</th>
+    <th class="r">Variance</th><th class="r">Δ%</th>
+  </tr></thead><tbody>`;
+  Object.entries(byL2).forEach(([l2,l2rows])=>{
+    const l2cur=l2rows.reduce((s,r)=>s+r.cur,0);
+    const l2cmp=l2rows.reduce((s,r)=>s+r[f],0);
+    const l2va=l2cur-l2cmp;const l2d=pct(l2cur,l2cmp);
+    html+=`<tr style="background:var(--panel-2)">
+      <td colspan="2"><b style="color:var(--ink)">${l2}</b></td><td></td>
+      <td class="r num"><b>${fmtN(Math.abs(l2cur))}</b></td><td class="r num"><b>${fmtN(Math.abs(l2cmp))}</b></td>
+      <td class="r num ${l2va>=0?'pos':'neg'}"><b>${fmtN(l2va)}</b></td>
+      <td class="r num ${l2d>=0?'pos':'neg'}"><b>${l2d>=0?'+':''}${l2d.toFixed(1)}%</b></td></tr>`;
+    l2rows.slice().sort((a,b)=>Math.abs(b.cur)-Math.abs(a.cur)).forEach(r=>{
+      const va=r.cur-r[f];const d=pct(r.cur,r[f]);
+      html+=`<tr class="tap" onclick="drillTxn('${r.entity}','${r.gl}')">
+        <td class="mini num" style="color:var(--ink-3)">${r.gl}</td><td class="mini">${r.gd}</td>
+        <td class="mini muted">${r.l3||'—'}</td>
+        <td class="r num">${fmtN(Math.abs(r.cur))}</td><td class="r num">${fmtN(Math.abs(r[f]))}</td>
+        <td class="r num ${va>=0?'pos':'neg'}">${fmtN(va)}</td>
+        <td class="r num ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d.toFixed(1)}%</td></tr>`;
+    });
+  });
+  html+=`</tbody></table></div>
+  <p class="mini muted" style="margin-top:10px">${rows.length} P&L accounts · ${entityCode} · click any row to see journal-level detail and vendor attribution. No budget layer — switch to FP&A view for BvA.</p>`;
+  return html;
+}
+function renderVerticalCtrlBody(f){
+  const lyr=LAYERS.find(l=>l[0]===bLayer);
+  const verticalMap={};
+  DATA.entities.forEach(e=>{if(!verticalMap[e.vertical])verticalMap[e.vertical]=[];verticalMap[e.vertical].push(e.code);});
+  const vAgg={};
+  Object.entries(verticalMap).forEach(([v,codes])=>{
+    let rev=0,cost=0,opex=0,revCmp=0,costCmp=0,opexCmp=0;
+    DATA.tb.filter(r=>r.typ==='PL'&&codes.includes(r.entity)).forEach(r=>{
+      if(r.l2==='Revenue'){rev+=r.cur;revCmp+=r[f];}
+      else if(r.l2==='Direct Cost'){cost+=r.cur;costCmp+=r[f];}
+      else{opex+=r.cur;opexCmp+=r[f];}
+    });
+    const revA=-rev,ebitda=revA-cost-opex,revCmpA=-revCmp,ebitdaCmp=revCmpA-costCmp-opexCmp;
+    vAgg[v]={rev:revA,cost,opex,ebitda,ebitdaCmp,
+      margin:revA>0?ebitda/revA*100:0,mom:pct(ebitda,ebitdaCmp),entities:codes.length,codes};
+  });
+  let html=`<div class="aud-scope-banner aud-vertical">
+    <div class="aud-scope-icon">VC</div>
+    <div style="flex:1"><div class="aud-scope-title">Group · ${Object.keys(verticalMap).length} Business Verticals · ${DATA.entities.length} Entities</div>
+    <div class="aud-scope-sub">Multi-entity consolidation by vertical · No budget layer · ${lyr[1]} basis</div></div>
+    <span class="mini muted" style="font-size:9.5px;max-width:200px;text-align:right;line-height:1.5">e.g. Real Estate Controller owns all ${(verticalMap['Real Estate']||[]).length} RE entities consolidated</span>
+  </div>`;
+  html+=`<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px"><table><thead><tr>
+    <th>Vertical</th><th>Entities</th>
+    <th class="r">Revenue</th><th class="r">Direct Cost</th><th class="r">EBITDA</th>
+    <th class="r">Margin</th><th class="r">EBITDA ${lyr[1]} Δ</th>
+  </tr></thead><tbody>`;
+  ['Real Estate','Hospitality','Investments','Corporate'].forEach(v=>{
+    if(!vAgg[v])return;
+    const va=vAgg[v];const isWatch=v==='Hospitality';
+    html+=`<tr class="tap" onclick="verticalDrillDown('${v}')">
+      <td><b style="color:var(--ink)">${v}</b>${isWatch?` <span class="chip risk" style="font-size:9px;padding:1px 7px">watch</span>`:''}
+        <div class="mini muted" style="font-size:10px">${va.codes.join(' · ')}</div></td>
+      <td class="mini" style="color:var(--ink-3)">${va.entities}</td>
+      <td class="r num">${fmt(va.rev)}</td><td class="r num">${fmt(va.cost)}</td>
+      <td class="r num">${fmt(va.ebitda)}</td>
+      <td class="r num ${va.margin>=15?'pos':va.margin<5?'neg':''}">${va.margin.toFixed(1)}%</td>
+      <td class="r num ${va.mom>=0?'pos':'neg'}">${va.mom>=0?'+':''}${va.mom.toFixed(1)}%</td></tr>`;
+  });
+  const totalRev=Object.values(vAgg).reduce((s,v)=>s+v.rev,0);
+  const totalEB=Object.values(vAgg).reduce((s,v)=>s+v.ebitda,0);
+  const totalEBCmp=Object.values(vAgg).reduce((s,v)=>s+v.ebitdaCmp,0);
+  const totalMom=pct(totalEB,totalEBCmp);
+  html+=`<tr style="border-top:2px solid var(--line-2);background:var(--panel-2)">
+    <td colspan="2"><b style="color:var(--ink)">Group Total</b></td>
+    <td class="r num"><b>${fmt(totalRev)}</b></td><td></td>
+    <td class="r num"><b>${fmt(totalEB)}</b></td>
+    <td class="r num"><b>${totalRev>0?(totalEB/totalRev*100).toFixed(1):0}%</b></td>
+    <td class="r num ${totalMom>=0?'pos':'neg'}"><b>${totalMom>=0?'+':''}${totalMom.toFixed(1)}%</b></td></tr>`;
+  html+=`</tbody></table></div>
+  <p class="mini muted">Click any vertical to see entity breakdown. Hospitality margin is the current watch-item. No budget layer — switch to FP&A for BvA.</p>`;
+  return html;
+}
+function verticalDrillDown(vertical){
+  emit('VARIANCE','drill-down → '+vertical,'expanding to entity breakdown · no budget layer','act');
+  const lyr=LAYERS.find(l=>l[0]===bLayer);
+  const entities=DATA.entities.filter(e=>e.vertical===vertical);
+  let rows='';
+  entities.forEach(e=>{
+    const a=entAgg(e.code);
+    rows+=`<tr class="tap" onclick="entityDrawer('${e.code}')">
+      <td><b style="color:var(--ink)">${e.code}</b></td><td class="mini">${e.name}</td>
+      <td class="r num">${fmt(a.rev)}</td><td class="r num">${fmt(a.eb)}</td>
+      <td class="r num ${a.mgn>=15?'pos':a.mgn<5?'neg':''}">${a.mgn.toFixed(1)}%</td>
+      <td class="r num ${a.mom>=0?'pos':'neg'}">${a.mom>=0?'+':''}${a.mom.toFixed(1)}%</td></tr>`;
+  });
+  openDrawer(`<div class="drawer-head"><div>
+    <span class="tag-ag">VERTICAL DRILL-DOWN</span>
+    <div class="h2" style="margin-top:10px">${vertical} — entity breakdown</div>
+    <div class="mini muted">${entities.length} entities · ${lyr[1]} basis · no budget layer</div>
+  </div><div class="x" onclick="closeDrawer()">×</div></div>
+  <div class="drawer-body">
+    <table><thead><tr><th>Code</th><th>Entity</th><th class="r">Revenue</th><th class="r">EBITDA</th><th class="r">Margin</th><th class="r">${bLayer} Δ</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="mini muted" style="margin-top:12px">Click any entity for full P&L and open items. Budget layer not available in Vertical Controller view.</p>
+  </div>`);
 }
 function commentaryFor(g,d){
   const m={'Revenue':'Real Estate handover milestones drove recognition; Hospitality flat.',
@@ -1258,6 +1687,165 @@ function renderForecast(){
    </div>`;
 }
 
+/* ---------- PERIOD 13 · CONSOLIDATION ADJUSTMENTS ---------- */
+function renderP13(){
+  emit('SCRUTINY','P13 scan','loading consolidation-only entries · checking approval status','act');
+  const entries=DATA.p13||[];
+  const pending=entries.filter(e=>e.status==='pending-approval');
+  const approved=entries.filter(e=>e.status==='approved');
+  const totalImpact=entries.reduce((s,e)=>s+(e.pl_impact||0),0);
+  el('content').innerHTML=`
+   <div class="eyebrow">Period 13 · consolidation adjustments</div>
+   <div class="h1">Top-sided entries: group level only.</div>
+   <p class="lead">These entries are made by Group Accounting after all 10 legal entities have closed their books. They live exclusively at the consolidated P&amp;L and balance sheet — no entity controller will see them in their own TB. Each requires a preparer, a business case, a supporting reference, and explicit Group Controller sign-off before the CFO pack is issued.</p>
+
+   <div class="p13-gov-banner">
+     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+       <span class="tag-ag">GOVERNANCE</span>
+       <b style="font-size:12.5px">Dual sign-off required for all P13 entries</b>
+       <span class="chip ${pending.length?'risk':'ok'}" style="margin-left:auto">${pending.length} pending · ${approved.length} approved</span>
+     </div>
+     <div class="mini muted" style="line-height:1.55">These entries are invisible to entity controllers. Only the Group Controller, FP&amp;A, and CFO see the consolidated view inclusive of P13. Outstanding pending entries block CFO pack issuance.</div>
+   </div>
+
+   <div class="grid" style="grid-template-columns:repeat(3,1fr);margin:18px 0">
+     <div class="card"><div class="kpi-label">Total entries</div><div class="kpi-val num" style="font-size:22px">${entries.length}</div><div class="mini muted">this close cycle</div></div>
+     <div class="card"><div class="kpi-label">Net P&amp;L impact</div><div class="kpi-val num ${totalImpact>=0?'pos':'neg'}" style="font-size:22px">${fmtN(totalImpact)}</div><div class="mini muted">consolidated only · AED</div></div>
+     <div class="card"><div class="kpi-label">Pending sign-off</div><div class="kpi-val num ${pending.length?'neg':''}" style="font-size:22px">${pending.length}</div><div class="mini muted" style="color:${pending.length?'var(--risk)':'var(--ok)'}">${pending.length?'blocking CFO pack':'all clear'}</div></div>
+   </div>
+
+   <div class="card" style="padding:0;overflow:hidden">
+     <table><thead><tr>
+       <th>ID</th><th>Entry description</th><th>Category</th>
+       <th class="r">Amount (AED)</th><th class="r">P&amp;L impact</th>
+       <th>Prepared by</th><th>Status</th>
+     </tr></thead><tbody>
+     ${entries.map(e=>{
+       const isApproved=e.status==='approved';
+       return `<tr class="tap" onclick="p13Drawer('${e.id}')">
+         <td class="mini num" style="color:var(--ink-3);white-space:nowrap">${e.id}</td>
+         <td><b style="color:var(--ink);font-size:12px">${e.desc}</b><div class="mini muted" style="font-size:10px">${e.supportingRef}</div></td>
+         <td><span class="mini">${e.category}</span></td>
+         <td class="r num ${e.amount>=0?'pos':'neg'}">${fmtN(e.amount)}</td>
+         <td class="r num ${(e.pl_impact||0)>=0?'pos':'neg'}">${e.pl_impact?fmtN(e.pl_impact):'<span style="color:var(--ink-3)">OCI/BS</span>'}</td>
+         <td class="mini">${e.preparedBy}<div class="mini muted" style="font-size:10px">${e.team}</div></td>
+         <td><span class="chip ${isApproved?'ok':'risk'}" style="font-size:10px">${isApproved?'Approved':'Pending'}</span></td>
+       </tr>`;
+     }).join('')}
+     </tbody></table>
+   </div>
+   <p class="mini muted" style="margin-top:10px">Click any row for Dr/Cr detail, supporting reference, governance trail, and sign-off action. P13 entries appear only in the group consolidated view — invisible in all entity-level TB extracts.</p>`;
+}
+function p13Drawer(id){
+  const e=(DATA.p13||[]).find(x=>x.id===id);if(!e)return;
+  const isApproved=e.status==='approved';
+  const isPending=e.status==='pending-approval';
+  emit('SCRUTINY','P13 detail → '+id,'loading governance trail\nchecking preparer credentials · risk class','act');
+  openDrawer(`<div class="drawer-head"><div>
+    <span class="tag-ag">P13 · CONSOLIDATION ENTRY</span>
+    <div class="h2" style="margin-top:10px">${e.desc}</div>
+    <div class="mini muted">${e.id} · ${e.category} · ref: ${e.supportingRef}</div>
+  </div><div class="x" onclick="closeDrawer()">×</div></div>
+  <div class="drawer-body">
+    <div class="p13-gov-banner" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+        <span class="tag-ag">GOVERNANCE</span>
+        <span class="chip ${isApproved?'ok':'risk'}">${isApproved?'APPROVED':'PENDING SIGN-OFF'}</span>
+        ${isApproved?`<span class="mini muted" style="margin-left:auto">Approved by ${e.approvedBy}</span>`:''}
+      </div>
+      <div class="mini muted" style="line-height:1.55">${e.governance}</div>
+    </div>
+    <div class="reason-box" style="margin-bottom:16px"><span class="k">Entry basis.</span> ${e.note}</div>
+    <table style="margin-bottom:18px"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>
+      <tr><td class="mini muted">Debit</td><td class="mini"><b>${e.debit}</b></td></tr>
+      <tr><td class="mini muted">Credit</td><td class="mini"><b>${e.credit}</b></td></tr>
+      <tr><td class="mini muted">Amount (AED)</td><td class="r num ${e.amount>=0?'pos':'neg'}"><b>${fmtN(e.amount)}</b></td></tr>
+      <tr><td class="mini muted">P&amp;L impact</td><td class="r num ${(e.pl_impact||0)>=0?'pos':'neg'}">${e.pl_impact?`<b>${fmtN(e.pl_impact)}</b>`:'<span style="color:var(--ink-3)">OCI / BS only — no P&amp;L impact</span>'}</td></tr>
+      <tr><td class="mini muted">Prepared by</td><td class="mini">${e.preparedBy} · ${e.team}</td></tr>
+      <tr><td class="mini muted">Supporting ref</td><td class="mini num">${e.supportingRef}</td></tr>
+      <tr><td class="mini muted">Visible to</td><td class="mini">Group Controller · FP&amp;A · CFO only <span class="chip risk" style="font-size:9px;padding:1px 7px;margin-left:4px">NOT in entity books</span></td></tr>
+    </tbody></table>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${isPending?`<button class="btn pri" onclick="toast('${id} approved — CFO pack updated · preparer notified');closeDrawer()"><svg viewBox='0 0 24 24'><path d='M20 6L9 17l-5-5'/></svg>Approve entry</button>`:''}
+      ${isPending?`<button class="btn" onclick="toast('${id} flagged for review — preparer notified');closeDrawer()">Flag for review</button>`:''}
+      <button class="btn" onclick="closeDrawer()">Close</button>
+    </div>
+  </div>`);
+}
+
+/* ================= PROCESS FLOW ================= */
+function renderProcessFlow(){
+  const pf=DATA.processFlow||{};
+  const steps=pf.steps||[];
+  emit('ORCHESTRATOR','Process Flow','mapping agent-by-agent close timeline · computing time savings','act');
+  // Group steps by phase
+  const phases=[...new Set(steps.map(s=>s.phase))];
+  const agentColor={system:'var(--ink-3)',agent:'var(--orange)',human:'#1E5F8E'};
+  const agentBg={system:'var(--panel-3)',agent:'var(--orange-tint)',human:'rgba(30,95,142,.10)'};
+  const phaseDot={'Data Ingestion':'#4A90D9','Mapping & Quality':'var(--orange)','Analysis':'#8B5CF6','Controller Review':'#1E5F8E','Pack & Sign-off':'var(--ok)'};
+  const autoRate=Math.round(((pf.stepsAuto||0)/(pf.stepsTotal||1))*100);
+  const kpis=[
+    {label:'AI Close Duration',val:pf.aiDuration||'—',sub:'end-to-end wall clock',icon:'<path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/>',color:'var(--ok)'},
+    {label:'Manual Equivalent',val:pf.manualDays||'—',sub:`${pf.manualHours||0} person-hours`,icon:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>',color:'var(--risk)'},
+    {label:'Hours Reclaimed',val:`${pf.manualHours||0}h`,sub:'per monthly close cycle',icon:'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',color:'var(--orange)'},
+    {label:'Automation Rate',val:`${autoRate}%`,sub:`${pf.stepsAuto||0} of ${pf.stepsTotal||0} steps fully AI`,icon:'<circle cx="12" cy="12" r="10"/><path d="M20 6L9 17l-5-5"/>',color:'#8B5CF6'}
+  ];
+  const kpiHtml=kpis.map(k=>`
+    <div class="pf-kpi">
+      <div class="pf-kpi-icon" style="color:${k.color}"><svg viewBox="0 0 24 24">${k.icon}</svg></div>
+      <div class="pf-kpi-val" style="color:${k.color}">${k.val}</div>
+      <div class="pf-kpi-label">${k.label}</div>
+      <div class="pf-kpi-sub">${k.sub}</div>
+    </div>`).join('');
+  let stepCounter=0;
+  const timelineHtml=phases.map(ph=>{
+    const phSteps=steps.filter(s=>s.phase===ph);
+    const phDot=phaseDot[ph]||'var(--line-2)';
+    const stepsHtml=phSteps.map(s=>{
+      stepCounter++;
+      const isHuman=s.agentType==='human';
+      const aColor=agentColor[s.agentType]||'var(--ink-2)';
+      const aBg=agentBg[s.agentType]||'var(--panel-2)';
+      return `<div class="pf-step${isHuman?' pf-human':''}">
+        <div class="pf-step-num" style="background:${phDot};color:#fff">${stepCounter}</div>
+        <div class="pf-step-body">
+          <div class="pf-step-top">
+            <span class="pf-agent-badge" style="background:${aBg};color:${aColor}">${s.agent}</span>
+            ${isHuman?'<span class="chip risk" style="font-size:9px;padding:1px 7px;margin-left:4px">HUMAN</span>':''}
+            <span class="pf-step-name">${s.name}</span>
+          </div>
+          <div class="pf-step-meta">
+            <span class="pf-meta-item"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zM12 6v6l4 2"/></svg>${s.dur}</span>
+            ${s.savedH>0?`<span class="pf-meta-item pf-saved"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>${s.savedH}h saved</span>`:''}
+            <span class="pf-meta-item pf-output" title="${s.output}">${s.output}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="pf-phase">
+      <div class="pf-phase-head">
+        <div class="pf-phase-dot" style="background:${phDot}"></div>
+        <span class="pf-phase-name">${ph}</span>
+        <span class="pf-phase-count">${phSteps.length} step${phSteps.length>1?'s':''}</span>
+      </div>
+      <div class="pf-steps">${stepsHtml}</div>
+    </div>`;
+  }).join('');
+  el('content').innerHTML=`
+    <div class="pf-wrap">
+      <div class="pf-kpi-row">${kpiHtml}</div>
+      <div class="pf-section-label">MONTH-END CLOSE TIMELINE</div>
+      <div class="pf-timeline">${timelineHtml}</div>
+      <div class="pf-commentary">
+        <div class="pf-comm-head">
+          <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>
+          Sage — Close Efficiency Summary
+        </div>
+        <p class="pf-comm-body">The AI-assisted close compresses a traditional <b>5.5-day manual cycle</b> into <b>${pf.aiDuration}</b> of wall-clock time, reclaiming <b>${pf.manualHours} person-hours</b> per month. The single human gate — Group Controller review &amp; P13 sign-off — ensures all consolidation adjustments carry the required dual-approval before the CFO pack is assembled. Automation rate sits at <b>${autoRate}%</b>; the remaining ${100-autoRate}% is intentional governance design, not a technical gap.</p>
+      </div>
+    </div>`;
+}
+
 /* ================= SAGE ASSISTANT ================= */
 let SAGE_LANG='en';
 let sageOpened=false;
@@ -1884,10 +2472,25 @@ function openDrawer(html){el('drawer').innerHTML=html;el('drawer').classList.add
 function closeDrawer(){el('drawer').classList.remove('on');el('scrim').classList.remove('on');}
 function toast(msg){el('toastMsg').textContent=msg;el('toast').classList.add('on');setTimeout(()=>el('toast').classList.remove('on'),2600);}
 
+/* ============ THEME ============ */
+function updateThemeIcon(){
+  const ic=el('themeIcon');if(!ic)return;
+  const light=document.documentElement.classList.contains('theme-light');
+  ic.innerHTML=light
+    ?'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+    :'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+}
+function toggleTheme(){
+  document.documentElement.classList.toggle('theme-light');
+  updateThemeIcon();
+  try{localStorage.setItem('closeiq-theme',document.documentElement.classList.contains('theme-light')?'light':'dark');}catch(e){}
+}
 /* ============ INIT ============ */
+(function(){try{if(localStorage.getItem('closeiq-theme')==='light')document.documentElement.classList.add('theme-light');}catch(e){}})();
 renderRoster();
 go('sources');
 updateFreshness();
+updateThemeIcon();
 // ambient periodic agent heartbeat (only once data is in)
 const AMBIENT=[
  ['VARIANCE','re-checked materiality thresholds','no new breaches across 7 layers','done'],

@@ -275,6 +275,22 @@
       "l2": "Equity",
       "l3": "Equity",
       "typ": "BS"
+    },
+    {
+      "code": "4300",
+      "desc": "Revenue - Digital Sales Platform",
+      "l1": null,
+      "l2": null,
+      "l3": null,
+      "typ": "PL"
+    },
+    {
+      "code": "6500",
+      "desc": "Digital Infrastructure Costs",
+      "l1": null,
+      "l2": null,
+      "l3": null,
+      "typ": "PL"
     }
   ],
   "tb": [
@@ -4855,7 +4871,10 @@
       "cols": 13,
       "endpoint": "https://fusion.damac.com/fscmRestApi/otbi/v1",
       "schema": "FAH.GL_BALANCES",
-      "entity": "all 10 entities"
+      "entity": "all 10 entities",
+      "glSubledgerMatch": false,
+      "mismatchAED": 3200000,
+      "mismatchDetail": "Trade Receivables GL (1100) does not reconcile to Salesforce AR sub-ledger — RE-02 posting difference of AED 3.2M under investigation"
     },
     {
       "id": "SFDC",
@@ -4868,7 +4887,10 @@
       "cols": 9,
       "endpoint": "https://damac.my.salesforce.com/services/data/v59.0",
       "schema": "Receivable__c",
-      "entity": "AR sub-ledger"
+      "entity": "AR sub-ledger",
+      "glSubledgerMatch": false,
+      "mismatchAED": 3200000,
+      "mismatchDetail": "AR sub-ledger total exceeds Fusion GL 1100 balance by AED 3.2M — source-level difference flagged; resolved by semantic layer before close engine processes"
     },
     {
       "id": "DLD",
@@ -4881,7 +4903,10 @@
       "cols": 9,
       "endpoint": "sftp://dld-gateway.damac.com/exports",
       "schema": "DLD_DEPOSIT_LEDGER",
-      "entity": "RE entities"
+      "entity": "RE entities",
+      "glSubledgerMatch": true,
+      "mismatchAED": 0,
+      "mismatchDetail": ""
     },
     {
       "id": "EPM",
@@ -4894,7 +4919,265 @@
       "cols": 6,
       "endpoint": "https://epm.damac.com/HyperionPlanning/rest/v3",
       "schema": "PLAN_BUD_FY26",
-      "entity": "all 10 entities"
+      "entity": "all 10 entities",
+      "glSubledgerMatch": true,
+      "mismatchAED": 0,
+      "mismatchDetail": ""
     }
-  ]
+  ],
+  "tbVersions": [
+    {
+      "version": "v1.0",
+      "label": "Initial TB extract",
+      "ts": "2026-05-28T08:14:00",
+      "rows": 280,
+      "extractedBy": "Oracle Fusion / OTBI",
+      "status": "superseded",
+      "note": "First extraction post period close — automated OTBI job at 08:00 GST"
+    },
+    {
+      "version": "v1.1",
+      "label": "JE accruals posted",
+      "ts": "2026-05-29T11:32:00",
+      "rows": 280,
+      "extractedBy": "Oracle Fusion / OTBI",
+      "status": "superseded",
+      "note": "Period accruals JE-14, JE-15, JE-16 posted to sub-ledger and refreshed"
+    },
+    {
+      "version": "v1.2",
+      "label": "IC eliminations applied",
+      "ts": "2026-05-30T09:05:00",
+      "rows": 280,
+      "extractedBy": "Oracle Fusion / OTBI",
+      "status": "superseded",
+      "note": "7 of 10 IC pairs matched and eliminated · 3 unmatched items flagged in Recon module"
+    },
+    {
+      "version": "v2.0",
+      "label": "Controller sign-off TB",
+      "ts": "2026-06-01T16:48:00",
+      "rows": 280,
+      "extractedBy": "Oracle Fusion / OTBI",
+      "status": "approved",
+      "approvedBy": "Siva",
+      "approvalNote": "Approved for CFO reporting — all material variances explained and signed off",
+      "note": "Final version after handover revenue confirmation and IC resolution"
+    }
+  ],
+  "tbDiffs": [
+    {
+      "from": "v1.1",
+      "to": "v2.0",
+      "changes": [
+        {
+          "entity": "RE-02",
+          "gl": "4010",
+          "gd": "Revenue - Handover Recognition",
+          "field": "cur",
+          "prev": 62400000,
+          "curr": 67200000,
+          "delta": 4800000,
+          "reason": "3 additional unit handovers confirmed by project ops — DAMAC Lagoons Phase 2"
+        },
+        {
+          "entity": "HOS-01",
+          "gl": "5100",
+          "gd": "Hospitality Operating Cost",
+          "field": "cur",
+          "prev": 28100000,
+          "curr": 29400000,
+          "delta": 1300000,
+          "reason": "June payroll accrual posted — seasonal staffing increase for Ramadan period"
+        },
+        {
+          "entity": "COR-01",
+          "gl": "6200",
+          "gd": "Finance Cost",
+          "field": "cur",
+          "prev": 11200000,
+          "curr": 10800000,
+          "delta": -400000,
+          "reason": "Interest rate swap settlement — Q2 hedge recognised at fair value per IFRS 9"
+        }
+      ]
+    }
+  ],
+  "p13": [
+    {
+      "id": "P13-01",
+      "desc": "IFRS 16 Lease Liability Re-measurement",
+      "amount": -2400000,
+      "pl_impact": -2400000,
+      "category": "Balance Sheet",
+      "l2": "Operating Expense",
+      "preparedBy": "Rania K",
+      "team": "Group Accounting",
+      "status": "pending-approval",
+      "governance": "Requires Group Controller sign-off before CFO pack is issued",
+      "note": "Lease term re-assessment per IFRS 16.45 — 3 office leases extended for 2 years. Incremental borrowing rate updated to 5.8% per Treasury.",
+      "supportingRef": "IA-2026-0312",
+      "debit": "Lease Liability (BS)",
+      "credit": "Retained Earnings (Equity)"
+    },
+    {
+      "id": "P13-02",
+      "desc": "Goodwill Impairment — Hospitality CGU",
+      "amount": -8500000,
+      "pl_impact": -8500000,
+      "category": "P&L",
+      "l2": "Operating Expense",
+      "preparedBy": "Rania K",
+      "team": "Group Accounting",
+      "status": "approved",
+      "approvedBy": "Siva",
+      "governance": "CFO notified · Board Audit Committee to be informed at Q2 meeting",
+      "note": "Annual IAS 36 impairment test — Hospitality CGU carrying value exceeds recoverable amount by AED 8.5M. Driven by revised RevPAR forecasts post-Q1 occupancy data.",
+      "supportingRef": "IAS36-2026-H1",
+      "debit": "Goodwill Impairment Loss (P&L)",
+      "credit": "Accumulated Impairment — Goodwill (BS)"
+    },
+    {
+      "id": "P13-03",
+      "desc": "FX Translation Adjustment — USD Portfolio",
+      "amount": 1200000,
+      "pl_impact": 0,
+      "category": "OCI",
+      "l2": "Translation Reserve",
+      "preparedBy": "Ahmed S",
+      "team": "Treasury",
+      "status": "approved",
+      "approvedBy": "Siva",
+      "governance": "Standard treasury process · Group Controller approved",
+      "note": "USD-denominated assets re-translated at May month-end spot rate AED/USD 3.6725. OCI — no P&L impact.",
+      "supportingRef": "FX-MAY-2026-04",
+      "debit": "Foreign Currency Translation Reserve (OCI)",
+      "credit": "USD Asset Portfolio (BS)"
+    },
+    {
+      "id": "P13-04",
+      "desc": "Intercompany Dividend Elimination — COR-01 to RE-02",
+      "amount": -3600000,
+      "pl_impact": 0,
+      "category": "Consolidation",
+      "l2": "Equity",
+      "preparedBy": "Rania K",
+      "team": "Group Accounting",
+      "status": "pending-approval",
+      "governance": "Requires Group Controller sign-off — IC pair still unmatched in Recon module",
+      "note": "Dividend declared by COR-01 to RE-02 must be eliminated on consolidation to avoid double-counting at group level. Blocked on IC Recon resolution.",
+      "supportingRef": "IC-ELIM-2026-09",
+      "debit": "Dividend Income — RE-02 (P&L)",
+      "credit": "Dividend Payable — COR-01 (BS)"
+    }
+  ],
+  "customers": [
+    {
+      "id": "CUST-001",
+      "name": "Qatar Investment Authority",
+      "type": "Institutional",
+      "segment": "Real Estate — Bulk Purchase",
+      "breakdown": [
+        {"entity": "RE-03", "revenue": 18600000, "units": 6, "desc": "DAMAC Hills Dev — 6 signature villa units"},
+        {"entity": "RE-04", "revenue": 12400000, "units": 4, "desc": "DAMAC Islands Dev — 4 waterfront townhouses"},
+        {"entity": "INV-01", "revenue": 8200000, "units": 0, "desc": "DAMAC Investments — strategic stake income Q2"}
+      ]
+    },
+    {
+      "id": "CUST-002",
+      "name": "HNW Individual Pool (Top 20 buyers)",
+      "type": "Individual (HNW)",
+      "segment": "Real Estate — Residential Units",
+      "breakdown": [
+        {"entity": "RE-01", "revenue": 19600000, "units": 6, "desc": "DAMAC Properties — 6 luxury apartments"},
+        {"entity": "RE-02", "revenue": 14000000, "units": 4, "desc": "DAMAC Lagoons — 4 lagoon-view units"},
+        {"entity": "RE-03", "revenue": 11800000, "units": 3, "desc": "DAMAC Hills — 3 golf-course villas"}
+      ]
+    },
+    {
+      "id": "CUST-003",
+      "name": "Mubadala Investment Company",
+      "type": "Institutional",
+      "segment": "Real Estate + Investments",
+      "breakdown": [
+        {"entity": "RE-02", "revenue": 22800000, "units": 7, "desc": "DAMAC Lagoons — 7 premium cluster units"},
+        {"entity": "INV-01", "revenue": 9400000, "units": 0, "desc": "DAMAC Investments — co-investment income"},
+        {"entity": "INV-02", "revenue": 5000000, "units": 0, "desc": "DICO Capital — fund distribution"}
+      ]
+    },
+    {
+      "id": "CUST-004",
+      "name": "Hospitality Guests (Aggregated)",
+      "type": "Hospitality",
+      "segment": "Room Revenue + F&B",
+      "breakdown": [
+        {"entity": "HOS-01", "revenue": 22400000, "units": 0, "desc": "DAMAC Hotels — May room + F&B revenue"},
+        {"entity": "HOS-02", "revenue": 14800000, "units": 0, "desc": "Mandarin Oriental JV — management fee + revenue share"}
+      ]
+    },
+    {
+      "id": "CUST-005",
+      "name": "Saudi Public Investment Fund",
+      "type": "Institutional",
+      "segment": "Real Estate — Portfolio",
+      "breakdown": [
+        {"entity": "RE-04", "revenue": 16800000, "units": 5, "desc": "DAMAC Islands — 5 island community units"},
+        {"entity": "INV-01", "revenue": 11200000, "units": 0, "desc": "DAMAC Investments — sovereign co-invest"},
+        {"entity": "INV-02", "revenue": 8400000, "units": 0, "desc": "DICO Capital — structured product income"}
+      ]
+    },
+    {
+      "id": "CUST-006",
+      "name": "Emirates NBD Private Wealth",
+      "type": "Institutional",
+      "segment": "Real Estate — Client Advisory",
+      "breakdown": [
+        {"entity": "RE-01", "revenue": 15600000, "units": 5, "desc": "DAMAC Properties — 5 units (client-on-behalf)"},
+        {"entity": "RE-02", "revenue": 10400000, "units": 4, "desc": "DAMAC Lagoons — 4 units (client-on-behalf)"}
+      ]
+    },
+    {
+      "id": "CUST-007",
+      "name": "Al Futtaim Properties",
+      "type": "Corporate",
+      "segment": "Real Estate — Development Partner",
+      "breakdown": [
+        {"entity": "RE-01", "revenue": 11200000, "units": 4, "desc": "DAMAC Properties — 4 commercial-linked units"},
+        {"entity": "RE-02", "revenue": 8400000, "units": 3, "desc": "DAMAC Lagoons — 3 development parcels"}
+      ]
+    },
+    {
+      "id": "CUST-008",
+      "name": "Meraas Capital",
+      "type": "Corporate",
+      "segment": "Real Estate + Investments",
+      "breakdown": [
+        {"entity": "RE-03", "revenue": 12000000, "units": 4, "desc": "DAMAC Hills — 4 club-villa units"},
+        {"entity": "INV-02", "revenue": 7600000, "units": 0, "desc": "DICO Capital — joint venture income"}
+      ]
+    }
+  ],
+  "processFlow": {
+    "aiDuration": "4h 12m",
+    "manualDays": "5.5 days",
+    "manualHours": 58,
+    "stepsTotal": 13,
+    "stepsAuto": 11,
+    "stepsHuman": 2,
+    "steps": [
+      {"id":1,"phase":"Data Ingestion","name":"Period close & GL lock","agent":"SYSTEM","agentType":"system","dur":"0m 00s","savedH":0,"status":"done","output":"Subledger locked 23:59 GST · all 10 entity books frozen · Oracle Fusion OTBI extraction queued automatically"},
+      {"id":2,"phase":"Data Ingestion","name":"GL extraction → TB v1.0","agent":"EXTRACT","agentType":"agent","dur":"1m 48s","savedH":2,"status":"done","output":"280 TB rows extracted · 28 GL codes · 10 entities · TB v1.0 snapshot created and hashed"},
+      {"id":3,"phase":"Data Ingestion","name":"Source ingestion — all 4 feeds","agent":"EXTRACT","agentType":"agent","dur":"3m 12s","savedH":1,"status":"done","output":"Oracle Fusion · Salesforce · DLD · EPM all loaded · 645 total rows · canonical schema applied"},
+      {"id":4,"phase":"Mapping & Quality","name":"GL ↔ Subledger reconciliation","agent":"RECON","agentType":"agent","dur":"0m 34s","savedH":4,"status":"done","output":"Trade Receivables mismatch detected: AED 3.2M (GL 1100 vs SFDC AR) · semantic layer reconciliation rule applied · flagged for awareness"},
+      {"id":5,"phase":"Mapping & Quality","name":"L1 / L2 / L3 hierarchy mapping","agent":"MAP","agentType":"agent","dur":"0m 52s","savedH":3,"status":"done","output":"280 rows mapped to canonical hierarchy · 2 unmapped GL codes (4300, 6500) flagged · MAP agent logged remediation action required"},
+      {"id":6,"phase":"Analysis","name":"JE accrual sub-process","agent":"MAP","agentType":"agent","dur":"14m 22s","savedH":8,"status":"done","output":"16-step PO-accrual workflow · 19 JEs raised totalling AED 19.4M · human-in-the-loop posting gate cleared by controller"},
+      {"id":7,"phase":"Analysis","name":"Intercompany elimination","agent":"RECON","agentType":"agent","dur":"2m 08s","savedH":6,"status":"done","output":"10 IC pairs scanned · 7 of 10 matched and eliminated · 3 unmatched (AED 2.6M) escalated to Recon module for resolution"},
+      {"id":8,"phase":"Analysis","name":"Variance analysis — 7 layers","agent":"VARIANCE","agentType":"agent","dur":"1m 54s","savedH":8,"status":"done","output":"Material movements: RE-02 handover revenue +AED 4.8M · Hospitality margin −12pp · IC timing difference flagged · 6 top movers ranked"},
+      {"id":9,"phase":"Analysis","name":"Balance sheet scrutiny","agent":"SCRUTINY","agentType":"agent","dur":"2m 41s","savedH":4,"status":"done","output":"28 GL heads reviewed · 3 high-risk balances identified · AED 14.5M write-back surfaced · 7 JE accruals verified against POs"},
+      {"id":10,"phase":"Controller Review","name":"TB re-extraction → v2.0","agent":"EXTRACT","agentType":"agent","dur":"1m 48s","savedH":2,"status":"done","output":"Post-JE and IC refresh · versions v1.0 → v1.1 → v1.2 → v2.0 logged · controller review notification dispatched"},
+      {"id":11,"phase":"Controller Review","name":"Group Controller review & P13","agent":"HUMAN","agentType":"human","dur":"48m 00s","savedH":8,"status":"done","output":"Siva reviewed all agent-flagged items · 4 P13 consolidation entries raised · 2 approved · TB v2.0 signed off at 16:48 GST"},
+      {"id":12,"phase":"Pack & Sign-off","name":"AI commentary generation","agent":"COMMENTARY","agentType":"agent","dur":"3m 17s","savedH":8,"status":"done","output":"Narratives generated for all material variances · CFO one-pager structured · Arabic version generated · tone calibrated to executive audience"},
+      {"id":13,"phase":"Pack & Sign-off","name":"CFO pack export & distribution","agent":"SYSTEM","agentType":"system","dur":"0m 44s","savedH":4,"status":"done","output":"18-slide PPT generated · emailed to CFO and Group Controller · audit trail locked to TB v2.0 · close cycle complete: 4h 12m"}
+    ]
+  }
 }

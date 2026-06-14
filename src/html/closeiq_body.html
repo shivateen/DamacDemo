@@ -17,6 +17,10 @@
       <svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>JE</button>
     <button class="nav-btn" data-view="fc" onclick="go('fc')">
       <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg>Forecast</button>
+    <button class="nav-btn" data-view="p13" onclick="go('p13')">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>P13</button>
+    <button class="nav-btn" data-view="flow" onclick="go('flow')">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h10M5 8v8M19 8v8M7 18h10"/></svg>Flow</button>
     <div class="nav-sp"></div>
     <div class="ver-chip">v2.4.1</div>
     <button class="nav-btn" onclick="toggleRail()">
@@ -34,8 +38,11 @@
       <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
         <div class="tb-search"><svg viewBox="0 0 24 24"><path d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3"/></svg>
           <input id="tbSearch" placeholder="Ask anything — entity, GL, vendor…" onkeydown="if(event.key==='Enter'&&this.value.trim()){openSage();const q=this.value.trim();this.value='';setTimeout(()=>askSage(q),350);}"></div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light / dark">
+          <svg id="themeIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
         <button class="tb-bell" onclick="openAudit()" title="Activity & audit"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg><span class="b" id="bellB">·</span></button>
-        <div class="tb-user"><div class="ava">LN</div><div><div class="nm">Lakshmi N</div><div class="rl">Group Controller</div></div></div>
+        <div class="tb-user"><div class="ava">S</div><div><div class="nm">Siva</div><div class="rl">Group Controller</div></div></div>
         <div class="period-pill" id="barFresh"><span class="live-dot"></span>no sources loaded</div>
       </div>
     </div>
