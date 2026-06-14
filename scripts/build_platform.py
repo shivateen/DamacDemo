@@ -134,18 +134,71 @@ def build_command():
 
   // Also: a voice/chat query about the close can route to CloseIQ
   window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
+
+  // Inject a ReconIQ launcher on the FSSC / shared-services tower page
+  function addReconIQLauncher(){
+    var main = document.getElementById('main');
+    if(!main) return;
+    var isFSSC = /Shared services|FSSC|Reconciliation|recon/i.test(main.textContent||'');
+    if(!isFSSC){ return; }
+    if(document.getElementById('__reconiqLauncher')) return;
+
+    var banner = document.createElement('div');
+    banner.id = '__reconiqLauncher';
+    banner.style.cssText = 'margin:14px 0;padding:16px 18px;border-radius:12px;'
+      + 'background:linear-gradient(135deg,#0d1418,#141c20);border:1px solid #2EA86D;'
+      + 'display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s';
+    banner.onmouseover=function(){banner.style.transform='translateY(-2px)';};
+    banner.onmouseout =function(){banner.style.transform='none';};
+    banner.innerHTML =
+      '<div style="width:42px;height:42px;border-radius:10px;background:#2EA86D;display:flex;'
+      + 'align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:20px;flex:none">T</div>'
+      + '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:#fff">'
+      + 'ReconIQ — Intercompany Reconciliation <span style="font-size:10px;color:#5dcaa5;'
+      + 'background:rgba(46,168,109,.18);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
+      + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">IC matching · 400+ entities · 2,420 combinations · '
+      + 'AED 2.6M open items · counter-party resolution engine.</div></div>'
+      + '<div style="color:#5dcaa5;font-size:13px;font-weight:600;white-space:nowrap">Open ReconIQ &rarr;</div>';
+    banner.onclick = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
+    main.insertBefore(banner, main.firstChild ? main.firstChild.nextSibling : null);
+  }
+
+  var mo2 = new MutationObserver(function(){ setTimeout(addReconIQLauncher, 60); });
+  function start2(){
+    var main = document.getElementById('main');
+    if(main){ mo2.observe(main, {childList:true, subtree:false}); addReconIQLauncher(); }
+    else setTimeout(start2, 300);
+  }
+  start2();
+
+  window.__openReconIQ = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
 })();
 </script>
 """
     return html.replace('</body>', inject + '</body>')
 
 
-# ── 4. Build the shell ───────────────────────────────────────────────────────
+# ── 4. Build ReconIQ (pass-through with shell nav hook) ─────────────────────
+def build_reconiq():
+    html = read(APPS / 'reconiq.html')
+    inject = """
+<script>
+(function(){
+  if(window.parent===window) return;
+  window.parent.postMessage({__showBar:true},'*');
+})();
+</script>
+"""
+    return html.replace('</body>', inject + '</body>')
+
+
+# ── 5. Build the shell ───────────────────────────────────────────────────────
 def build_shell():
     shell = read(APPS / 'shell.html')
     shell = shell.replace('__EVOLUTION_SRC__', 'app-evolution.html')
     shell = shell.replace('__COMMAND_SRC__',   'app-command.html')
     shell = shell.replace('__CLOSEIQ_SRC__',   'app-closeiq.html')
+    shell = shell.replace('__RECONIQ_SRC__',   'app-reconiq.html')
     return shell
 
 
@@ -156,11 +209,12 @@ def main():
     write(OUT / 'app-closeiq.html',   build_closeiq());    print("  ✓ app-closeiq.html")
     write(OUT / 'app-evolution.html', build_evolution());  print("  ✓ app-evolution.html")
     write(OUT / 'app-command.html',   build_command());    print("  ✓ app-command.html")
+    write(OUT / 'app-reconiq.html',   build_reconiq());    print("  ✓ app-reconiq.html")
     write(OUT / 'index.html',         build_shell());       print("  ✓ index.html (shell)")
 
     total = sum((OUT / f).stat().st_size for f in
-                ['index.html','app-closeiq.html','app-evolution.html','app-command.html'])
-    print(f"\n✓ Platform built — {total//1024} KB total across 4 files")
+                ['index.html','app-closeiq.html','app-evolution.html','app-command.html','app-reconiq.html'])
+    print(f"\n✓ Platform built — {total//1024} KB total across 5 files")
     print(f"  Built {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 if __name__ == '__main__':
