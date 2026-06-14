@@ -188,14 +188,14 @@
 var DEMO_LINKS = {
   recon:    "",   /* FSS - Reconciliation        */
   payments: "",   /* FSS - Payments              */
-  tb:       "",   /* Controllership - Month end closure */
+  tb:       "",   /* Controllership - TB scrutiny */
   variance: ""    /* FP&A - Variance analysis    */
 };
 
 (function(){
-  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, aiProj:null, pending:[]};
+  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, pending:[]};
   var navByPersona={
-    cfo:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"],["engagements","Special AI projects","ti-robot"]],
+    cfo:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["engagements","Engagements","ti-briefcase"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"]],
     analyst:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"]]
   };
 
@@ -330,7 +330,7 @@ var DEMO_LINKS = {
      scope:["Payment-run automation across 14 weekly runs","Pre-release duplicate and anomaly detection","Approval workflow with full audit trail"],
      results:["Duplicate detection live in shadow mode — 9 catches in 4 weeks","UAT in progress with AP team"],
      next:"Production go-live targeted week 8; controls sign-off with internal audit week 7."},
-    {id:"tb",n:"Controllership — Month end closure",fn:"Controllership",icon:"ti-list-check",pct:45,state:"prog",owner:"Tiger pod B · Group controller",
+    {id:"tb",n:"Controllership — Trial balance scrutiny",fn:"Controllership",icon:"ti-list-check",pct:45,state:"prog",owner:"Tiger pod B · Group controller",
      scope:["Automated TB analytics across 100+ entities","Anomaly flags on unusual movements pre-close","AI-drafted flux commentary with drill-through"],
      results:["Anomaly model trained on 24 months of close data","First scrutiny pack reviewed by controller team"],
      next:"Live alongside the July close (week 9) in parallel-run mode."},
@@ -340,7 +340,7 @@ var DEMO_LINKS = {
      next:"Build sprint starts week 7; first monthly cycle in parallel by week 11."}
   ];
   var ucState={done:["success","Delivered","ti-circle-check"],prog:["info","In build","ti-progress"],start:["warning","Starting","ti-player-play"]};
-  var timeline=[["W2","Data access + environments","done"],["W4","Reconciliation engine live in pilot","done"],["W6","Payments UAT · TB model training","now"],["W8","Payments live · recon full rollout","next"],["W9","Month-end closure parallel-run at July close","next"],["W11","Variance analysis first cycle","next"],["W12","Wave 1 close-out · value sign-off · Wave 2 mobilise","next"]];
+  var timeline=[["W2","Data access + environments","done"],["W4","Reconciliation engine live in pilot","done"],["W6","Payments UAT · TB model training","now"],["W8","Payments live · recon full rollout","next"],["W9","TB scrutiny parallel-run at July close","next"],["W11","Variance analysis first cycle","next"],["W12","Wave 1 close-out · value sign-off · Wave 2 mobilise","next"]];
   var wave23=[
     {n:"Wave 2 · Scale",uc:20,dur:"3 months",budget:"USD 1.0M",
      items:["AI collections prioritisation","Automated dunning","Escrow release automation","Close acceleration (day 7→5)","Intercompany auto-matching","Consolidation automation","Driver-based rolling forecast","Self-service analytics","VAT computation automation","CT computation automation","Live cost-to-complete","Predictive margin alerts","13-week forecast at group scale","Notional pooling setup","Bank fee analytics","Master-data dedup (AI)","Vendor self-service portal","Continuous controls monitoring (P2P)","Duplicate-payment prevention at scale","Board reporting automation"]},
@@ -503,18 +503,13 @@ var DEMO_LINKS = {
     var grid="";for(var g=0;g<3;g++){var gy=(25+g*(h-45)/2).toFixed(1);var gv=(mx-g*(mx-mn)/2);grid+='<line x1="'+pad+'" y1="'+gy+'" x2="'+(w-10)+'" y2="'+gy+'" stroke="var(--bd3)" stroke-width="0.5"/><text x="'+(pad-4)+'" y="'+(parseFloat(gy)+3)+'" text-anchor="end" font-size="9" fill="var(--tx3)">'+(Math.round(gv*10)/10)+'</text>';}
     return grid;
   }
-  function defaultCats(n){
-    var y=2026,q=2,out=[];
-    for(var i=0;i<n;i++){out.unshift(y+"Q"+q); q--; if(q<1){q=4;y--;}}
-    return out;
-  }
   function bigChart(d,col,label,area,cats){
     var w=560,h=150,pad=34;
     var mn=Math.min.apply(null,d),mx=Math.max.apply(null,d),r=(mx-mn)||1;
     var pts=d.map(function(y,i){return (pad+i/(d.length-1)*(w-pad-14)).toFixed(1)+","+((h-20)-((y-mn)/r)*(h-45)).toFixed(1);}).join(" ");
     var dots=d.map(function(y,i){var x=(pad+i/(d.length-1)*(w-pad-14)).toFixed(1),yy=((h-20)-((y-mn)/r)*(h-45)).toFixed(1);return '<circle cx="'+x+'" cy="'+yy+'" r="3" fill="'+col+'"/>';}).join("");
     var fill=area?'<polygon points="'+pad+','+(h-20)+' '+pts+' '+(w-14)+','+(h-20)+'" fill="'+col+'" opacity="0.15"/>':'';
-    var xl=d.map(function(v,i){var c=(cats||defaultCats(d.length))[i];return '<text x="'+(pad+i/(d.length-1)*(w-pad-14)).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
+    var xl=d.map(function(v,i){var c=cats?cats[i]:("Q"+(i+1));return '<text x="'+(pad+i/(d.length-1)*(w-pad-14)).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
     return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="'+label+'">'+axisGrid(mn,mx,pad,w,h)+fill+'<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+dots+xl+'</svg>';
   }
   function bigBars(d,col,label,cats){
@@ -525,7 +520,7 @@ var DEMO_LINKS = {
       var bh=((v-mn)/r)*(h-45);
       return '<rect x="'+(pad+i*slot+slot*0.18).toFixed(1)+'" y="'+((h-20)-bh).toFixed(1)+'" width="'+(slot*0.64).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="3" fill="'+col+'" opacity="0.9"/>';
     }).join("");
-    var xl=d.map(function(v,i){var c=(cats||defaultCats(d.length))[i];return '<text x="'+(pad+i*slot+slot*0.5).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
+    var xl=d.map(function(v,i){var c=cats?cats[i]:("Q"+(i+1));return '<text x="'+(pad+i*slot+slot*0.5).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
     return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="'+label+'">'+axisGrid(mn,mx,pad,w,h)+bars+xl+'</svg>';
   }
   function bigVarBars(d,label,cats){
@@ -537,7 +532,7 @@ var DEMO_LINKS = {
       var bh=Math.abs(v)*scale, up=v>=0;
       return '<rect x="'+(pad+i*slot+slot*0.18).toFixed(1)+'" y="'+(up?zero-bh:zero).toFixed(1)+'" width="'+(slot*0.64).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="3" fill="'+(up?"#1d9e75":"#e24b4a")+'" opacity="0.9"/>';
     }).join("");
-    var xl=d.map(function(v,i){var c=(cats||defaultCats(d.length))[i];return '<text x="'+(pad+i*slot+slot*0.5).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
+    var xl=d.map(function(v,i){var c=cats?cats[i]:("Q"+(i+1));return '<text x="'+(pad+i*slot+slot*0.5).toFixed(1)+'" y="'+(h-5)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
     return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="'+label+'"><line x1="'+pad+'" y1="'+zero+'" x2="'+(w-14)+'" y2="'+zero+'" stroke="var(--tx3)" stroke-width="1"/>'+bars+xl+'</svg>';
   }
   function bigDonut(segs,label){
@@ -591,7 +586,7 @@ var DEMO_LINKS = {
 
   /* ---------------- render: nav ---------------- */
   function renderNav(){
-    var parentScreen={tower:"home",workstream:"home",insightDetail:"insights",reportDetail:"reports",engagementDetail:"engagements"};
+    var parentScreen={tower:"home",workstream:"home",insightDetail:"insights",reportDetail:"reports"};
     var cur=parentScreen[S.screen]||S.screen;
     document.getElementById("nav").innerHTML=(navByPersona[S.persona]||navByPersona.cfo).map(function(it){
       var on=cur===it[0];
@@ -605,7 +600,6 @@ var DEMO_LINKS = {
     if(screen==="workstream")S.workstream=arg;
     if(screen==="insightDetail")S.insight=arg;
     if(screen==="reportDetail")S.report=arg;
-    if(screen==="engagementDetail")S.aiProj=arg;
     renderNav();renderMain();
     document.getElementById("main").scrollIntoView({behavior:"smooth",block:"start"});
   }
@@ -715,75 +709,6 @@ var DEMO_LINKS = {
       '<div class="secthead" style="margin-top:14px;">Ask about this report — by voice or text</div>'+askChips(d.qs);
   }
 
-  /* ---------------- render: special AI projects ---------------- */
-  var aiProjects=[
-    {id:"tiger",name:"Tiger — finance transformation",icon:"ti-briefcase",ramp:"c-blue",lead:"Partner-led program · Tiger",
-     obj:"The flagship 3-wave, 44-use-case finance transformation program delivered with Tiger.",pill:["In delivery · Wave 1","success"]},
-    {id:"liquidity",name:"AI liquidity forecasting",icon:"ti-chart-dots",ramp:"c-teal",lead:"Treasury · Tiger data science",
-     obj:"Machine-learning 13-week and 12-month cash-flow forecasting across all entities and escrow cycles.",pill:["Pilot · 96% accuracy","info"],
-     meta:{sponsor:"Group CFO",lead:"Treasury + Tiger DS",start:"Mar 2026",stage:"Pilot"},
-     targets:[["Forecast accuracy","96%","success"],["Horizon","13 wk → 12 mo","info"],["Funding cost saving","15-25 bps","success"],["Idle cash mobilised","AED 0.8-1.2B","info"]],
-     approach:["Learns from collection patterns, construction draws and escrow release cycles","Scenario and stress modelling on demand","Feeds the treasury command center in real time"],
-     milestones:[["Data pipeline & model build","done"],["13-week pilot at group","now"],["12-month horizon extension","next"],["Automated cash positioning","next"]],
-     benefits:[["Funding cost","-15 to -25 bps","success"],["Precautionary borrowing","reduced","success"],["Cash visibility","T+1 → real time","success"]],
-     qs:["How accurate is the forecast?","What benefit does it unlock?","When does it scale group-wide?"]},
-    {id:"collections",name:"Intelligent collections agent",icon:"ti-cash",ramp:"c-pink",lead:"Sales finance · Tiger",
-     obj:"AI-prioritised collections and automated dunning to reduce DSO, piloting in Lagoons and Hills 2.",pill:["In build · 2-community pilot","warning"],
-     meta:{sponsor:"Group CFO",lead:"Sales finance + Tiger",start:"May 2026",stage:"Build"},
-     targets:[["DSO reduction","-4 to -6 days","success"],["Cash impact","~AED 290M","info"],["Pilot communities","2","info"],["Group go-live","Wave 2","warning"]],
-     approach:["Propensity-to-pay scoring for every customer","Automated, payment-plan-aware dunning sequences","Prioritised worklist for the collections team"],
-     milestones:[["Model scoping & data","done"],["Pilot build — 2 communities","now"],["Wave 2 group rollout","next"]],
-     benefits:[["DSO","-4 to -6 days","success"],["Working capital","released","success"],["Manual dunning","eliminated","success"]],
-     qs:["What DSO reduction is targeted?","Which communities pilot first?","How does propensity scoring work?"]},
-    {id:"docintel",name:"Document intelligence (AP & contracts)",icon:"ti-file-text",ramp:"c-amber",lead:"FSSC · Tiger",
-     obj:"GenAI extraction and validation for supplier invoices and contracts, feeding touchless AP and payment controls.",pill:["Pilot · touchless AP","info"],
-     meta:{sponsor:"Group CFO",lead:"FSSC + Tiger",start:"Apr 2026",stage:"Pilot"},
-     targets:[["Touchless AP","81% → 95%","success"],["Invoices / month","118k","info"],["Cost per invoice","AED 4.1 → 2.5","success"],["Duplicate catch","pre-release","success"]],
-     approach:["OCR + LLM extraction across invoice formats","Automated three-way match and exception routing","Contract clause extraction for obligations and dates"],
-     milestones:[["AP invoice pilot","done"],["Exception routing live","now"],["Contract intelligence","next"]],
-     benefits:[["Touchless AP","→ 95%","success"],["Cost per invoice","-40%","success"],["Duplicate payments","prevented","success"]],
-     qs:["What is the touchless AP target?","How does extraction work?","What does contract intelligence add?"]}
-  ];
-  function aiProjectsHtml(){
-    var cards=aiProjects.map(function(p){
-      return '<button class="aiproj card" data-id="'+p.id+'" style="text-align:left; cursor:pointer;">'+
-        '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">'+
-          '<div style="display:flex; align-items:center; gap:10px;"><div class="'+p.ramp+'" style="width:34px; height:34px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+p.icon+'" style="font-size:19px;" aria-hidden="true"></i></div>'+
-          '<div><div style="font-size:14px; font-weight:500;">'+p.name+'</div><div style="font-size:11px; color:var(--tx3);">'+p.lead+'</div></div></div>'+
-          '<i class="ti ti-chevron-right" style="font-size:16px; color:var(--tx3);" aria-hidden="true"></i></div>'+
-        '<div style="font-size:12.5px; color:var(--tx2); line-height:1.5; margin-bottom:8px;">'+p.obj+'</div>'+
-        '<span class="pill" style="color:var(--tx-'+p.pill[1]+'); background:var(--bg-'+p.pill[1]+');">'+p.pill[0]+'</span></button>';
-    }).join("");
-    return '<div style="font-size:16px; font-weight:500; margin-bottom:3px;">Special AI projects</div>'+
-      '<div style="font-size:13px; color:var(--tx2); margin-bottom:14px;">AI initiatives sponsored by the office of the CFO · '+aiProjects.length+' active · click a project for full details</div>'+
-      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">'+cards+'</div>';
-  }
-  function bindAiProjects(){
-    Array.prototype.forEach.call(document.querySelectorAll(".aiproj"),function(b){b.onclick=function(){go("engagementDetail",b.getAttribute("data-id"));};});
-  }
-  function aiProjectDetail(){
-    if(S.aiProj==="tiger") return backBtn("engagements","All AI projects")+engagementsHtml();
-    var p=aiProjects.filter(function(y){return y.id===S.aiProj;})[0];
-    var tg=p.targets.map(function(x){return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:17px; font-weight:500; color:'+toneCol(x[2])+';">'+x[1]+'</div></div>';}).join("");
-    var ap=p.approach.map(function(a){return '<div style="display:flex; gap:8px; align-items:flex-start; padding:5px 0;"><i class="ti ti-point-filled" style="font-size:13px; color:var(--tx-info); margin-top:3px;" aria-hidden="true"></i><span style="font-size:13px; line-height:1.5;">'+a+'</span></div>';}).join("");
-    var bn=p.benefits.map(function(x){return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:15px; font-weight:500; color:'+toneCol(x[2])+';">'+x[1]+'</div></div>';}).join("");
-    var msCol={done:"var(--tx-success)",now:"var(--tx-info)",next:"var(--tx3)"};
-    var msIc={done:"ti-circle-check",now:"ti-point-filled",next:"ti-circle"};
-    var ms=p.milestones.map(function(m){var wt=m[1]==="now"?"500":"400";return '<div style="display:flex; gap:9px; align-items:center; padding:5px 0;"><i class="ti '+msIc[m[1]]+'" style="font-size:16px; color:'+msCol[m[1]]+';" aria-hidden="true"></i><span style="font-size:13px; font-weight:'+wt+'; color:'+(m[1]==="next"?"var(--tx2)":"var(--tx1)")+';">'+m[0]+'</span>'+(m[1]==="now"?'<span class="pill" style="color:var(--tx-info); background:var(--bg-info); margin-left:auto;">Now</span>':'')+'</div>';}).join("");
-    return backBtn("engagements","All AI projects")+
-      '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px;">'+
-        '<div style="display:flex; align-items:center; gap:11px;"><div class="'+p.ramp+'" style="width:38px; height:38px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+p.icon+'" style="font-size:21px;" aria-hidden="true"></i></div><div><div style="font-size:18px; font-weight:500;">'+p.name+'</div><div style="font-size:12px; color:var(--tx3);">'+p.lead+'</div></div></div>'+
-        '<span class="pill" style="color:var(--tx-'+p.pill[1]+'); background:var(--bg-'+p.pill[1]+');">'+p.pill[0]+'</span></div>'+
-      '<div style="font-size:14px; line-height:1.65; color:var(--tx1); margin-bottom:12px; max-width:760px;">'+p.obj+'</div>'+
-      '<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--tx2); margin-bottom:14px;"><span><i class="ti ti-user-star" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Sponsor: '+p.meta.sponsor+'</span><span><i class="ti ti-users" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> '+p.meta.lead+'</span><span><i class="ti ti-calendar" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Started '+p.meta.start+'</span><span><i class="ti ti-flag" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> '+p.meta.stage+'</span></div>'+
-      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:16px;">'+tg+'</div>'+
-      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">'+
-        '<div class="card"><div class="secthead">Approach</div>'+ap+'</div>'+
-        '<div class="card"><div class="secthead">Milestones</div>'+ms+'</div></div>'+
-      '<div class="card" style="margin-bottom:6px;"><div class="secthead">Expected benefits</div><div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;">'+bn+'</div></div>'+
-      '<div class="secthead" style="margin-top:14px;">Ask about this project — by voice or text</div>'+askChips(p.qs);
-  }
-
   /* ---------------- render: engagements ---------------- */
   function engagementsHtml(){
     var head='<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:9px; margin-bottom:6px;"><div><div style="font-size:16px; font-weight:500;">Tiger × DAMAC — finance transformation</div><div style="font-size:12px; color:var(--tx3);">'+prog.waves+' waves · '+prog.uc+' use cases · '+prog.value+' · '+prog.dur+' · started '+prog.start+'</div></div><span class="pill" style="color:var(--tx-success); background:var(--bg-success);"><i class="ti ti-circle-check" style="font-size:13px;" aria-hidden="true"></i> On track · on budget</span></div>';
@@ -844,7 +769,7 @@ var DEMO_LINKS = {
     ["Forecast accuracy","95%","my models","success"],
     ["Open queries","5","2 ageing","warning"]
   ];
-  var wsShort={forecast:"Forecasting",budget:"Budgeting",partner:"Partnering",data:"Data & models"};
+  var wsShort={close:"Month-end",forecast:"Forecasting",budget:"Budgeting",partner:"Partnering",data:"Data & models"};
   function wsName(id){return wsShort[id]||id;}
   var prDot={High:"var(--tx-danger)",Medium:"var(--tx-warning)",Low:"var(--tx3)"};
   var prMap={High:"danger",Medium:"warning",Low:"neutral"};
@@ -856,28 +781,37 @@ var DEMO_LINKS = {
   }
   function dcCol(dc){return dc==="danger"?"var(--tx-danger)":dc==="warning"?"var(--tx-warning)":dc==="success"?"var(--tx-success)":"var(--tx2)";}
   var aActivities=[
-    {t:"Q3 rolling forecast model refresh",ws:"forecast",due:"Due today",dc:"warning",pr:"High",st:"In progress"},
-    {t:"June budget-variance commentary",ws:"budget",due:"Due in 1 day",dc:"tx2",pr:"High",st:"In progress"},
-    {t:"Reconcile cost center master vs ERP",ws:"data",due:"Overdue 1 day",dc:"danger",pr:"High",st:"Blocked"},
-    {t:"Hospitality F&B margin query",ws:"partner",due:"Due in 2 days",dc:"tx2",pr:"Medium",st:"In progress"},
-    {t:"FY27 cost center templates issue",ws:"budget",due:"Due in 5 days",dc:"tx2",pr:"Medium",st:"Not started"},
-    {t:"Headcount bridge for VP review",ws:"partner",due:"Due in 4 days",dc:"tx2",pr:"Medium",st:"Not started"}
+    {t:"June variance commentary — G&A",ws:"close",due:"Due today",dc:"warning",pr:"High",st:"In progress"},
+    {t:"Refresh Q3 rolling forecast model",ws:"forecast",due:"Due in 2 days",dc:"tx2",pr:"High",st:"Not started"},
+    {t:"Cost center reclass — Technology",ws:"close",due:"Overdue 1 day",dc:"danger",pr:"High",st:"Blocked"},
+    {t:"Board pack data tab refresh",ws:"close",due:"Due in 3 days",dc:"tx2",pr:"Medium",st:"In progress"},
+    {t:"Headcount bridge for VP review",ws:"partner",due:"Due in 4 days",dc:"tx2",pr:"Medium",st:"Not started"},
+    {t:"Marketing spend deep-dive (ad-hoc)",ws:"partner",due:"Due in 5 days",dc:"tx2",pr:"Low",st:"Not started"}
   ];
   var aWorkstreams=[
+    {id:"close",n:"Month-end close & reporting",icon:"ti-calendar-stats",ramp:"c-purple",status:"Day 3 of close",pct:55,open:4,rag:"warning",
+     over:"Supporting the June close — variance commentary, flux analysis and the management pack. Close is on day 3 of 7; the cost center reclass is blocked pending controller sign-off.",
+     metrics:[["Open tasks","4","warning"],["Done this cycle","6","success"],["Due this week","3","warning"],["Avg cycle","2.1 days","info"]],
+     tasks:[
+      {t:"June variance commentary — G&A",due:"Due today",dc:"warning",pr:"High",st:"In progress",desc:"Explain the AED 14M favourable G&A variance vs budget and draft flux commentary for the management pack.",eff:"~3 hrs · self"},
+      {t:"Cost center reclass — Technology",due:"Overdue 1 day",dc:"danger",pr:"High",st:"Blocked",desc:"Reclassify AED 2.3M misposted to shared services. Blocked awaiting controller approval.",eff:"~1 hr · controller"},
+      {t:"Management pack — P&L tab",due:"Due in 1 day",dc:"tx2",pr:"Medium",st:"In progress",desc:"Refresh the consolidated P&L tab and tie it to the day-3 flash.",eff:"~2 hrs · self"},
+      {t:"Flux analysis — revenue by community",due:"Due in 2 days",dc:"tx2",pr:"Medium",st:"Not started",desc:"Decompose revenue variance by community and flag movers over AED 50M.",eff:"~3 hrs · self"},
+      {t:"Intercompany recharge check",due:"Completed",dc:"success",pr:"Low",st:"Done",desc:"Validated intercompany recharges for the month; no exceptions found.",eff:"done"}
+     ]},
     {id:"forecast",n:"Forecasting",icon:"ti-chart-line",ramp:"c-amber",status:"Q3 refresh in progress",pct:40,open:3,rag:"info",
      over:"Owning the rolling 13-week and quarterly forecast refresh. Q3 driver inputs are being updated; accuracy held at 95% in May.",
      metrics:[["Open tasks","3","info"],["Forecast accuracy","95%","success"],["Next refresh","Q3","info"],["Scenarios queued","2","warning"]],
      tasks:[
-      {t:"Q3 rolling forecast model refresh",due:"Due today",dc:"warning",pr:"High",st:"In progress",desc:"Update driver inputs — sales velocity, collection curves, construction draw schedule — and roll the model forward to Q3.",eff:"~5 hrs · self"},
+      {t:"Q3 rolling forecast model refresh",due:"Due in 2 days",dc:"warning",pr:"High",st:"Not started",desc:"Update driver inputs — sales velocity, collection curves, construction draw schedule — and roll the model forward to Q3.",eff:"~5 hrs · self"},
       {t:"Collection curve update",due:"Due in 3 days",dc:"tx2",pr:"Medium",st:"In progress",desc:"Refresh collection curves by community from the latest receipts; reflect Lagoons and Hills 2 slippage.",eff:"~2 hrs · self"},
       {t:"Scenario: +50 bps rate sensitivity",due:"Due in 4 days",dc:"tx2",pr:"Low",st:"Not started",desc:"Model the interest-cost impact of a 50 bps rate rise on floating debt for the VP.",eff:"~2 hrs · self"},
       {t:"Forecast accuracy review (May)",due:"Completed",dc:"success",pr:"Low",st:"Done",desc:"Back-tested the May forecast vs actuals; accuracy 95%, within tolerance.",eff:"done"}
      ]},
-    {id:"budget",n:"Budgeting & variance",icon:"ti-table",ramp:"c-teal",status:"FY27 prep · June variance",pct:30,open:4,rag:"info",
-     over:"FY27 budget preparation plus monthly budget-vs-actual variance analysis and commentary — issuing cost center templates, consolidating submissions, and explaining the movers.",
-     metrics:[["Open tasks","4","info"],["Templates issued","18 / 24","warning"],["Variance lines","42","info"],["Cycle target","11 wks","info"]],
+    {id:"budget",n:"Budgeting",icon:"ti-table",ramp:"c-teal",status:"FY27 budget prep",pct:25,open:3,rag:"info",
+     over:"Early FY27 budget preparation — issuing cost center templates and consolidating departmental submissions ahead of the 11-week cycle.",
+     metrics:[["Open tasks","3","info"],["Templates issued","18 / 24","warning"],["Submissions in","6","info"],["Cycle target","11 wks","info"]],
      tasks:[
-      {t:"June budget-variance commentary",due:"Due in 1 day",dc:"tx2",pr:"High",st:"In progress",desc:"Decompose the June actual-vs-budget variance by driver — price, volume, mix, cost — and draft commentary for the management pack.",eff:"~3 hrs · self"},
       {t:"FY27 cost center templates issue",due:"Due in 5 days",dc:"tx2",pr:"Medium",st:"In progress",desc:"Distribute budget templates to 24 cost centers with prior-year actuals pre-filled.",eff:"~3 hrs · self"},
       {t:"Headcount plan consolidation",due:"Due in 6 days",dc:"tx2",pr:"Medium",st:"Not started",desc:"Consolidate departmental headcount plans and reconcile to the HR establishment.",eff:"~4 hrs · self"},
       {t:"Budget assumptions pack",due:"Due in 7 days",dc:"tx2",pr:"Low",st:"Not started",desc:"Draft the macro and operational assumptions pack for VP review.",eff:"~2 hrs · self"}
@@ -895,7 +829,7 @@ var DEMO_LINKS = {
      metrics:[["Open tasks","2","info"],["Feeds healthy","12 / 13","success"],["Recs clean","Yes","success"],["Last refresh","Today","success"]],
      tasks:[
       {t:"Refresh opex model data feed",due:"Due in 1 day",dc:"warning",pr:"High",st:"In progress",desc:"Refresh the opex model from the latest GL extract and validate control totals.",eff:"~1 hr · self"},
-      {t:"Reconcile cost center master vs ERP",due:"Overdue 1 day",dc:"danger",pr:"High",st:"Blocked",desc:"Reconcile the cost center master against ERP and flag new or retired centers. Blocked awaiting ERP read access from IT.",eff:"~2 hrs · IT"},
+      {t:"Reconcile cost center master vs ERP",due:"Due in 3 days",dc:"tx2",pr:"Medium",st:"Not started",desc:"Reconcile the cost center master list against ERP; flag new or retired centers.",eff:"~2 hrs · self"},
       {t:"Archive April working files",due:"Completed",dc:"success",pr:"Low",st:"Done",desc:"Archived April models and supporting files per the retention policy.",eff:"done"}
      ]}
   ];
@@ -1120,8 +1054,7 @@ var DEMO_LINKS = {
       else if(S.screen==="tower"){m.innerHTML=towerPage();}
       else if(S.screen==="insights"){m.innerHTML=insightsHtml(); bindInsights();}
       else if(S.screen==="insightDetail"){m.innerHTML=insightDetail();}
-      else if(S.screen==="engagements"){m.innerHTML=aiProjectsHtml(); bindAiProjects();}
-      else if(S.screen==="engagementDetail"){m.innerHTML=aiProjectDetail();}
+      else if(S.screen==="engagements"){m.innerHTML=engagementsHtml();}
       else if(S.screen==="reports"){m.innerHTML=reportsHtml(); bindReports();}
       else if(S.screen==="reportDetail"){m.innerHTML=reportDetail();}
       else{m.innerHTML=threadsHtml(); bindThreads();}
@@ -1167,11 +1100,12 @@ var DEMO_LINKS = {
         if(/forecast/.test(q)&&!/accuracy/.test(q)){go("workstream","forecast");pushMsg("bot","Opening your forecasting workstream.");speak("Opening forecasting.");return;}
         if(/budget/.test(q)){go("workstream","budget");pushMsg("bot","Opening budgeting.");speak("Opening budgeting.");return;}
         if(/partner/.test(q)){go("workstream","partner");pushMsg("bot","Opening business partnering.");speak("Opening business partnering.");return;}
+        if(/month.?end|close|management report/.test(q)){go("workstream","close");pushMsg("bot","Opening month-end close and reporting.");speak("Opening month-end close.");return;}
         if(/data|model/.test(q)){go("workstream","data");pushMsg("bot","Opening data and model maintenance.");speak("Opening data and model maintenance.");return;}
       }
-      if(/due|open activit|to.?do|my task|what.*do today|what.*work/.test(q)){text="You have 15 open activities, 8 due this week. Top priority: the Q3 rolling forecast refresh due today and the June budget-variance commentary due tomorrow. Reconciling the cost center master against ERP is overdue and blocked awaiting access from IT.";content=miniCard("Open activities","15 · 8 due this week","warning","Q3 forecast refresh due today");pushMsg("bot",text,content);speak(text);return;}
+      if(/due|open activit|to.?do|my task|what.*do today|what.*work/.test(q)){text="You have 15 open activities, 8 due this week. Top priority: the June G and A variance commentary due today and the Q3 forecast refresh due in two days. The Technology cost center reclass is overdue and blocked on controller approval.";content=miniCard("Open activities","15 · 8 due this week","warning","G&A commentary due today");pushMsg("bot",text,content);speak(text);return;}
       if(/how am i|my performance|on.?time|productiv|am i doing/.test(q)){text="You are tracking well — 94 percent on-time delivery over the last 90 days, 28 tasks completed this month, average turnaround 1.8 days. Five queries are open, two ageing.";content=miniCard("On-time delivery","94%","success","28 done MTD · 1.8 day avg");pushMsg("bot",text,content);speak(text);return;}
-      if(/variance commentary|g&a|g and a/.test(q)){text="The June G and A variance is 14 million dirhams favourable, driven by headcount phasing as open roles fill in the second half. Technology is the only function over, on cloud migration. It feeds the budget-variance commentary in your queue.";content=miniCard("G&A vs budget","AED 14M fav","success","Headcount phasing");pushMsg("bot",text,content);speak(text);return;}
+      if(/variance commentary|g&a|g and a/.test(q)){text="The June G and A variance is 14 million dirhams favourable, driven by headcount phasing as open roles fill in the second half. Technology is the only function over, on cloud migration. That is the commentary due today.";content=miniCard("G&A vs budget","AED 14M fav","success","Headcount phasing");pushMsg("bot",text,content);speak(text);return;}
     }
     /* navigation intents */
     var navHit=null;
@@ -1186,23 +1120,22 @@ var DEMO_LINKS = {
       else if(/risk|control|audit/.test(q))navHit=["tower","risk","Opening risk and internal controls."];
       else if(/report/.test(q))navHit=["reports",null,"Opening your reports."];
       else if(/insight/.test(q))navHit=["insights",null,"Opening insights."];
-      else if(/tiger/.test(q))navHit=["engagementDetail","tiger","Opening the Tiger transformation program."];
-      else if(/engage|program|ai project|special project/.test(q))navHit=["engagements",null,"Opening special AI projects."];
+      else if(/engage|tiger|program/.test(q))navHit=["engagements",null,"Opening the engagement view."];
       else if(/thread/.test(q))navHit=["threads",null,"Opening threads."];
       else if(/home|command/.test(q))navHit=["home",null,"Back to the command center."];
     }
-    if(navHit && S.persona!=="cfo" && (navHit[0]==="tower"||navHit[0]==="engagements"||navHit[0]==="engagementDetail")) navHit=null;
+    if(navHit && S.persona!=="cfo" && (navHit[0]==="tower"||navHit[0]==="engagements")) navHit=null;
     if(navHit){go(navHit[0],navHit[1]); pushMsg("bot",navHit[2]); speak(navHit[2]); return;}
     /* use cases */
     if(/reconcil/.test(q)){text="The FSS reconciliation use case is delivered. The auto-match engine covers 60 plus bank accounts and escrow receipts, hitting a 92 percent auto-match rate in pilot — the rec cycle went from 5 days to same-day. It also surfaced 120 million dirhams of unapplied receipts now being cleared. Full rollout completes in week 8.";content=miniCard("FSS — Reconciliation","Delivered · 92% auto-match","success","Rec cycle: 5 days → same-day");}
     else if(/payment/.test(q)){text="The FSS payments use case is 70 percent built. Duplicate and anomaly detection is live in shadow mode and has caught 9 potential duplicates in 4 weeks. UAT is running with the AP team, controls sign-off is week 7, production go-live week 8.";content=miniCard("FSS — Payments","In build · 70%","info","9 duplicates caught in shadow mode");}
-    else if(/trial balance|tb scrutiny|scrutin|month.?end clos/.test(q)){text="Month-end closure is 45 percent built. The anomaly model is trained on 24 months of close data and the controller team has reviewed the first scrutiny pack. It runs in parallel with the July close in week 9.";content=miniCard("Controllership — Month-end closure","In build · 45%","info","Parallel-run at July close");}
+    else if(/trial balance|tb scrutiny|scrutin/.test(q)){text="Trial balance scrutiny is 45 percent built. The anomaly model is trained on 24 months of close data and the controller team has reviewed the first scrutiny pack. It runs in parallel with the July close in week 9.";content=miniCard("Controllership — TB scrutiny","In build · 45%","info","Parallel-run at July close");}
     else if(/variance/.test(q)){text="Variance analysis is mobilising — about 15 percent in. The driver tree is agreed with FP&A, the build sprint starts week 7, and the first monthly cycle runs in parallel by week 11. It will decompose budget versus actuals by price, volume, mix and cost, with AI commentary.";content=miniCard("FP&A — Variance analysis","Starting · 15%","warning","First cycle by week 11");}
     /* engagement */
     else if(/wave 2|wave two/.test(q)){text="Wave 2 scales to 20 use cases over 3 months at 1 million dollars — collections AI, escrow automation, close acceleration, driver-based forecasting, live cost-to-complete and more. It mobilises at Wave 1 close-out in week 12.";}
     else if(/wave 3|wave three/.test(q)){text="Wave 3 is the optimisation wave — 20 use cases, 3 months, 1 million dollars: in-house bank, payment factory, straight-through hedging, continuous close, and capital-markets readiness for the 2027 sukuk.";}
     else if(/wave|engage|status|tiger|program|budget|on track/.test(q)){text="The program is on track and on budget. We're in week 6 of Wave 1 — reconciliation is delivered, payments is at 70 percent, trial balance scrutiny at 45, and variance analysis is mobilising. 240 thousand of the 500 thousand dollar budget is spent, in line with 50 percent of schedule elapsed. No scope changes, risks low.";content=miniCard("Wave 1 · Foundation","Week 6 of 12 · 48% spent","success","1 delivered · 2 in build · 1 starting");}
-    else if(/next two weeks|coming up|next milestone|what lands/.test(q)){text="In the next two weeks: payments controls sign-off with internal audit in week 7, then production go-live and full reconciliation rollout in week 8. Month-end closure goes to parallel-run at the July close in week 9.";}
+    else if(/next two weeks|coming up|next milestone|what lands/.test(q)){text="In the next two weeks: payments controls sign-off with internal audit in week 7, then production go-live and full reconciliation rollout in week 8. Trial balance scrutiny goes to parallel-run at the July close in week 9.";}
     /* metrics */
     else if(/idle|pooling/.test(q)){text="1.1 billion dirhams sits in low-yield current accounts. Pooled at market rates that's worth roughly 45 to 55 million dirhams a year. Notional pooling is a Wave 2 candidate.";content=miniCard("Idle cash","AED 1.1B","warning","Worth AED 45-55M p.a. if pooled");}
     else if(/cash|liquid/.test(q)){text="Group liquidity is 12.1 billion dirhams — 9.2 months of operating cover, 600 million ahead of plan. That's 6.3 billion unrestricted cash, 2.1 billion in money-market deposits and 3.7 billion undrawn facilities. The watch item: 1.1 billion is idle in low-yield accounts.";content=miniCard("Available liquidity","AED 12.1B","success","AED 1.1B idle · pooling opportunity");}
@@ -1212,7 +1145,7 @@ var DEMO_LINKS = {
     else if(/escrow|rera|release/.test(q)){text="Escrow holds 5.2 billion dirhams across 42 compliant RERA accounts — zero exceptions in 24 months. About 900 million is eligible for release but waiting on certification paperwork that runs 3 to 5 weeks. Automating release tracking would compress that to days.";content=miniCard("Escrow (RERA)","AED 5.2B","info","AED 0.9B eligible for release");}
     else if(/funding|debt|interest|sukuk|maturit/.test(q)){text="Blended cost of funding is 4.8 percent, down 15 basis points on refinancing. The stack: 2.3 billion sukuk at 5.1 maturing 2027, 2.6 billion syndicated at 4.6, 1.8 billion bilaterals at 4.9. Better forecasting could save a further 15 to 25 basis points; the 2027 sukuk is the next event to position for.";content=miniCard("Cost of funding","4.8% (-15 bps)","success","Next maturity: Sukuk 2027 · AED 2.3B");}
     else if(/forecast|13.week|thirteen/.test(q)){text="The AI 13-week liquidity forecast is in pilot at 96 percent accuracy. It learns from collection patterns, construction drawdowns and escrow release cycles. Scaling it group-wide is a Wave 2 use case.";content=miniCard("13-week forecast","96% accuracy","success","Pilot · group scale in Wave 2");}
-    else if(/close|controllership|intercompany/.test(q)){text="The close runs to day 7 with only 3 audit adjustments — quality is fine, speed is the issue. Intercompany is the bottleneck with 34 million dirhams open. Month-end closure lands in Wave 1; the path is day 7 to day 3 over two waves.";content=miniCard("Financial close","Day 7","warning","Target: day 3 · IC open AED 34M");}
+    else if(/close|controllership|intercompany/.test(q)){text="The close runs to day 7 with only 3 audit adjustments — quality is fine, speed is the issue. Intercompany is the bottleneck with 34 million dirhams open. Trial balance scrutiny lands in Wave 1; the path is day 7 to day 3 over two waves.";content=miniCard("Financial close","Day 7","warning","Target: day 3 · IC open AED 34M");}
     else if(/tax|vat|corporate/.test(q)){text="VAT filings are clean, but the first full UAE corporate tax cycle is exposing manual machinery — 60 percent of tax effort is manual and transfer pricing for 100 plus entities is hand-assembled. Automated computation is the priority.";content=miniCard("Tax & compliance","CT readiness 45%","warning","60% of effort manual");}
     else if(/invoice|fssc|shared service|touchless/.test(q)){text="The FSSC processes 118 thousand invoices a month at 81 percent touchless and 4.1 dirhams per invoice. Both Wave 1 FSS use cases land here — reconciliation is delivered, payments is at 70 percent.";content=miniCard("Shared services","118k invoices/mo","success","81% touchless · AED 4.1/invoice");}
     else if(/fraud|duplicate|sod|control/.test(q)){text="Zero high-severity findings, but assurance is sample-based. 12 duplicate-payment alerts a month are caught after the fact — the payments use case moves that pre-release. 23 SoD conflicts are open. Continuous monitoring is the Wave 2 answer.";content=miniCard("Risk & controls","0 high findings","success","57% automated · 23 SoD conflicts open");}
@@ -1411,13 +1344,31 @@ var DEMO_LINKS = {
 (function(){
   if(window.parent===window) return;  // only when embedded in shell
 
+  // ── Wire DEMO_LINKS to platform shell navigation ──────────────────────────
+  // demoBtn() checks DEMO_LINKS[key] and renders an <a href="..."> if set.
+  // We use sentinel hrefs so a click interceptor can route them via postMessage.
+  if(typeof DEMO_LINKS !== 'undefined'){
+    DEMO_LINKS.tb       = '#__closeiq';
+    DEMO_LINKS.variance = '#__closeiq';
+    DEMO_LINKS.recon    = '#__reconiq';
+    DEMO_LINKS.payments = '#__reconiq';
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    while(t && t.tagName !== 'A') t = t.parentElement;
+    if(!t || !t.href) return;
+    if(t.href.indexOf('#__closeiq') !== -1){
+      e.preventDefault(); window.parent.postMessage({__navTo:'closeiq'},'*');
+    } else if(t.href.indexOf('#__reconiq') !== -1){
+      e.preventDefault(); window.parent.postMessage({__navTo:'reconiq'},'*');
+    }
+  }, true);
+
+  // ── CloseIQ launcher on Controllership tower detail page ──────────────────
   function addCloseIQLauncher(){
     var main = document.getElementById('main');
-    if(!main) return;
-    // Only on the controllership tower page
-    var isControllership = /Controllership/.test(main.textContent||'') &&
-                           /day 7|continuous close|trial-balance/i.test(main.textContent||'');
-    if(!isControllership){ return; }
+    if(!main || !main.querySelector('.back')) return;  // not on a detail page
+    if(!/Controllership/i.test(main.textContent||'')) return;
     if(document.getElementById('__closeiqLauncher')) return;
 
     var banner = document.createElement('div');
@@ -1435,31 +1386,17 @@ var DEMO_LINKS = {
       + 'background:rgba(240,140,30,.16);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
       + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">Open the full close cockpit — TB scrutiny, '
       + 'variance, intercompany recon, and the Sage assistant. Day 7 → day 3.</div></div>'
-      + '<div style="color:#F5A93E;font-size:13px;font-weight:600;white-space:nowrap">Open CloseIQ &rarr;</div>';
+      + '<div style="color:#F5A93E;font-size:13px;font-weight:600;white-space:nowrap">Open CloseIQ →</div>';
     banner.onclick = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
-
-    // Insert near the top of the tower page content
-    main.insertBefore(banner, main.firstChild ? main.firstChild.nextSibling : null);
+    var ref = main.querySelector('.back');
+    main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
   }
 
-  // Watch for screen changes (the app re-renders #main on navigation)
-  var mo = new MutationObserver(function(){ setTimeout(addCloseIQLauncher, 60); });
-  function start(){
-    var main = document.getElementById('main');
-    if(main){ mo.observe(main, {childList:true, subtree:false}); addCloseIQLauncher(); }
-    else setTimeout(start, 300);
-  }
-  start();
-
-  // Also: a voice/chat query about the close can route to CloseIQ
-  window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
-
-  // Inject a ReconIQ launcher on the FSSC / shared-services tower page
+  // ── ReconIQ launcher on FSSC / Shared services tower detail page ──────────
   function addReconIQLauncher(){
     var main = document.getElementById('main');
-    if(!main) return;
-    var isFSSC = /Shared services|FSSC|Reconciliation|recon/i.test(main.textContent||'');
-    if(!isFSSC){ return; }
+    if(!main || !main.querySelector('.back')) return;  // not on a detail page
+    if(!/Shared services|FSSC/i.test(main.textContent||'')) return;
     if(document.getElementById('__reconiqLauncher')) return;
 
     var banner = document.createElement('div');
@@ -1477,19 +1414,28 @@ var DEMO_LINKS = {
       + 'background:rgba(46,168,109,.18);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
       + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">IC matching · 400+ entities · 2,420 combinations · '
       + 'AED 2.6M open items · counter-party resolution engine.</div></div>'
-      + '<div style="color:#5dcaa5;font-size:13px;font-weight:600;white-space:nowrap">Open ReconIQ &rarr;</div>';
+      + '<div style="color:#5dcaa5;font-size:13px;font-weight:600;white-space:nowrap">Open ReconIQ →</div>';
     banner.onclick = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
-    main.insertBefore(banner, main.firstChild ? main.firstChild.nextSibling : null);
+    var ref = main.querySelector('.back');
+    main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
   }
 
-  var mo2 = new MutationObserver(function(){ setTimeout(addReconIQLauncher, 60); });
-  function start2(){
+  // ── Watch #main for navigation changes ────────────────────────────────────
+  function onMainMutation(){
+    setTimeout(function(){
+      addCloseIQLauncher();
+      addReconIQLauncher();
+    }, 80);
+  }
+  var mo = new MutationObserver(onMainMutation);
+  function start(){
     var main = document.getElementById('main');
-    if(main){ mo2.observe(main, {childList:true, subtree:false}); addReconIQLauncher(); }
-    else setTimeout(start2, 300);
+    if(main){ mo.observe(main, {childList:true, subtree:false}); }
+    else setTimeout(start, 300);
   }
-  start2();
+  start();
 
+  window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
   window.__openReconIQ = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
 })();
 </script>
