@@ -85,20 +85,36 @@ def build_evolution():
 # ── 3. Inject shell hooks into Command Center ────────────────────────────────
 def build_command():
     html = read(APPS / 'command-center.html')
-    # Inject a script that adds an "Open CloseIQ" launcher when the controllership
-    # tower page is shown, and routes the Wave 1 TB-scrutiny action to CloseIQ.
     inject = """
 <script>
 (function(){
   if(window.parent===window) return;  // only when embedded in shell
 
+  // ── Wire DEMO_LINKS to platform shell navigation ──────────────────────────
+  // demoBtn() checks DEMO_LINKS[key] and renders an <a href="..."> if set.
+  // We use sentinel hrefs so a click interceptor can route them via postMessage.
+  if(typeof DEMO_LINKS !== 'undefined'){
+    DEMO_LINKS.tb       = '#__closeiq';
+    DEMO_LINKS.variance = '#__closeiq';
+    DEMO_LINKS.recon    = '#__reconiq';
+    DEMO_LINKS.payments = '#__reconiq';
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    while(t && t.tagName !== 'A') t = t.parentElement;
+    if(!t || !t.href) return;
+    if(t.href.indexOf('#__closeiq') !== -1){
+      e.preventDefault(); window.parent.postMessage({__navTo:'closeiq'},'*');
+    } else if(t.href.indexOf('#__reconiq') !== -1){
+      e.preventDefault(); window.parent.postMessage({__navTo:'reconiq'},'*');
+    }
+  }, true);
+
+  // ── CloseIQ launcher on Controllership tower detail page ──────────────────
   function addCloseIQLauncher(){
     var main = document.getElementById('main');
-    if(!main) return;
-    // Only on the controllership tower page
-    var isControllership = /Controllership/.test(main.textContent||'') &&
-                           /day 7|continuous close|trial-balance/i.test(main.textContent||'');
-    if(!isControllership){ return; }
+    if(!main || !main.querySelector('.back')) return;  // not on a detail page
+    if(!/Controllership/i.test(main.textContent||'')) return;
     if(document.getElementById('__closeiqLauncher')) return;
 
     var banner = document.createElement('div');
@@ -116,31 +132,17 @@ def build_command():
       + 'background:rgba(240,140,30,.16);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
       + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">Open the full close cockpit — TB scrutiny, '
       + 'variance, intercompany recon, and the Sage assistant. Day 7 → day 3.</div></div>'
-      + '<div style="color:#F5A93E;font-size:13px;font-weight:600;white-space:nowrap">Open CloseIQ &rarr;</div>';
+      + '<div style="color:#F5A93E;font-size:13px;font-weight:600;white-space:nowrap">Open CloseIQ →</div>';
     banner.onclick = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
-
-    // Insert near the top of the tower page content
-    main.insertBefore(banner, main.firstChild ? main.firstChild.nextSibling : null);
+    var ref = main.querySelector('.back');
+    main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
   }
 
-  // Watch for screen changes (the app re-renders #main on navigation)
-  var mo = new MutationObserver(function(){ setTimeout(addCloseIQLauncher, 60); });
-  function start(){
-    var main = document.getElementById('main');
-    if(main){ mo.observe(main, {childList:true, subtree:false}); addCloseIQLauncher(); }
-    else setTimeout(start, 300);
-  }
-  start();
-
-  // Also: a voice/chat query about the close can route to CloseIQ
-  window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
-
-  // Inject a ReconIQ launcher on the FSSC / shared-services tower page
+  // ── ReconIQ launcher on FSSC / Shared services tower detail page ──────────
   function addReconIQLauncher(){
     var main = document.getElementById('main');
-    if(!main) return;
-    var isFSSC = /Shared services|FSSC|Reconciliation|recon/i.test(main.textContent||'');
-    if(!isFSSC){ return; }
+    if(!main || !main.querySelector('.back')) return;  // not on a detail page
+    if(!/Shared services|FSSC/i.test(main.textContent||'')) return;
     if(document.getElementById('__reconiqLauncher')) return;
 
     var banner = document.createElement('div');
@@ -158,19 +160,28 @@ def build_command():
       + 'background:rgba(46,168,109,.18);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
       + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">IC matching · 400+ entities · 2,420 combinations · '
       + 'AED 2.6M open items · counter-party resolution engine.</div></div>'
-      + '<div style="color:#5dcaa5;font-size:13px;font-weight:600;white-space:nowrap">Open ReconIQ &rarr;</div>';
+      + '<div style="color:#5dcaa5;font-size:13px;font-weight:600;white-space:nowrap">Open ReconIQ →</div>';
     banner.onclick = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
-    main.insertBefore(banner, main.firstChild ? main.firstChild.nextSibling : null);
+    var ref = main.querySelector('.back');
+    main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
   }
 
-  var mo2 = new MutationObserver(function(){ setTimeout(addReconIQLauncher, 60); });
-  function start2(){
+  // ── Watch #main for navigation changes ────────────────────────────────────
+  function onMainMutation(){
+    setTimeout(function(){
+      addCloseIQLauncher();
+      addReconIQLauncher();
+    }, 80);
+  }
+  var mo = new MutationObserver(onMainMutation);
+  function start(){
     var main = document.getElementById('main');
-    if(main){ mo2.observe(main, {childList:true, subtree:false}); addReconIQLauncher(); }
-    else setTimeout(start2, 300);
+    if(main){ mo.observe(main, {childList:true, subtree:false}); }
+    else setTimeout(start, 300);
   }
-  start2();
+  start();
 
+  window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
   window.__openReconIQ = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
 })();
 </script>
