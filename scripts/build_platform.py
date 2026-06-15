@@ -99,7 +99,7 @@ def build_command():
     DEMO_LINKS.tb       = '#__closeiq';  // CFO engagements demoBtn key (backward compat)
     DEMO_LINKS.variance = '#__closeiq';
     DEMO_LINKS.recon    = '#__reconiq';
-    DEMO_LINKS.payments = '#__reconiq';
+    DEMO_LINKS.payments = '#__paymentsiq';
   }
 
   // hashchange: catches launchActivity()'s window.location.href = '#__...'
@@ -114,6 +114,10 @@ def build_command():
       if(ov) ov.style.display = 'none';
       history.replaceState(null,'',window.location.pathname);
       window.parent.postMessage({__navTo:'reconiq'},'*');
+    } else if(h === '#__paymentsiq'){
+      if(ov) ov.style.display = 'none';
+      history.replaceState(null,'',window.location.pathname);
+      window.parent.postMessage({__navTo:'paymentsiq'},'*');
     }
   });
 
@@ -126,6 +130,8 @@ def build_command():
       e.preventDefault(); window.parent.postMessage({__navTo:'closeiq'},'*');
     } else if(t.href.indexOf('#__reconiq') !== -1){
       e.preventDefault(); window.parent.postMessage({__navTo:'reconiq'},'*');
+    } else if(t.href.indexOf('#__paymentsiq') !== -1){
+      e.preventDefault(); window.parent.postMessage({__navTo:'paymentsiq'},'*');
     }
   }, true);
 
@@ -185,11 +191,40 @@ def build_command():
     main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
   }
 
+  // ── PaymentsIQ launcher on FSSC / Payments detail page ───────────────────
+  function addPaymentsIQLauncher(){
+    var main = document.getElementById('main');
+    if(!main || !main.querySelector('.back')) return;  // not on a detail page
+    if(!/Shared services|FSSC|Payment/i.test(main.textContent||'')) return;
+    if(document.getElementById('__paymentsiqLauncher')) return;
+
+    var banner = document.createElement('div');
+    banner.id = '__paymentsiqLauncher';
+    banner.style.cssText = 'margin:14px 0;padding:16px 18px;border-radius:12px;'
+      + 'background:linear-gradient(135deg,#1a1108,#221a0a);border:1px solid #F08C1E;'
+      + 'display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s';
+    banner.onmouseover=function(){banner.style.transform='translateY(-2px)';};
+    banner.onmouseout =function(){banner.style.transform='none';};
+    banner.innerHTML =
+      '<div style="width:42px;height:42px;border-radius:10px;background:#F08C1E;display:flex;'
+      + 'align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:20px;flex:none">T</div>'
+      + '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:#fff">'
+      + 'PaymentsIQ — IPC Validation <span style="font-size:10px;color:#F5A93E;'
+      + 'background:rgba(240,140,30,.16);padding:2px 8px;border-radius:10px;margin-left:6px">WAVE 1 · LIVE</span></div>'
+      + '<div style="font-size:12px;color:#B4B2A9;margin-top:3px">IPC certificate validation · 10 IPCs · AED 28M queue · '
+      + 'AI benchmark analysis · aberration detection.</div></div>'
+      + '<div style="color:#F5A93E;font-size:13px;font-weight:600;white-space:nowrap">Open PaymentsIQ →</div>';
+    banner.onclick = function(){ window.parent.postMessage({__navTo:'paymentsiq'},'*'); };
+    var ref = main.querySelector('.back');
+    main.insertBefore(banner, ref ? ref.nextSibling : main.firstChild);
+  }
+
   // ── Watch #main for navigation changes ────────────────────────────────────
   function onMainMutation(){
     setTimeout(function(){
       addCloseIQLauncher();
       addReconIQLauncher();
+      addPaymentsIQLauncher();
     }, 80);
   }
   var mo = new MutationObserver(onMainMutation);
@@ -200,8 +235,9 @@ def build_command():
   }
   start();
 
-  window.__openCloseIQ = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
-  window.__openReconIQ = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
+  window.__openCloseIQ    = function(){ window.parent.postMessage({__navTo:'closeiq'},'*'); };
+  window.__openReconIQ    = function(){ window.parent.postMessage({__navTo:'reconiq'},'*'); };
+  window.__openPaymentsIQ = function(){ window.parent.postMessage({__navTo:'paymentsiq'},'*'); };
 })();
 </script>
 """
@@ -222,13 +258,28 @@ def build_reconiq():
     return html.replace('</body>', inject + '</body>')
 
 
-# ── 5. Build the shell ───────────────────────────────────────────────────────
+# ── 5. Build PaymentsIQ (pass-through with shell nav hook) ──────────────────
+def build_paymentsiq():
+    html = read(APPS / 'paymentsiq.html')
+    inject = """
+<script>
+(function(){
+  if(window.parent===window) return;
+  window.parent.postMessage({__showBar:true},'*');
+})();
+</script>
+"""
+    return html.replace('</body>', inject + '</body>')
+
+
+# ── 6. Build the shell ───────────────────────────────────────────────────────
 def build_shell():
     shell = read(APPS / 'shell.html')
-    shell = shell.replace('__EVOLUTION_SRC__', 'app-evolution.html')
-    shell = shell.replace('__COMMAND_SRC__',   'app-command.html')
-    shell = shell.replace('__CLOSEIQ_SRC__',   'app-closeiq.html')
-    shell = shell.replace('__RECONIQ_SRC__',   'app-reconiq.html')
+    shell = shell.replace('__EVOLUTION_SRC__',  'app-evolution.html')
+    shell = shell.replace('__COMMAND_SRC__',    'app-command.html')
+    shell = shell.replace('__CLOSEIQ_SRC__',    'app-closeiq.html')
+    shell = shell.replace('__RECONIQ_SRC__',    'app-reconiq.html')
+    shell = shell.replace('__PAYMENTSIQ_SRC__', 'app-paymentsiq.html')
     return shell
 
 
@@ -236,15 +287,17 @@ def main():
     print("Building consolidated DAMAC × Tiger platform…")
     OUT.mkdir(parents=True, exist_ok=True)
 
-    write(OUT / 'app-closeiq.html',   build_closeiq());    print("  ✓ app-closeiq.html")
-    write(OUT / 'app-evolution.html', build_evolution());  print("  ✓ app-evolution.html")
-    write(OUT / 'app-command.html',   build_command());    print("  ✓ app-command.html")
-    write(OUT / 'app-reconiq.html',   build_reconiq());    print("  ✓ app-reconiq.html")
-    write(OUT / 'index.html',         build_shell());       print("  ✓ index.html (shell)")
+    write(OUT / 'app-closeiq.html',    build_closeiq());     print("  ✓ app-closeiq.html")
+    write(OUT / 'app-evolution.html',  build_evolution());   print("  ✓ app-evolution.html")
+    write(OUT / 'app-command.html',    build_command());     print("  ✓ app-command.html")
+    write(OUT / 'app-reconiq.html',    build_reconiq());     print("  ✓ app-reconiq.html")
+    write(OUT / 'app-paymentsiq.html', build_paymentsiq());  print("  ✓ app-paymentsiq.html")
+    write(OUT / 'index.html',          build_shell());        print("  ✓ index.html (shell)")
 
     total = sum((OUT / f).stat().st_size for f in
-                ['index.html','app-closeiq.html','app-evolution.html','app-command.html','app-reconiq.html'])
-    print(f"\n✓ Platform built — {total//1024} KB total across 5 files")
+                ['index.html','app-closeiq.html','app-evolution.html','app-command.html',
+                 'app-reconiq.html','app-paymentsiq.html'])
+    print(f"\n✓ Platform built — {total//1024} KB total across 6 files")
     print(f"  Built {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 if __name__ == '__main__':

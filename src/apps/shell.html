@@ -73,15 +73,16 @@
 </div>
 
 <div class="switcher" id="switcher">
-  <div class="brand"><span class="logo">T</span><div>DAMAC × Tiger<div class="by">Finance AI Platform</div></div></div>
+  <div class="brand"><span class="logo">T</span><div>DAMAC FinIQ<div class="by">Powered by Tiger Analytics</div></div></div>
   <div class="tabs">
     <button class="sw-tab" data-app="evolution"><span class="n">1</span>Vision</button>
     <button class="sw-tab" data-app="command"><span class="n">2</span>Command Center</button>
     <button class="sw-tab" data-app="closeiq"><span class="n">3</span>CloseIQ · Month-End Close</button>
     <button class="sw-tab" data-app="reconiq"><span class="n">4</span>ReconIQ · IC Reconciliation</button>
+    <button class="sw-tab" data-app="paymentsiq"><span class="n">5</span>PaymentsIQ · IPC Validation</button>
   </div>
   <div class="spacer"></div>
-  <div class="hint">⌘1 / ⌘2 / ⌘3 / ⌘4 to switch</div>
+  <div class="hint">⌘1 / ⌘2 / ⌘3 / ⌘4 / ⌘5 to switch</div>
 </div>
 
 <div class="reveal-tab hide" id="revealTab" title="Show app switcher">
@@ -92,14 +93,15 @@
   <iframe class="frame" id="frame-evolution" src="__EVOLUTION_SRC__"></iframe>
   <iframe class="frame" id="frame-command"   src="__COMMAND_SRC__"></iframe>
   <iframe class="frame" id="frame-closeiq"   src="__CLOSEIQ_SRC__"></iframe>
-  <iframe class="frame" id="frame-reconiq"   src="__RECONIQ_SRC__"></iframe>
+  <iframe class="frame" id="frame-reconiq"     src="__RECONIQ_SRC__"></iframe>
+  <iframe class="frame" id="frame-paymentsiq" src="__PAYMENTSIQ_SRC__"></iframe>
 </div>
 
 <script>
 (function(){
   var current = 'evolution';
   var barShown = false;
-  var apps = ['evolution','command','closeiq','reconiq'];
+  var apps = ['evolution','command','closeiq','reconiq','paymentsiq'];
 
   function setBar(show){
     barShown = show;
@@ -135,6 +137,7 @@
     if((e.metaKey||e.ctrlKey) && e.key==='2'){ e.preventDefault(); switchTo('command'); }
     if((e.metaKey||e.ctrlKey) && e.key==='3'){ e.preventDefault(); switchTo('closeiq'); }
     if((e.metaKey||e.ctrlKey) && e.key==='4'){ e.preventDefault(); switchTo('reconiq'); }
+    if((e.metaKey||e.ctrlKey) && e.key==='5'){ e.preventDefault(); switchTo('paymentsiq'); }
   });
 
   // Listen for navigation requests from inside the iframes
@@ -144,7 +147,7 @@
   });
 
   // Boot sequence
-  var msgs = ['initialising…','loading vision…','mounting command center…','wiring CloseIQ engine…','loading ReconIQ…','ready'];
+  var msgs = ['initialising…','loading vision…','mounting command center…','wiring CloseIQ engine…','loading ReconIQ…','loading PaymentsIQ…','ready'];
   var i = 0;
   var bm = document.getElementById('bootMsg');
   var iv = setInterval(function(){
