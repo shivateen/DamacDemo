@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PaymentsIQ · IPC Validation</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F08C1E'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='17' font-weight='700' fill='white' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Variables ── */
+:root{
+  --bg:#0d0e11;--panel:#141618;--panel-2:#1a1c20;--panel-3:#222428;
+  --orange:#F08C1E;--orange-soft:#E09520;--orange-dim:rgba(240,140,30,.30);--orange-tint:rgba(240,140,30,.14);
+  --ink:#DDDDD9;--ink-2:#9A9CA4;--ink-3:#686A72;--line:#252830;--line-2:#313540;
+  --risk:#E05252;--risk-tint:rgba(224,82,82,.14);
+  --ok:#2EA86D;--ok-tint:rgba(46,168,109,.14);
+  --warn:#D09A2A;--warn-tint:rgba(208,154,42,.14);
+  --mono:'JetBrains Mono',monospace;--font:'Poppins',-apple-system,sans-serif;
+}
+:root.theme-light{
+  --bg:#F1F1EE;--panel:#FFFFFF;--panel-2:#F6F6F3;--panel-3:#ECECE8;
+  --orange:#F08C1E;--orange-soft:#C8720D;--orange-dim:#EBCFA6;--orange-tint:rgba(240,140,30,.10);
+  --ink:#1C1C1C;--ink-2:#404040;--ink-3:#85878C;--line:#E4E4E0;--line-2:#CDCDC7;
+  --risk:#C03A2B;--risk-tint:rgba(192,58,43,.10);
+  --ok:#1E7E54;--ok-tint:rgba(30,126,84,.10);
+  --warn:#A8731B;--warn-tint:rgba(168,115,27,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font);cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:var(--font);background:none;border:none;outline:none;color:inherit;resize:none}
+/* ── Layout ── */
+.app{display:flex;height:100vh;overflow:hidden}
+/* ── Nav ── */
+.nav{width:60px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px}
+.nav .logo{width:34px;height:34px;border-radius:9px;background:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:17px;margin-bottom:10px;flex-shrink:0}
+.nav-btn{width:44px;height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);font-size:9.5px;font-weight:500;transition:.15s;padding:6px}
+.nav-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn:hover{color:var(--ink-2);background:var(--panel-2)}
+.nav-btn.active{color:var(--orange);background:var(--orange-tint)}
+.nav-sp{flex:1}
+.ver-chip{font-size:9px;color:var(--ink-3);font-family:var(--mono);padding:3px 6px;border-radius:5px;border:1px solid var(--line);margin-bottom:6px}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* ── Topbar ── */
+.topbar{height:54px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 18px;flex-shrink:0}
+:root.theme-light .topbar{background:#fff;border-bottom:3px solid var(--orange)}
+.brandmark .p{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.3px}
+.brandmark .p b{color:var(--orange)}
+.brandmark .by{font-size:10px;color:var(--ink-3);font-weight:500}
+.tb-title{font-size:13.5px;font-weight:600;color:var(--ink)}
+.tb-sub{font-size:11px;color:var(--ink-3)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.theme-toggle{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;transition:.15s;border:1px solid var(--line)}
+:root.theme-light .theme-toggle{background:var(--panel-2)}
+.theme-toggle:hover{background:var(--panel-3)}
+.theme-toggle svg{width:16px;height:16px;stroke:var(--ink-2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tb-user{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border-radius:10px;padding:5px 10px 5px 6px;border:1px solid var(--line)}
+:root.theme-light .tb-user{background:var(--panel-2)}
+.tb-user .ava{width:26px;height:26px;border-radius:7px;background:var(--orange);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.tb-user .nm{font-size:12px;font-weight:600;color:var(--ink);line-height:1.2}
+.tb-user .rl{font-size:10px;color:var(--ink-3)}
+.period-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--ink-2);font-family:var(--mono)}
+:root.theme-light .period-pill{background:var(--panel-2)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:ldot 2s infinite}
+@keyframes ldot{0%,100%{opacity:1}50%{opacity:.35}}
+/* ── Command Centre link ── */
+.cmd-btn{display:flex;align-items:center;gap:6px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:8px;padding:5px 12px;font-size:11.5px;font-weight:600;color:var(--orange-soft);cursor:pointer;transition:.15s;white-space:nowrap}
+.cmd-btn:hover{background:var(--orange);color:#fff;border-color:var(--orange)}
+.cmd-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+/* ── Content ── */
+.content{flex:1;overflow-y:auto;padding:18px;background:var(--bg)}
+/* ── KPI cards ── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .lbl{font-size:10.5px;color:var(--ink-3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi .val{font-size:22px;font-weight:700;color:var(--ink);font-family:var(--mono);line-height:1}
+.kpi .sub{font-size:11px;margin-top:5px}
+.kpi .sub.ok{color:var(--ok)}.kpi .sub.risk{color:var(--risk)}.kpi .sub.warn{color:var(--warn)}
+/* ── Verdict badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap;font-family:var(--mono)}
+.badge.high{background:var(--risk);color:#fff}
+.badge.moderate{background:var(--warn-tint);color:var(--warn);border:1px solid var(--warn)}
+.badge.validated{background:var(--ok-tint);color:var(--ok);border:1px solid var(--ok)}
+.badge.awaiting{background:var(--panel-3);color:var(--ink-2);border:1px solid var(--line-2)}
+.badge.auto{background:var(--ok-tint);color:var(--ok)}
+/* ── Pills ── */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill.ok{background:var(--ok-tint);color:var(--ok)}
+.pill.risk{background:var(--risk-tint);color:var(--risk)}
+.pill.warn{background:var(--warn-tint);color:var(--warn)}
+.pill.orange{background:var(--orange-tint);color:var(--orange-soft)}
+.pill.ink{background:var(--panel-3);color:var(--ink-2)}
+/* ── Tables ── */
+.tbl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;font-weight:500;color:var(--ink-3);text-align:left;padding:9px 14px;background:var(--panel-2);border-bottom:1px solid var(--line);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+td{font-size:12.5px;color:var(--ink);padding:10px 14px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr.clickable:hover td{background:var(--panel-2);cursor:pointer}
+tr.clickable:hover td:first-child{border-left:2px solid var(--orange)}
+td.num{text-align:right;font-family:var(--mono)}
+td.mono{font-family:var(--mono);font-size:11.5px}
+/* ── Analysis card ── */
+.acard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.acard-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.acard-icon{width:28px;height:28px;border-radius:7px;background:var(--orange-tint);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.acard-icon svg{width:14px;height:14px;stroke:var(--orange-soft);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acard h3{font-size:13px;font-weight:600;color:var(--ink)}
+.acard p{font-size:12.5px;color:var(--ink-2);line-height:1.65}
+/* ── CTA card ── */
+.cta-card{background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.cta-card .ct{font-size:13px;font-weight:600;color:var(--orange-soft)}
+.cta-card .cs{font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.cta-card button{flex-shrink:0;background:var(--orange);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px}
+.cta-card button:hover{opacity:.88;transform:translateY(-1px)}
+.cta-card button svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+/* ── Drawer ── */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:800;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:500px;background:var(--panel);border-left:1px solid var(--line);z-index:900;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+.drawer.show{transform:none}
+.drw-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+.drw-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.drw-sub{font-size:11.5px;color:var(--ink-3)}
+.drw-x{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-3);background:var(--panel-2);cursor:pointer;flex-shrink:0}
+.drw-x:hover{color:var(--ink)}
+.drw-body{padding:18px 22px}
+.drw-sect{margin-bottom:20px}
+.drw-sect h3{font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.drw-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)}
+.drw-row:last-child{border-bottom:none}
+.drw-k{font-size:11.5px;color:var(--ink-3)}
+.drw-v{font-size:12px;color:var(--ink);font-weight:500;text-align:right;font-family:var(--mono)}
+.bm-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px}
+.bm-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bm-fill.ok{background:var(--ok)}
+.bm-fill.warn{background:var(--warn)}
+.bm-fill.risk{background:var(--risk)}
+.bm-row{margin-bottom:12px}
+.bm-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-bottom:3px}
+.bm-label span{color:var(--ink);font-weight:500;font-family:var(--mono)}
+.verdict-box{border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.verdict-box.high{background:var(--risk-tint);border:1px solid var(--risk)}
+.verdict-box.moderate{background:var(--warn-tint);border:1px solid var(--warn)}
+.verdict-box.validated{background:var(--ok-tint);border:1px solid var(--ok)}
+.verdict-box.awaiting{background:var(--panel-3);border:1px solid var(--line-2)}
+.verdict-box .vt{font-size:12px;font-weight:600;margin-bottom:5px}
+.verdict-box.high .vt{color:var(--risk)}
+.verdict-box.moderate .vt{color:var(--warn)}
+.verdict-box.validated .vt{color:var(--ok)}
+.verdict-box.awaiting .vt{color:var(--ink-2)}
+.verdict-box .vb{font-size:12px;color:var(--ink-2);line-height:1.6}
+.btn-action{margin-top:12px;width:100%;padding:11px;border-radius:10px;background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s}
+.btn-action:hover{opacity:.88}
+.btn-action.secondary{background:var(--panel-3);color:var(--ink-2);margin-top:6px}
+.btn-action.secondary:hover{color:var(--ink)}
+/* ── Rail ── */
+.rail{width:340px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.app.rail-collapsed .rail{width:0;border:none}
+.app.rail-collapsed .sage-fab{right:24px}
+.app.rail-collapsed .sage-panel{right:0}
+.rail-head{padding:14px 14px 8px;border-bottom:1px solid var(--line)}
+.rail-head .t{font-size:12px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.rail-head .s{font-size:10px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+.gear{width:13px;height:13px;stroke:var(--orange);fill:none;stroke-width:1.8}
+.mesh-wrap{padding:10px 8px 4px}
+.mesh-svg{width:100%;height:auto;display:block}
+.medge{stroke:var(--orange-dim);stroke-width:1;fill:none}
+.medge.active{stroke:var(--orange);stroke-width:1.5;animation:pedge 1.4s ease-in-out infinite}
+@keyframes pedge{0%,100%{opacity:.35}50%{opacity:1}}
+.mnode circle{fill:var(--panel-3);stroke:var(--line-2);stroke-width:1.4;transition:.35s;opacity:.5}
+.mnode.active circle{fill:var(--orange-tint);stroke:var(--orange);opacity:1}
+.mnode text{fill:var(--ink-3);font-family:var(--mono);font-size:6.5px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.mnode.active text{fill:var(--orange-soft)}
+.mlabel{fill:var(--ink-3);font-size:5.8px;font-family:var(--mono);opacity:.6;transition:.3s;pointer-events:none}
+.mlabel.live{opacity:1;fill:var(--orange-soft)}
+.mhub circle{fill:var(--panel-2);stroke:var(--orange);stroke-width:1.4}
+.mhub text{fill:var(--orange-soft);font-family:var(--mono);font-size:5.5px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+.feed{flex:1;overflow-y:auto;padding:8px 10px;min-height:0}
+.feed-item{display:flex;align-items:flex-start;gap:7px;padding:7px 0;border-bottom:1px solid var(--line)}
+.feed-item:last-child{border-bottom:none}
+.fdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;background:var(--ink-3)}
+.fdot.ok{background:var(--ok)}.fdot.risk{background:var(--risk)}.fdot.warn{background:var(--warn)}.fdot.orange{background:var(--orange)}
+.feed-item .ag{font-size:9.5px;font-weight:600;color:var(--ink-2);font-family:var(--mono)}
+.feed-item .msg{font-size:11px;color:var(--ink-3);margin-top:1px;line-height:1.4}
+.feed-item .ts{font-size:9px;color:var(--ink-3);margin-top:2px;font-family:var(--mono)}
+.rail-foot{padding:8px 12px;border-top:1px solid var(--line);font-size:10px;color:var(--ink-3);display:flex;justify-content:space-between;flex-shrink:0}
+/* ── Sage ── */
+.sage-fab{position:fixed;bottom:22px;right:352px;background:var(--orange);color:#fff;border-radius:22px;padding:10px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 18px rgba(240,140,30,.4);z-index:700;transition:.15s;border:none;cursor:pointer}
+.sage-fab:hover{transform:translateY(-2px)}
+.sage-fab svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.sage-panel{position:fixed;bottom:0;right:340px;width:380px;background:var(--panel-2);border:1px solid var(--line-2);border-bottom:none;border-radius:14px 14px 0 0;z-index:720;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sage-panel.open{transform:none}
+.sage-ph{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.sage-orb{width:28px;height:28px;border-radius:8px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sage-orb svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.sage-id .n{font-size:13px;font-weight:600;color:var(--ink)}
+.sage-id .r{font-size:10px;color:var(--ink-3)}
+.sage-x{margin-left:auto;color:var(--ink-3);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1}
+.sage-x:hover{color:var(--ink)}
+.sage-body{max-height:300px;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.smsg{max-width:90%;padding:9px 13px;border-radius:12px;font-size:12.5px;line-height:1.5}
+.smsg.bot{background:var(--panel-3);color:var(--ink);align-self:flex-start;border-radius:4px 12px 12px 12px}
+.smsg.user{background:var(--orange-tint);color:var(--ink);align-self:flex-end;border-radius:12px 4px 12px 12px}
+.sage-foot{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.sage-in{flex:1;font-size:12.5px;color:var(--ink);background:var(--panel-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.sage-in::placeholder{color:var(--ink-3)}
+.sage-send{background:var(--orange);border-radius:8px;padding:8px 10px;color:#fff;border:none;cursor:pointer}
+.sage-send svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;display:block}
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:9px 16px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:8px;opacity:0;transition:.25s;z-index:1000;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.toast svg{width:15px;height:15px;stroke:var(--ok);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+/* ── Skeleton ── */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk{background:linear-gradient(90deg,var(--panel-2) 25%,var(--panel-3) 50%,var(--panel-2) 75%);background-size:200% 100%;animation:shimmer 1.3s ease-in-out infinite;border-radius:8px}
+.sk-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.sk-kpi{height:82px;border-radius:12px}
+.sk-block{height:260px;border-radius:12px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- LEFT NAV -->
+<nav class="nav">
+  <div class="logo">T</div>
+  <button class="nav-btn active" id="nb-overview" onclick="go('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Overview
+  </button>
+  <button class="nav-btn" id="nb-queue" onclick="go('queue')">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+    Queue
+  </button>
+  <button class="nav-btn" id="nb-benchmark" onclick="go('benchmark')">
+    <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg>
+    Benchmark
+  </button>
+  <div class="nav-sp"></div>
+  <div class="ver-chip">v1.0</div>
+  <button class="nav-btn" id="nb-agents" onclick="toggleRail()">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4"/></svg>
+    Agents
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="brandmark"><span class="p">Payments<b>IQ</b></span><span class="by" style="margin-left:6px">by Tiger Analytics</span></div>
+    <div style="margin-left:8px">
+      <div class="tb-title" id="barT">IPC Payment Validation</div>
+      <div class="tb-sub" id="barS">Jun 2026 · 10 IPCs in queue · AED 28.0M under review</div>
+    </div>
+    <div class="tb-right">
+      <button class="cmd-btn" onclick="goCommandCentre()" title="Open IPC Processing Centre">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        IPC Processing Centre
+      </button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+        <svg id="themeIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <div class="tb-user">
+        <div class="ava">S</div>
+        <div><div class="nm">Siva</div><div class="rl">Head of Finance Operations</div></div>
+      </div>
+      <div class="period-pill"><span class="live-dot"></span>Jun-26 · Live</div>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+</main>
+
+<!-- AGENT RAIL -->
+<aside class="rail">
+  <div class="rail-head">
+    <div class="t">
+      <svg class="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06A1.65 1.65 0 0015 19.4a1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 9a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9"/></svg>
+      Validation Agents
+    </div>
+    <div class="s">6 agents · INGEST→REPORT pipeline · autonomous</div>
+  </div>
+  <div class="mesh-wrap" id="meshWrap"></div>
+  <div class="feed" id="feed"></div>
+  <div class="rail-foot"><span id="feedCount">0 events</span><span>audit chain ✓</span></div>
+</aside>
+
+</div>
+
+<!-- SAGE -->
+<button class="sage-fab" onclick="toggleSage()">
+  <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>
+  Ask Sage
+</button>
+<div class="sage-panel" id="sagePanel">
+  <div class="sage-ph">
+    <div class="sage-orb"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div>
+    <div class="sage-id"><div class="n">Sage</div><div class="r">IPC validation assistant</div></div>
+    <span class="sage-x" onclick="toggleSage()">×</span>
+  </div>
+  <div class="sage-body" id="sageBody">
+    <div class="smsg bot">Hello Siva. Jun-26 IPC validation run complete — 10 certificates in queue totalling AED 28.0M. 2 flagged HIGH_ABERRATION (IPC-081, IPC-086), 2 MODERATE_FLAG, 4 validated or auto-approved, 2 awaiting PM sign-off. Both high-risk items require your review before payment release. What would you like to drill into?</div>
+  </div>
+  <div class="sage-foot">
+    <input class="sage-in" id="sageIn" placeholder="Ask about an IPC, project, or benchmark…" onkeydown="if(event.key==='Enter')sendSage()">
+    <button class="sage-send" onclick="sendSage()"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+/* ── DATA ── */
+var IPC_DATA=[
+  {id:'IPC-2024-081',project:'Ocean Heights Tower 3',contractor:'Al Futtaim Carillion',amount:4200000,benchmark:2950000,deviation:42.4,verdict:'HIGH_ABERRATION',stage:'Structure — Level 28-34',period:'Apr-26',
+   note:'Claim AED 4.2M against structural works at levels 28–34. Benchmark for equivalent scope on Tower 1 and Tower 2 is AED 2.95M. The 42% excess is driven by three line items: formwork day-rate uplift (+AED 680K), scaffolding idle-time charges (+AED 420K), and a 22% concrete volume over-run with no supporting site instruction. BENCHMARK agent flags this as the highest aberration in the current batch.',
+   items:[{desc:'Formwork — levels 28-34',claimed:1840000,benchmark:1160000,dev:58.6},{desc:'Concrete supply & pour',claimed:1320000,benchmark:1080000,dev:22.2},{desc:'Scaffolding & access',claimed:640000,benchmark:360000,dev:77.8},{desc:'Rebar & fixing',claimed:400000,benchmark:350000,dev:14.3}],
+   actions:['Reject formwork uplift — no SI on record','Request concrete pour records before approval','Approve rebar at benchmark rate']},
+  {id:'IPC-2024-082',project:'Safa Park Residences',contractor:'Arabtec Construction',amount:2800000,benchmark:2370000,deviation:18.1,verdict:'MODERATE_FLAG',stage:'MEP — Floors 4-10',period:'Apr-26',
+   note:'MEP first-fix claim at AED 2.8M versus benchmark of AED 2.37M. The 18% premium is concentrated in the HVAC ducting line item — contractor has claimed for pre-insulated duct rather than standard duct + site insulation, representing an AED 280K material substitution. A change order is reportedly in draft but not yet issued. BENCHMARK agent recommends holding payment on the HVAC delta pending CO confirmation.',
+   items:[{desc:'HVAC ducting & equipment',claimed:1200000,benchmark:920000,dev:30.4},{desc:'Plumbing first fix',claimed:680000,benchmark:620000,dev:9.7},{desc:'Electrical containment',claimed:560000,benchmark:530000,dev:5.7},{desc:'Fire suppression rough-in',claimed:360000,benchmark:300000,dev:20.0}],
+   actions:['Hold HVAC delta pending CO issuance','Approve plumbing, electrical, fire suppression','Request draft CO reference from contractor']},
+  {id:'IPC-2024-083',project:'DAMAC Hills 2 — Phase 4',contractor:'Drake & Scull',amount:1900000,benchmark:1920000,deviation:-1.0,verdict:'VALIDATED',stage:'Finishing — Villas 80-120',period:'Apr-26',
+   note:'Finishing works claim for 40 villas at AED 1.9M is 1% below benchmark. All line items within acceptable tolerance bands. Site progress photos confirm works complete to the claimed stage. BENCHMARK agent auto-validates this certificate.',
+   items:[{desc:'Tiling & stonework',claimed:720000,benchmark:740000,dev:-2.7},{desc:'Joinery & built-in furniture',claimed:560000,benchmark:570000,dev:-1.8},{desc:'Painting & decoration',claimed:380000,benchmark:370000,dev:2.7},{desc:'Sanitary ware fit-out',claimed:240000,benchmark:240000,dev:0}],
+   actions:['Approve for payment — no exceptions']},
+  {id:'IPC-2024-084',project:'The Lagoons — Tower 8',contractor:'Shapoorji Pallonji',amount:3400000,benchmark:3100000,deviation:9.7,verdict:'AWAITING_PM',stage:'Superstructure — Level 12-18',period:'Apr-26',
+   note:'Claim of AED 3.4M for superstructure works. Benchmark deviation of 9.7% is within the threshold for elevated projects but the PM has requested a site visit before sign-off due to reported access delays in April. Sage is holding approval pending PM confirmation.',
+   items:[{desc:'Post-tensioned slab',claimed:1580000,benchmark:1440000,dev:9.7},{desc:'Perimeter columns',claimed:840000,benchmark:760000,dev:10.5},{desc:'Core walls',claimed:620000,benchmark:580000,dev:6.9},{desc:'Transfer beam',claimed:360000,benchmark:320000,dev:12.5}],
+   actions:['Await PM site visit confirmation','PM approval routes to payment automatically']},
+  {id:'IPC-2024-085',project:'Volta Tower',contractor:'Khansaheb Civil Engineering',amount:2100000,benchmark:2050000,deviation:2.4,verdict:'VALIDATED',stage:'Façade — Zone B',period:'Apr-26',
+   note:'Façade cladding claim for Zone B at AED 2.1M — 2.4% above benchmark, within the 5% auto-validation corridor. All materials are traceable to approved submittals. Certificate cleared.',
+   items:[{desc:'Aluminium cladding panels',claimed:980000,benchmark:960000,dev:2.1},{desc:'Curtain wall glazing',claimed:720000,benchmark:700000,dev:2.9},{desc:'Sealant & weatherproofing',claimed:240000,benchmark:240000,dev:0},{desc:'Fixings & support system',claimed:160000,benchmark:150000,dev:6.7}],
+   actions:['Approve for payment — within tolerance']},
+  {id:'IPC-2024-086',project:'BAY1012 — District One West',contractor:'Consolidated Contractors (CCC)',amount:5700000,benchmark:3900000,deviation:46.2,verdict:'HIGH_ABERRATION',stage:'Piling & Substructure',period:'Apr-26',
+   note:'Piling and substructure claim at AED 5.7M against a benchmark of AED 3.9M — the largest absolute deviation in the current batch. The contractor has included AED 1.1M for "ground improvement works" with no corresponding line in the contract BoQ, and AED 700K for dewatering that exceeds the site-specific hydrology report by 240%. BENCHMARK agent flags this as potentially fraudulent and recommends a full QS review before any payment.',
+   items:[{desc:'Bored piling — 450mm dia',claimed:2200000,benchmark:1800000,dev:22.2},{desc:'Ground improvement / grouting',claimed:1100000,benchmark:0,dev:999},{desc:'Dewatering',claimed:1020000,benchmark:300000,dev:240.0},{desc:'Pile cap & grade beams',claimed:1380000,benchmark:1800000,dev:-23.3}],
+   actions:['Escalate to QS — uncontracted line items','Reject dewatering claim pending hydrology review','Reject ground improvement — no BoQ reference']},
+  {id:'IPC-2024-087',project:'DAMAC Bay by Cavalli',contractor:'Al Naboodah Contracting',amount:1600000,benchmark:1620000,deviation:-1.2,verdict:'AUTO_APPROVE',stage:'Internal fit-out — Floors 2-5',period:'Apr-26',
+   note:'Internal fit-out claim for floors 2–5. AED 1.6M is 1.2% below benchmark. All line items within auto-approve corridor. Certificate released for payment.',
+   items:[{desc:'Partition walls & doors',claimed:620000,benchmark:630000,dev:-1.6},{desc:'Ceiling systems',claimed:480000,benchmark:490000,dev:-2.0},{desc:'Floor finishes',claimed:360000,benchmark:360000,dev:0},{desc:'Ironmongery & accessories',claimed:140000,benchmark:140000,dev:0}],
+   actions:['Auto-approved — payment queued']},
+  {id:'IPC-2024-088',project:'Eleganz by DAMAC',contractor:'Specon LLC',amount:2300000,benchmark:2000000,deviation:15.0,verdict:'MODERATE_FLAG',stage:'Electrical — HV/LV Systems',period:'Apr-26',
+   note:'HV/LV electrical systems claim at AED 2.3M. The 15% excess is largely attributable to an emergency generator upgrade (AED 210K) requested by DEWA at connection approval stage, and cable tray rerouting caused by a coordination clash (+AED 90K). Both items are supportable but require change order confirmation. BENCHMARK agent recommends partial approval pending CO paperwork.',
+   items:[{desc:'HV switchgear & transformer',claimed:920000,benchmark:840000,dev:9.5},{desc:'LV distribution boards',claimed:560000,benchmark:520000,dev:7.7},{desc:'Emergency generator upgrade',claimed:510000,benchmark:300000,dev:70.0},{desc:'Cable tray & containment',claimed:310000,benchmark:340000,dev:-8.8}],
+   actions:['Approve HV, LV, cable tray','Hold generator delta pending CO confirmation']},
+  {id:'IPC-2024-089',project:'SAY Tower',contractor:'ALEC Engineering',amount:900000,benchmark:880000,deviation:2.3,verdict:'AUTO_APPROVE',stage:'Concrete — Podium Level',period:'Apr-26',
+   note:'Podium slab claim at AED 900K. 2.3% above benchmark — within auto-approve corridor. ALEC is a preferred contractor with a clean 24-month payment history. Certificate released.',
+   items:[{desc:'Podium slab concrete',claimed:480000,benchmark:460000,dev:4.3},{desc:'Rebar — BRC mesh',claimed:240000,benchmark:240000,dev:0},{desc:'Formwork & striking',claimed:180000,benchmark:180000,dev:0}],
+   actions:['Auto-approved — payment queued']},
+  {id:'IPC-2024-090',project:'AKOYA Oxygen — Phase 3',contractor:'Dutco Balfour Beatty',amount:3100000,benchmark:2980000,deviation:4.0,verdict:'AWAITING_PM',stage:'Infrastructure — Roads & Utilities',period:'Apr-26',
+   note:'Roads and utilities claim at AED 3.1M. Deviation of 4.0% is within threshold but the project manager has a standing policy for PM sign-off on all infrastructure IPCs above AED 3M. Sage has routed this to the PM approval queue.',
+   items:[{desc:'Roadworks & base course',claimed:1200000,benchmark:1160000,dev:3.4},{desc:'Storm drainage',claimed:780000,benchmark:740000,dev:5.4},{desc:'Potable water network',claimed:640000,benchmark:640000,dev:0},{desc:'Street lighting & MEP',claimed:480000,benchmark:440000,dev:9.1}],
+   actions:['Awaiting PM sign-off — routed 14-Jun-26']}
+];
+
+var AGENT_NAMES=['INGEST','EXTRACT','BENCHMARK','VALIDATE','CLASSIFY','REPORT'];
+var AGENT_FULL={INGEST:'Data Ingestion',EXTRACT:'PDF Extraction',BENCHMARK:'Benchmark Analysis',VALIDATE:'Validation Engine',CLASSIFY:'Classification',REPORT:'Report Generation'};
+var MESH_POS={INGEST:[105,38],EXTRACT:[158,69],BENCHMARK:[158,131],CLASSIFY:[105,162],VALIDATE:[52,131],REPORT:[52,69]};
+var LABEL_POS={INGEST:[105,20,'middle'],EXTRACT:[176,63,'start'],BENCHMARK:[176,137,'start'],CLASSIFY:[105,180,'middle'],VALIDATE:[34,137,'end'],REPORT:[34,63,'end']};
+
+var feedCount=0;
+
+/* ── HELPERS ── */
+function el(id){return document.getElementById(id);}
+function fmt(n){return 'AED '+(n>=1e6?(n/1e6).toFixed(1)+'M':n.toLocaleString());}
+function showToast(msg){var t=el('toast');el('toastMsg').textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
+function openDrawer(html){el('drawer').innerHTML=html;el('drawer').classList.add('show');el('scrim').classList.add('show');}
+function closeDrawer(){el('drawer').classList.remove('show');el('scrim').classList.remove('show');}
+
+function goCommandCentre(){
+  try{window.parent.postMessage({__navTo:'command'},'*');}catch(e){}
+  showToast('Opening IPC Processing Centre…');
+}
+
+function emit(agent,msg,type){
+  feedCount++;
+  var dot=type==='ok'?'ok':type==='risk'?'risk':type==='warn'?'warn':'orange';
+  var ts=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var d=document.createElement('div');d.className='feed-item';
+  d.innerHTML='<div class="fdot '+dot+'"></div><div><div class="ag">'+agent+'</div><div class="msg">'+msg+'</div><div class="ts">'+ts+'</div></div>';
+  var f=el('feed');f.insertBefore(d,f.firstChild);
+  if(f.children.length>30)f.removeChild(f.lastChild);
+  el('feedCount').textContent=feedCount+' events';
+}
+
+function setActive(ids){
+  AGENT_NAMES.forEach(function(a){
+    var n=el('mn-'+a),e=el('me-'+a),l=el('ml-'+a);
+    var on=ids.indexOf(a)>=0;
+    if(n)n.classList.toggle('active',on);
+    if(e)e.classList.toggle('active',on);
+    if(l){l.classList.remove('live');if(on)l.classList.add('live');}
+  });
+}
+
+/* ── MESH ── */
+function renderMesh(){
+  var hub=[105,100];
+  var edges=AGENT_NAMES.map(function(a){var p=MESH_POS[a];return '<line class="medge" id="me-'+a+'" x1="'+hub[0]+'" y1="'+hub[1]+'" x2="'+p[0]+'" y2="'+p[1]+'"/>';}).join('');
+  var nodes=AGENT_NAMES.map(function(a){
+    var p=MESH_POS[a],lp=LABEL_POS[a];
+    return '<g class="mnode" id="mn-'+a+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="13"/><text x="'+p[0]+'" y="'+p[1]+'">'+a.substring(0,3)+'</text></g>'
+      +'<text class="mlabel" id="ml-'+a+'" x="'+lp[0]+'" y="'+lp[1]+'" text-anchor="'+lp[2]+'">'+AGENT_FULL[a]+'</text>';
+  }).join('');
+  el('meshWrap').innerHTML='<svg class="mesh-svg" viewBox="0 0 210 200" xmlns="http://www.w3.org/2000/svg">'
+    +'<defs><radialGradient id="piq-hub" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="var(--orange)" stop-opacity=".18"/><stop offset="100%" stop-color="var(--orange)" stop-opacity="0"/></radialGradient></defs>'
+    +'<circle cx="'+hub[0]+'" cy="'+hub[1]+'" r="63" fill="none" stroke="var(--line-2)" stroke-width=".7" stroke-dasharray="3 5" opacity=".5"/>'
+    +'<circle cx="'+hub[0]+'" cy="'+hub[1]+'" r="32" fill="url(#piq-hub)"/>'
+    +edges+nodes
+    +'<g class="mhub"><circle cx="'+hub[0]+'" cy="'+hub[1]+'" r="20"/><text x="'+hub[0]+'" y="'+hub[1]+'">PayIQ</text></g>'
+    +'</svg>';
+}
+
+/* ── VERDICT BADGE ── */
+function verdictBadge(v){
+  if(v==='HIGH_ABERRATION')return '<span class="badge high">HIGH</span>';
+  if(v==='MODERATE_FLAG')return '<span class="badge moderate">MODERATE FLAG</span>';
+  if(v==='VALIDATED')return '<span class="badge validated">VALIDATED</span>';
+  if(v==='AWAITING_PM')return '<span class="badge awaiting">AWAITING PM</span>';
+  if(v==='AUTO_APPROVE')return '<span class="badge auto">AUTO APPROVE</span>';
+  return '<span class="badge awaiting">'+v+'</span>';
+}
+function verdictClass(v){
+  if(v==='HIGH_ABERRATION')return 'high';
+  if(v==='MODERATE_FLAG')return 'moderate';
+  if(v==='VALIDATED')return 'validated';
+  if(v==='AUTO_APPROVE')return 'validated';
+  return 'awaiting';
+}
+
+/* ── VIEWS ── */
+var VIEWS={
+  overview:['IPC Validation Dashboard','Jun-26 · 10 certificates · AED 28.0M under review · 2 high-risk flags'],
+  queue:['IPC Validation Queue','10 certificates · click any row for full benchmark analysis'],
+  benchmark:['Benchmark Analysis','AI-driven rate comparison · contractor history · deviation trends'],
+  agents:['Validation Agent Pipeline','6 agents · INGEST → EXTRACT → BENCHMARK → VALIDATE → CLASSIFY → REPORT']
+};
+var VIEW_SEQ={
+  overview:[['INGEST','Loading IPC batch — 10 certificates, Jun-26','orange'],['EXTRACT','PDF extraction complete — line items parsed','orange'],['BENCHMARK','Running benchmark comparisons — 4 contractor databases','orange'],['VALIDATE','Validation engine: 4 auto-cleared, 2 flagged HIGH','risk'],['CLASSIFY','Classifying exceptions — 2 HIGH, 2 MODERATE, 2 AWAITING PM','warn'],['REPORT','Jun-26 IPC validation report ready','ok']],
+  queue:[['VALIDATE','Refreshing queue status — 10 IPCs','orange'],['CLASSIFY','2 HIGH_ABERRATION require manual review before payment','risk']],
+  benchmark:[['BENCHMARK','Loading contractor rate benchmarks — Q1/Q2 2026 data','orange'],['BENCHMARK','Deviation analysis complete — 2 items exceed 40% threshold','risk']],
+  agents:[['INGEST','Standing by — next batch expected 16-Jun-26','ok'],['BENCHMARK','Benchmark database updated — 12,400 rate records','ok']]
+};
+
+function go(view){
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  var nb=el('nb-'+view);if(nb)nb.classList.add('active');
+  var t=VIEWS[view];if(t){el('barT').textContent=t[0];el('barS').textContent=t[1];}
+  el('content').innerHTML='<div class="sk-kpis"><div class="sk sk-kpi"></div><div class="sk sk-kpi"></div><div class="sk sk-kpi"></div><div class="sk sk-kpi"></div><div class="sk sk-kpi"></div></div><div class="sk sk-block"></div>';
+  var seq=VIEW_SEQ[view]||[];
+  seq.forEach(function(s,i){setTimeout(function(){emit(s[0],s[1],s[2]);setActive([s[0]]);},i*220);});
+  setTimeout(function(){
+    setActive([]);
+    if(view==='overview')renderOverview();
+    else if(view==='queue')renderQueue();
+    else if(view==='benchmark')renderBenchmark();
+    else if(view==='agents')renderAgentsView();
+  },Math.max(seq.length*220+200,420));
+}
+
+function kpi(lbl,val,sub,tone){
+  return '<div class="kpi"><div class="lbl">'+lbl+'</div><div class="val">'+val+'</div><div class="sub '+tone+'">'+sub+'</div></div>';
+}
+function drwRow(k,v){return '<div class="drw-row"><span class="drw-k">'+k+'</span><span class="drw-v">'+v+'</span></div>';}
+
+/* ── Overview ── */
+function renderOverview(){
+  var totalAmt=IPC_DATA.reduce(function(s,i){return s+i.amount;},0);
+  var highRisk=IPC_DATA.filter(function(i){return i.verdict==='HIGH_ABERRATION';});
+  var modFlag=IPC_DATA.filter(function(i){return i.verdict==='MODERATE_FLAG';});
+  var cleared=IPC_DATA.filter(function(i){return i.verdict==='VALIDATED'||i.verdict==='AUTO_APPROVE';});
+  var awaiting=IPC_DATA.filter(function(i){return i.verdict==='AWAITING_PM';});
+  var highAmt=highRisk.reduce(function(s,i){return s+i.amount;},0);
+
+  var h='<div class="kpi-row">'
+    +kpi('Certificates in Queue','10','Jun-26 batch · IPC Processing Centre','ok')
+    +kpi('High Risk Flags',''+highRisk.length,'Require review before payment','risk')
+    +kpi('Moderate Flags',''+modFlag.length,'Partial hold — CO confirmation needed','warn')
+    +kpi('Cleared / Auto-approved',''+cleared.length,'Released for payment','ok')
+    +kpi('Held Value','AED '+highAmt.toLocaleString(),'Pending review & sign-off','risk')
+    +'</div>';
+
+  h+='<div class="cta-card"><div><div class="ct">IPC Processing Centre</div><div class="cs">Upload new IPC batches, configure benchmark settings, manage PDF ingestion and system connections</div></div>'
+    +'<button onclick="goCommandCentre()"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Open Command Centre</button></div>';
+
+  h+='<div class="acard"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Sage AI Briefing — Jun-26 IPC Validation Run</h3></div>'
+    +'<p>Jun-26 IPC batch complete. <strong>10 certificates, AED 28.0M under review</strong>. 4 certificates cleared or auto-approved, 2 awaiting PM sign-off within policy thresholds. The remaining 4 require attention:<br><br>'
+    +'<strong>IPC-086 (AED 5.7M) — BAY1012 District One — HIGH:</strong> 46% above benchmark. AED 1.1M for "ground improvement works" has no BoQ reference. AED 700K dewatering claim is 3× the site hydrology estimate. BENCHMARK agent recommends full QS review — possible fraudulent inflation.<br><br>'
+    +'<strong>IPC-081 (AED 4.2M) — Ocean Heights T3 — HIGH:</strong> 42% above benchmark. Formwork day-rate uplift and scaffolding idle-time charges are unsupported by any site instruction. Reject overages and approve at benchmark rates.<br><br>'
+    +'<strong>IPC-088 (AED 2.3M) — Eleganz — MODERATE:</strong> Generator upgrade and cable tray rerouting are supportable but need change order confirmation before full payment.<br><br>'
+    +'<strong>IPC-082 (AED 2.8M) — Safa Park — MODERATE:</strong> HVAC pre-insulated duct substitution AED 280K needs CO issuance. Remaining MEP items clear for payment.</p></div>';
+
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><h2 style="font-size:13px;font-weight:600">IPC Summary</h2><span style="font-size:11px;color:var(--ink-3)">Click any row for full benchmark detail</span></div>';
+  h+='<div class="tbl-wrap"><table><thead><tr><th>IPC Ref</th><th>Project</th><th>Contractor</th><th class="num">Claim (AED)</th><th class="num">Deviation</th><th>AI Verdict</th></tr></thead><tbody>';
+  IPC_DATA.forEach(function(ipc){
+    var devCls=Math.abs(ipc.deviation)>30?'style="color:var(--risk);font-weight:600"':Math.abs(ipc.deviation)>10?'style="color:var(--warn);font-weight:600"':'style="color:var(--ok)"';
+    h+='<tr class="clickable" onclick="openIPCDrawer(\''+ipc.id+'\')">'
+      +'<td class="mono">'+ipc.id+'</td>'
+      +'<td style="font-size:12px">'+ipc.project+'</td>'
+      +'<td style="font-size:11.5px;color:var(--ink-3)">'+ipc.contractor+'</td>'
+      +'<td class="num">'+ipc.amount.toLocaleString()+'</td>'
+      +'<td class="num"><span '+devCls+'>'+(ipc.deviation>0?'+':'')+ipc.deviation.toFixed(1)+'%</span></td>'
+      +'<td>'+verdictBadge(ipc.verdict)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  el('content').innerHTML=h;
+}
+
+/* ── Queue ── */
+function renderQueue(){
+  var h='<div class="kpi-row">'
+    +kpi('In Queue','10','Jun-26 batch · 10 contractors','ok')
+    +kpi('Requires Review','4','HIGH + MODERATE flags','risk')
+    +kpi('Awaiting PM','2','Within threshold — PM policy','warn')
+    +kpi('Auto-cleared','4','Within 5% benchmark corridor','ok')
+    +kpi('Total Claimed','AED 28.0M','Jun-26 · all projects','warn')
+    +'</div>';
+  h+='<div class="tbl-wrap"><table><thead><tr><th>IPC Ref</th><th>Project</th><th>Stage</th><th class="num">Claimed (AED)</th><th class="num">Benchmark (AED)</th><th class="num">Deviation</th><th>Verdict</th></tr></thead><tbody>';
+  IPC_DATA.forEach(function(ipc){
+    var devCls=Math.abs(ipc.deviation)>30?'style="color:var(--risk);font-weight:600"':Math.abs(ipc.deviation)>10?'style="color:var(--warn);font-weight:600"':'style="color:var(--ok)"';
+    h+='<tr class="clickable" onclick="openIPCDrawer(\''+ipc.id+'\')">'
+      +'<td class="mono">'+ipc.id+'</td>'
+      +'<td style="font-size:12px">'+ipc.project+'</td>'
+      +'<td style="font-size:11px;color:var(--ink-3)">'+ipc.stage+'</td>'
+      +'<td class="num">'+ipc.amount.toLocaleString()+'</td>'
+      +'<td class="num" style="color:var(--ink-3)">'+ipc.benchmark.toLocaleString()+'</td>'
+      +'<td class="num"><span '+devCls+'>'+(ipc.deviation>0?'+':'')+ipc.deviation.toFixed(1)+'%</span></td>'
+      +'<td>'+verdictBadge(ipc.verdict)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  el('content').innerHTML=h;
+}
+
+/* ── Benchmark view ── */
+function renderBenchmark(){
+  var byDev=IPC_DATA.slice().sort(function(a,b){return Math.abs(b.deviation)-Math.abs(a.deviation);});
+  var h='<div class="kpi-row">'
+    +kpi('Avg Deviation','+14.2%','Across 10 certificates · Jun-26','warn')
+    +kpi('Max Deviation','+46.2%','IPC-086 BAY1012 — investigate','risk')
+    +kpi('Within Corridor','4','≤5% benchmark deviation','ok')
+    +kpi('Benchmark DB','12,400','Rate records · Q1/Q2 2026','ok')
+    +kpi('Benchmarked Value','AED 23.8M','vs AED 28.0M claimed','warn')
+    +'</div>';
+  h+='<div class="acard"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg></div><h3>Deviation Waterfall — Jun-26 Batch</h3></div><div style="padding:4px 0">';
+  byDev.forEach(function(ipc){
+    var pct=Math.min(Math.abs(ipc.deviation)/50*100,100);
+    var fcls=Math.abs(ipc.deviation)>30?'risk':Math.abs(ipc.deviation)>10?'warn':'ok';
+    h+='<div class="bm-row"><div class="bm-label"><span style="color:var(--ink-2)">'+ipc.id+' · '+ipc.project+'</span><span>'+(ipc.deviation>0?'+':'')+ipc.deviation.toFixed(1)+'%</span></div>'
+      +'<div class="bm-bar"><div class="bm-fill '+fcls+'" style="width:'+pct+'%"></div></div></div>';
+  });
+  h+='</div></div>';
+  h+='<div style="display:flex;gap:12px">';
+  h+='<div style="flex:1"><div class="acard"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h3>Certificates Requiring Action</h3></div>';
+  IPC_DATA.filter(function(i){return i.verdict==='HIGH_ABERRATION'||i.verdict==='MODERATE_FLAG';}).forEach(function(ipc){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">'
+      +'<div><div style="font-size:12px;font-weight:600;color:var(--ink)">'+ipc.id+' — '+ipc.project+'</div>'
+      +'<div style="font-size:11px;color:var(--ink-3);margin-top:2px">'+ipc.contractor+' · '+fmt(ipc.amount)+'</div></div>'
+      +verdictBadge(ipc.verdict)
+      +'</div>';
+  });
+  h+='<button class="btn-action" style="margin-top:12px" onclick="go(\'queue\')">Open Full Queue →</button></div></div>';
+  h+='<div style="flex:1"><div class="acard"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Benchmark Configuration</h3></div>'
+    +'<p style="font-size:12px;color:var(--ink-2);line-height:1.7">Benchmark rates are pulled from the DAMAC contractor master, RICS UAE schedule, and 24-month historical IPC actuals. To update rates, add a new contractor, or upload a PDF tender schedule, use the IPC Processing Centre.</p>'
+    +'<button class="btn-action" style="margin-top:14px" onclick="goCommandCentre()">Open IPC Processing Centre →</button>'
+    +'</div></div>';
+  h+='</div>';
+  el('content').innerHTML=h;
+}
+
+/* ── Agents view ── */
+function renderAgentsView(){
+  var desc={
+    INGEST:'Receives IPC certificate batches from the IPC Processing Centre. Validates batch completeness — all expected PDF files and metadata present before the run proceeds.',
+    EXTRACT:'Parses PDF certificates using document AI. Extracts contractor name, IPC reference, line items, quantities, and rates into structured JSON for downstream processing.',
+    BENCHMARK:'Compares each line item rate against the DAMAC benchmark database (12,400+ rate records, Q1/Q2 2026 actuals). Calculates deviation per line and overall IPC deviation score.',
+    VALIDATE:'Applies the auto-approval ruleset: IPCs within the 5% corridor are cleared. Between 5–15% routes to MODERATE_FLAG. Above 30% triggers HIGH_ABERRATION.',
+    CLASSIFY:'Categorises each flagged IPC: uncontracted items, rate uplift, quantity over-run, or policy breach. Populates the queue with action recommendations for the reviewer.',
+    REPORT:'Assembles the payment validation report: cleared, flagged, and held certificates with benchmark evidence, action log, and audit hash for finance sign-off.'
+  };
+  var h='<div class="kpi-row">'
+    +kpi('Agents Active','6','Full INGEST→REPORT pipeline','ok')
+    +kpi('IPCs Processed','10','Jun-26 run complete','ok')
+    +kpi('Auto-cleared','4','Within benchmark corridor','ok')
+    +kpi('Processing Time','2m 34s','vs 3–5 days manual review','ok')
+    +kpi('Next Batch','16-Jun','Awaiting upload','warn')
+    +'</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  AGENT_NAMES.forEach(function(a){
+    h+='<div class="acard"><div class="acard-head"><div class="acard-icon" style="background:var(--panel-3)"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--ink-2);fill:none;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4"/></svg></div><h3>'+a+' — '+AGENT_FULL[a]+'</h3></div>'
+      +'<p style="font-size:12px;color:var(--ink-2);line-height:1.6">'+desc[a]+'</p>'
+      +'<div style="margin-top:10px;display:flex;gap:6px"><span class="pill ok">Active</span><span class="pill ink">Jun-26 complete</span></div></div>';
+  });
+  h+='</div>';
+  el('content').innerHTML=h;
+}
+
+/* ── IPC Drawer ── */
+function openIPCDrawer(id){
+  var ipc=null;IPC_DATA.forEach(function(x){if(x.id===id)ipc=x;});if(!ipc)return;
+  var vc=verdictClass(ipc.verdict);
+  var h='<div class="drw-head"><div>'
+    +'<div class="drw-title">'+ipc.id+'</div>'
+    +'<div class="drw-sub">'+ipc.project+' · '+ipc.stage+'</div></div>'
+    +'<div class="drw-x" onclick="closeDrawer()">×</div></div>';
+  h+='<div class="drw-body">';
+
+  h+='<div class="drw-sect"><h3>Certificate Detail</h3>';
+  h+=drwRow('IPC Reference',ipc.id);
+  h+=drwRow('Project',ipc.project);
+  h+=drwRow('Contractor',ipc.contractor);
+  h+=drwRow('Stage',ipc.stage);
+  h+=drwRow('Period',ipc.period);
+  h+=drwRow('Claimed Amount','AED '+ipc.amount.toLocaleString());
+  h+=drwRow('Benchmark','AED '+ipc.benchmark.toLocaleString());
+  h+=drwRow('Deviation',(ipc.deviation>0?'+':'')+ipc.deviation.toFixed(1)+'%');
+  h+='</div>';
+
+  h+='<div class="drw-sect"><h3>AI Verdict</h3>';
+  h+='<div class="verdict-box '+vc+'"><div class="vt">'+verdictBadge(ipc.verdict)+' — '+ipc.verdict.replace(/_/g,' ')+'</div>'
+    +'<div class="vb" style="margin-top:8px">'+ipc.note+'</div></div>';
+  h+='</div>';
+
+  h+='<div class="drw-sect"><h3>Line Item Benchmark</h3>';
+  h+='<div class="tbl-wrap" style="margin-bottom:0"><table>'
+    +'<thead><tr><th>Description</th><th class="num">Claimed</th><th class="num">Benchmark</th><th class="num">Dev %</th></tr></thead><tbody>';
+  ipc.items.forEach(function(it){
+    var dc=Math.abs(it.dev)>30?'style="color:var(--risk);font-weight:600"':Math.abs(it.dev)>10?'style="color:var(--warn)"':'style="color:var(--ok)"';
+    h+='<tr><td style="font-size:12px">'+it.desc+'</td>'
+      +'<td class="num">'+it.claimed.toLocaleString()+'</td>'
+      +'<td class="num" style="color:var(--ink-3)">'+(it.benchmark===0?'—':it.benchmark.toLocaleString())+'</td>'
+      +'<td class="num"><span '+dc+'>'+(it.dev>0?'+':'')+(it.dev===999?'∞':it.dev.toFixed(1))+'%</span></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='</div>';
+
+  h+='<div class="drw-sect"><h3>Recommended Actions</h3>';
+  ipc.actions.forEach(function(a){
+    h+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2)">'
+      +'<svg style="width:13px;height:13px;stroke:var(--orange);fill:none;stroke-width:2.5;stroke-linecap:round;flex-shrink:0;margin-top:2px" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'
+      +a+'</div>';
+  });
+  h+='</div>';
+
+  if(ipc.verdict==='HIGH_ABERRATION'){
+    h+='<button class="btn-action" onclick="showToast(\''+ipc.id+' escalated to QS review\');closeDrawer()">Escalate to QS Review →</button>';
+    h+='<button class="btn-action secondary" onclick="showToast(\''+ipc.id+' approved at benchmark value\');closeDrawer()">Approve at Benchmark Value</button>';
+  } else if(ipc.verdict==='MODERATE_FLAG'){
+    h+='<button class="btn-action" onclick="showToast(\''+ipc.id+' partial approval sent\');closeDrawer()">Approve Cleared Lines →</button>';
+    h+='<button class="btn-action secondary" onclick="showToast(\'CO request sent for '+ipc.id+'\');closeDrawer()">Request Change Order Confirmation</button>';
+  } else if(ipc.verdict==='AWAITING_PM'){
+    h+='<button class="btn-action" onclick="showToast(\'PM reminder sent for '+ipc.id+'\');closeDrawer()">Send PM Reminder →</button>';
+  } else {
+    h+='<button class="btn-action" onclick="showToast(\''+ipc.id+' confirmed for payment\');closeDrawer()">Confirm Payment Release →</button>';
+  }
+
+  h+='</div>';
+  openDrawer(h);
+}
+
+/* ── SAGE ── */
+var sageOpen=false;
+function toggleRail(){el('app').classList.toggle('rail-collapsed');}
+function toggleSage(){sageOpen=!sageOpen;el('sagePanel').classList.toggle('open',sageOpen);}
+function sendSage(){
+  var inp=el('sageIn'),q=inp.value.trim();if(!q)return;inp.value='';
+  var body=el('sageBody');
+  var um=document.createElement('div');um.className='smsg user';um.textContent=q;body.appendChild(um);
+  setTimeout(function(){
+    var bm=document.createElement('div');bm.className='smsg bot';bm.textContent=sageReply(q);
+    body.appendChild(bm);body.scrollTop=body.scrollHeight;
+  },620);
+  body.scrollTop=body.scrollHeight;
+}
+function sageReply(q){
+  if(/086|bay|ccc|district one|fraud|grout/i.test(q))return 'IPC-086 (BAY1012, CCC) is the highest-risk certificate: AED 5.7M claimed vs AED 3.9M benchmark (+46%). AED 1.1M "ground improvement" has no BoQ reference — potentially fraudulent. AED 700K dewatering is 3× the hydrology estimate. Recommend full QS review before any payment.';
+  if(/081|ocean heights|formwork|scaffold/i.test(q))return 'IPC-081 (Ocean Heights T3, Al Futtaim Carillion): AED 4.2M vs AED 2.95M benchmark (+42%). Formwork day-rate uplift AED 680K and scaffolding idle-time AED 420K have no supporting site instruction. Recommend rejecting these two line items and approving the IPC at benchmark rates.';
+  if(/082|safa|hvac|change order|mep/i.test(q))return 'IPC-082 (Safa Park, Arabtec): AED 2.8M vs AED 2.37M (+18%). The HVAC delta of AED 280K relates to pre-insulated duct material substitution — a draft CO is reportedly in progress. Hold HVAC pending CO issuance; approve plumbing, electrical, and fire suppression.';
+  if(/088|eleganz|generator|specon/i.test(q))return 'IPC-088 (Eleganz, Specon): AED 2.3M vs AED 2.0M (+15%). Generator upgrade AED 210K was requested by DEWA at connection approval — supportable, but needs CO. Cable tray rerouting AED 90K is a coordination-clash variation. Approve HV/LV and cable tray; hold generator delta.';
+  if(/auto.appro|cleared|within|tolerance/i.test(q))return '4 certificates auto-approved or validated: IPC-083 (DAMAC Hills 2, -1%), IPC-085 (Volta, +2.4%), IPC-087 (DAMAC Bay, -1.2%), IPC-089 (SAY Tower, +2.3%). All within the 5% corridor. Payment released.';
+  if(/awaiting|pm|sign.off|084|090/i.test(q))return 'IPC-084 (Lagoons T8, +9.7%) and IPC-090 (AKOYA Phase 3, +4.0%) are awaiting PM sign-off per policy — all IPCs requiring PM approval >AED 3M. Within benchmark thresholds. No risk flags.';
+  if(/total|how much|held|value/i.test(q))return 'Jun-26 batch: AED 28.0M total claimed. AED 9.9M held pending review (IPC-081 AED 4.2M + IPC-086 AED 5.7M). AED 7.6M in partial approval (MODERATE flags). AED 6.5M awaiting PM. AED 4.6M auto-cleared.';
+  if(/command|centre|center|upload|ingestion/i.test(q))return 'To upload a new IPC batch, configure benchmark rates, or manage PDF ingestion settings, open the IPC Processing Centre from the button in the top bar — or I can navigate you there now.';
+  return 'Jun-26 IPC validation: 10 certificates, AED 28.0M. 2 HIGH_ABERRATION (IPC-081, IPC-086 — total AED 9.9M held), 2 MODERATE_FLAG, 2 AWAITING_PM, 4 cleared. Which certificate or contractor would you like to analyse?';
+}
+
+/* ── THEME ── */
+function toggleTheme(){
+  document.documentElement.classList.toggle('theme-light');
+  updateThemeIcon();
+  try{localStorage.setItem('paymentsiq-theme',document.documentElement.classList.contains('theme-light')?'light':'dark');}catch(e){}
+}
+function updateThemeIcon(){
+  var ic=el('themeIcon');if(!ic)return;
+  var light=document.documentElement.classList.contains('theme-light');
+  ic.innerHTML=light?'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>':'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+}
+
+/* ── INIT ── */
+(function(){
+  try{if(localStorage.getItem('paymentsiq-theme')==='light')document.documentElement.classList.add('theme-light');}catch(e){}
+  renderMesh();
+  updateThemeIcon();
+  setTimeout(function(){emit('REPORT','Jun-26 IPC run complete — 10 certificates, AED 28.0M reviewed','ok');},200);
+  setTimeout(function(){emit('VALIDATE','2 HIGH_ABERRATION: IPC-081 (+42%), IPC-086 (+46%)','risk');},420);
+  setTimeout(function(){emit('BENCHMARK','Benchmark comparisons complete — 12,400 rate records applied','ok');},640);
+  setTimeout(function(){emit('EXTRACT','PDF extraction complete — all 10 certificate line items parsed','ok');},860);
+  go('overview');
+})();
+</script>
+
+<script>
+(function(){
+  if(window.parent===window) return;
+  window.parent.postMessage({__showBar:true},'*');
+})();
+</script>
+</body>
+</html>
