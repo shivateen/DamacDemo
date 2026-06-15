@@ -237,10 +237,6 @@ td.mono{font-family:var(--mono);font-size:11.5px}
     <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/></svg>
     BRS
   </button>
-  <button class="nav-btn" id="nb-open" onclick="go('open')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
-    Open Items
-  </button>
   <div class="nav-sp"></div>
   <div class="ver-chip">v1.0</div>
   <button class="nav-btn" id="nb-agents" onclick="toggleRail()">
@@ -410,16 +406,14 @@ function renderMesh(){
 /* ── VIEWS ── */
 var VIEWS={
   overview:['IC Reconciliation — May 2026','7 of 10 pairs matched · AED 2.6M open · 2 timing diffs + 1 FX gap'],
-  ic:['Intercompany Pair Detail','10 pairs · May-26 · click any row for full analysis'],
-  brs:['Bank Reconciliation Statement','6 accounts · 94% auto-match · 3 reconciling items'],
-  open:['Open Items Queue','6 items requiring action before close sign-off'],
+  ic:['Intercompany Pair Detail','10 pairs · May-26 · click any row for full analysis · open items below'],
+  brs:['Bank Reconciliation Statement','6 accounts · 94% auto-match · open items below'],
   agents:['ReconIQ Agent Pipeline','6 agents · INGEST → MAP → MATCH → CLASSIFY → COMMENTARY → REPORT']
 };
 var VIEW_SEQ={
   overview:[['INGEST','Loading GL extracts — 400+ entities across Oracle Fusion','orange'],['MAP','Applying IC relationship map — 2,420 combinations','orange'],['MATCH','Two-sided matching engine running — comparing entity pairs','orange'],['CLASSIFY','Classifying exceptions: 1×FX gap, 2×timing diffs','warn'],['COMMENTARY','Generating analysis and resolution recommendations','orange'],['REPORT','May-26 reconciliation pack ready — 7/10 matched','ok']],
   ic:[['MATCH','Refreshing IC pair status for May-26','orange'],['CLASSIFY','Categorising 3 unmatched items by exception type','warn'],['COMMENTARY','Analysis available for IC-04, IC-06, IC-09','ok']],
   brs:[['INGEST','Pulling bank statements — Emirates NBD, ADCB, FAB, Mashreq','orange'],['MAP','Mapping transactions to GL accounts','orange'],['MATCH','BRS: 94% auto-match rate — 3 reconciling items flagged','ok']],
-  open:[['CLASSIFY','6 open items — 3 IC, 3 BRS — ranked by risk','warn'],['COMMENTARY','Resolution actions generated for all items','ok']],
   agents:[['INGEST','Standing by — next run 06:00, 15-Jun-26','ok'],['MATCH','Last run confidence: 97.3% on matched pairs','ok']]
 };
 
@@ -435,7 +429,6 @@ function go(view){
     if(view==='overview')renderOverview();
     else if(view==='ic')renderIC();
     else if(view==='brs')renderBRS();
-    else if(view==='open')renderOpen();
     else if(view==='agents')renderAgents();
   },Math.max(seq.length*220+200,420));
 }
@@ -459,7 +452,7 @@ function renderOverview(){
     +kpi('Pairs Matched','7 / 10','70% · May-26 run complete','ok')
     +kpi('IC Open','AED 2.6M','3 items: 1 FX + 2 timing','risk')
     +kpi('BRS Auto-match','94%','3 reconciling items','warn')
-    +kpi('Open Items Queue','6','Pre-close action required','warn')
+    +kpi('Open Items Queue','6','3 IC · 3 BRS — see below','warn')
     +kpi('Run Time','4m 12s','vs 2–3 days manual','ok')
     +'</div>';
   h+='<div class="acard"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Sage Commentary — May-26 Reconciliation</h3></div>'
@@ -477,6 +470,34 @@ function renderOverview(){
   });
   h+='</tbody></table></div>';
   el('content').innerHTML=h;
+}
+
+/* ── Open Items inline section ── */
+function openItemsSection(typePrefix){
+  var items=OPEN_ITEMS.filter(function(o){return o.type.indexOf(typePrefix)===0;});
+  if(!items.length)return '';
+  var totalAmt=items.reduce(function(s,o){return s+o.amount;},0);
+  var h='<div id="open-items-section" style="margin-top:22px">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  h+='<h2 style="font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px">'
+    +'<span style="width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block;flex-shrink:0"></span>'
+    +'Open Items</h2>';
+  h+='<span style="font-size:11px;color:var(--ink-3)">'+items.length+' item'+(items.length>1?'s':'')+' · AED '+totalAmt.toLocaleString()+' · pre-close action required</span>';
+  h+='</div>';
+  h+='<div class="tbl-wrap"><table>'
+    +'<thead><tr><th>ID</th><th>Entity</th><th>Description</th><th class="num">Amount (AED)</th><th>Action Required</th><th>Risk</th></tr></thead><tbody>';
+  items.forEach(function(o){
+    var rc=o.risk==='low'?'ok':o.risk==='medium'?'warn':'risk';
+    h+='<tr><td class="mono">'+o.id+'</td>'
+      +'<td class="mono" style="font-size:11.5px">'+o.entity+'</td>'
+      +'<td style="font-size:12px">'+o.desc+'</td>'
+      +'<td class="num">'+o.amount.toLocaleString()+'</td>'
+      +'<td style="font-size:12px;color:var(--ink-2)">'+o.action+'</td>'
+      +'<td>'+pill(o.risk.charAt(0).toUpperCase()+o.risk.slice(1),rc)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='</div>';
+  return h;
 }
 
 /* ── IC Pairs ── */
@@ -500,6 +521,7 @@ function renderIC(){
       +'<td>'+statusPill(p)+'</td></tr>';
   });
   h+='</tbody></table></div>';
+  h+=openItemsSection('IC');
   el('content').innerHTML=h;
 }
 
@@ -714,6 +736,7 @@ function renderBRS(){
       +'<td>'+(b.status==='matched'?pill('✓ Matched','ok'):pill('Reconciling','warn'))+'</td></tr>';
   });
   h+='</tbody></table></div>';
+  h+=openItemsSection('BRS');
   el('content').innerHTML=h;
 }
 
@@ -734,27 +757,6 @@ function openBRSDrawer(id){
   openDrawer(h);
 }
 
-/* ── Open Items ── */
-function renderOpen(){
-  var h='<div class="kpi-row">'
-    +kpi('Total Open','6','Pre-close sign-off queue','risk')
-    +kpi('IC Items','3','IC-04, IC-06, IC-09','risk')
-    +kpi('BRS Items','3','Standard timing, no control risk','warn')
-    +kpi('High Risk','0','No unexplained variances','ok')
-    +kpi('Expected Clear','1-Jun-26','Timing items self-clear','ok')
-    +'</div>';
-  h+='<div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Type</th><th>Entity</th><th>Description</th><th class="num">Amount (AED)</th><th>Action</th><th>Risk</th></tr></thead><tbody>';
-  OPEN_ITEMS.forEach(function(o){
-    var rc=o.risk==='low'?'ok':o.risk==='medium'?'warn':'risk';
-    h+='<tr><td class="mono">'+o.id+'</td><td>'+pill(o.type,'ink')+'</td><td class="mono" style="font-size:11.5px">'+o.entity+'</td>'
-      +'<td style="font-size:12px">'+o.desc+'</td>'
-      +'<td class="num">'+o.amount.toLocaleString()+'</td>'
-      +'<td style="font-size:12px;color:var(--ink-2)">'+o.action+'</td>'
-      +'<td>'+pill(o.risk.charAt(0).toUpperCase()+o.risk.slice(1),rc)+'</td></tr>';
-  });
-  h+='</tbody></table></div>';
-  el('content').innerHTML=h;
-}
 
 /* ── Agents ── */
 function renderAgents(){

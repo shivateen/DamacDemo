@@ -47,6 +47,7 @@
   }
   .card{border:0.5px solid var(--bd3); border-radius:var(--r-lg); padding:0.9rem 1rem; background:var(--bg1);}
   .mcard{background:var(--bg2); border-radius:var(--r-md); padding:0.6rem 0.8rem;}
+  select.fsel{font-family:var(--font);font-size:12px;color:var(--tx1);background:var(--bg2);border:0.5px solid var(--bd2);border-radius:var(--r-md);padding:5px 10px;cursor:pointer;outline:none;min-width:160px;}
   .pill{font-size:11px; padding:3px 9px; border-radius:99px; display:inline-flex; align-items:center; gap:4px;}
   .secthead{font-size:12px; font-weight:500; color:var(--tx2); margin:0 0 6px; text-transform:none;}
   table.brk{width:100%; border-collapse:collapse; font-size:13px;}
@@ -204,14 +205,21 @@ var DEMO_LINKS = {
 };
 
 (function(){
-  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, aiProj:null, pending:[]};
+  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, aiProj:null, pending:[], filterEntity:"all", filterVertical:"all"};
   var navByPersona={
     cfo:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"],["engagements","Special AI projects","ti-robot"]],
     analyst:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"]]
   };
 
   /* ---------------- data: home KPIs ---------------- */
-  var kpis=[["Group cash","AED 8.4B","+0.6B vs plan","success"],["Liquidity","AED 12.1B","9.2 mo opex","success"],["YTD collections","AED 6.7B","94% target","warning"],["EBITDA margin","34.2%","+1.4 pts","success"],["Escrow (RERA)","AED 5.2B","42 accounts","info"],["Forecast acc.","96%","13-wk","success"]];
+  var kpis=[
+    ["Group cash","AED 8.4B","+0.6B vs plan","success",["tower","treasury"]],
+    ["Liquidity","AED 12.1B","9.2 mo opex","success",["insightDetail","liquidity"]],
+    ["YTD Revenue","AED 12.3B","+18% YoY","success",["insightDetail","ytdrevenue"]],
+    ["YTD EBITDA","AED 4.1B","+23% YoY","success",["insightDetail","ytdebitda"]],
+    ["EBITDA margin","34.2%","+1.4 pts","success",["insightDetail","ebitda"]],
+    ["Compliance","100% on-time","CT 45% ready","warning",["tower","tax"]]
+  ];
 
   /* ---------------- data: functions (towers) ---------------- */
   var towers=[
@@ -327,7 +335,19 @@ var DEMO_LINKS = {
      deep:"The 40 bps improvement over eight quarters came from refinancing the syndicated facility and favourable repricing on bilaterals. The structural opportunity is behavioural: with T+1 visibility, treasury borrows precautionary buffers it often doesn't need. The AI 13-week forecast in pilot is showing 96% accuracy — confidence that supports running thinner buffers, worth an estimated 15-25 bps. The 2027 sukuk (AED 2.3B) is the next maturity event to position for, ideally 9-12 months ahead.",
      brk:{cols:["Instrument","Outstanding","Rate","Maturity"],rows:[["Sukuk","AED 2.3B","5.1%","2027"],["Syndicated facility","AED 2.6B","4.6%","2028"],["Bilateral facilities","AED 1.8B","4.9%","2026-27"],["Blended","AED 6.7B","4.8%","—"]]},
      drivers:["Syndicated refinancing completed below budget","Bilateral repricing on improved credit profile","Precautionary buffers still inflating drawn balances"],
-     qs:["What is the debt maturity profile?","How would better forecasting cut funding cost?","When should we position for the 2027 sukuk?"]}
+     qs:["What is the debt maturity profile?","How would better forecasting cut funding cost?","When should we position for the 2027 sukuk?"]},
+    {id:"ytdrevenue",l:"YTD Revenue",v:"AED 12.3B",c:"+18% YoY",t:"success",sp:[7.2,7.8,8.4,8.9,9.5,10.3,11.2,12.3],axis:"AED B",
+     n:"Revenue is AED 12.3B year to date, 4.2% ahead of budget. Premium launch pricing and strong unit volumes are the primary drivers; hospitality is recovering ahead of expectations.",
+     deep:"The AED 12.3B YTD compares to a budget of AED 11.8B (+4.2%) and AED 10.4B in the prior year (+18% YoY). The outperformance decomposes as: +2.4 pts from premium launch pricing, +1.1 pts from volume, and +0.7 pts from product mix shift toward higher-margin units. Hospitality contributes AED 1.2B YTD, recovering ahead of plan. The current run-rate implies a full-year number of AED 20–21B if H2 trajectory holds.",
+     brk:{cols:["Segment","AED B","% of total","YoY"],rows:[["Development","10.4","85%","+16%"],["Hospitality","1.2","10%","+28%"],["Other","0.7","5%","+12%"],["Group total","12.3","100%","+18%"]]},
+     drivers:["Premium launch pricing +2.4 pts vs budget","Unit volume above absorption plan","Hospitality recovery tracking ahead of forecast"],
+     qs:["Break down revenue by segment","What is the full-year revenue forecast?","How does pricing compare to last year?"]},
+    {id:"ytdebitda",l:"YTD EBITDA",v:"AED 4.1B",c:"+23% YoY",t:"success",sp:[2.2,2.4,2.7,2.9,3.2,3.5,3.8,4.1],axis:"AED B",
+     n:"EBITDA of AED 4.1B is 6.1% ahead of budget and 23% ahead of last year. Revenue outperformance and G&A discipline are the drivers; construction cost inflation on two sites is the forward watch.",
+     deep:"The AED 0.6B EBITDA beat vs budget decomposes as: AED 0.5B from revenue outperformance flowing through at margin, AED 0.15B from G&A running below budget on headcount phasing, partly offset by AED 0.05B of cost headwinds on Lagoons cluster F and Hills 2. Development contributes AED 3.25B at 31.2% margin; hospitality adds AED 0.27B at 22.4%. If construction cost drift on the two watch sites spreads, development margin gives back 0.5–0.8 pts over four quarters.",
+     brk:{cols:["Segment","EBITDA","Margin","YoY"],rows:[["Development","AED 3.25B","31.2%","+1.1 pts"],["Hospitality","AED 0.27B","22.4%","+0.3 pts"],["G&A (cost centre)","(AED 0.75B)","6.1% of rev","-0.4 pts"],["Group EBITDA","AED 4.1B","34.2%","+1.4 pts"]]},
+     drivers:["Revenue 4.2% ahead of budget flows through at margin","G&A AED 14M below budget on headcount phasing","Hospitality recovery contributing modestly"],
+     qs:["What is the EBITDA bridge vs budget?","Which segment is driving margin expansion?","What could erode EBITDA in H2?"]}
   ];
 
   /* ---------------- data: engagement ---------------- */
@@ -623,21 +643,60 @@ var DEMO_LINKS = {
 
   /* ---------------- render: home ---------------- */
   function homeHtml(){
-    var k=kpis.map(function(x){return '<div class="mcard"><div style="font-size:12px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:19px; font-weight:500; line-height:1.2;">'+x[1]+'</div><div style="font-size:11px; color:'+toneCol(x[3])+';">'+x[2]+'</div></div>';}).join("");
+    var k=kpis.map(function(x){
+      var linked=!!x[4];
+      var attrs=linked?' class="mcard kpi-link" data-screen="'+x[4][0]+'" data-arg="'+x[4][1]+'" title="Open '+x[0]+' detail"':' class="mcard"';
+      var cursor=linked?' cursor:pointer;':'';
+      return '<div'+attrs+' style="'+cursor+'">'
+        +'<div style="font-size:12px; color:var(--tx2); display:flex; align-items:center; gap:4px;">'+x[0]+(linked?'<i class="ti ti-chevron-right" style="font-size:10px; color:var(--tx3);" aria-hidden="true"></i>':'')+'</div>'
+        +'<div style="font-size:19px; font-weight:500; line-height:1.2;">'+x[1]+'</div>'
+        +'<div style="font-size:11px; color:'+toneCol(x[3])+';">'+x[2]+'</div>'
+        +'</div>';
+    }).join("");
     var t=towers.map(function(x){var s=stat[x.status];
       return '<button class="twr" data-id="'+x.id+'" style="text-align:left; cursor:pointer; border:0.5px solid var(--bd3); background:var(--bg1); border-radius:var(--r-md); padding:0.75rem 0.8rem; display:flex; flex-direction:column; gap:6px;">'+
         '<div style="display:flex; align-items:center; justify-content:space-between; width:100%;"><div class="'+x.ramp+'" style="width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center;"><i class="ti '+x.icon+'" style="font-size:17px;" aria-hidden="true"></i></div><i class="ti ti-chevron-right" style="font-size:15px; color:var(--tx3);" aria-hidden="true"></i></div>'+
         '<div style="font-size:13px; font-weight:500; line-height:1.25;">'+x.name+'</div>'+
         '<div style="font-size:11px; color:var(--tx2);">'+x.metric+'</div>'+
         '<div style="font-size:11px; color:'+toneCol(s[0])+';"><i class="ti '+s[2]+'" style="font-size:10px;" aria-hidden="true"></i> '+s[1]+'</div></button>';}).join("");
-    return '<div style="font-size:15px; font-weight:500; margin-bottom:8px;">Key Performance Indicators (KPIs)</div>'+
-      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:9px; margin-bottom:1.2rem;">'+k+'</div>'+
+    var filters=
+      '<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">'
+      +'<div style="display:flex; align-items:center; gap:6px;">'
+      +'<span style="font-size:11px; color:var(--tx2); white-space:nowrap;">Entity</span>'
+      +'<select id="filterEntity" class="fsel">'
+      +'<option value="all">Select all</option>'
+      +'<option value="damac-prop">DAMAC Properties LLC</option>'
+      +'<option value="damac-intl">DAMAC International</option>'
+      +'<option value="damac-hotels">DAMAC Hotels &amp; Resorts</option>'
+      +'<option value="damac-maison">DAMAC Maison</option>'
+      +'<option value="cavalli">Cavalli Estates LLC</option>'
+      +'<option value="amali">Amali Islands LLC</option>'
+      +'</select></div>'
+      +'<div style="display:flex; align-items:center; gap:6px;">'
+      +'<span style="font-size:11px; color:var(--tx2); white-space:nowrap;">Vertical</span>'
+      +'<select id="filterVertical" class="fsel">'
+      +'<option value="all">Select all</option>'
+      +'<option value="dev">Real Estate Development</option>'
+      +'<option value="hosp">Hospitality</option>'
+      +'<option value="retail">Commercial &amp; Retail</option>'
+      +'<option value="invest">Investment Holdings</option>'
+      +'</select></div>'
+      +'</div>';
+    return '<div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">'
+      +'<div style="font-size:15px; font-weight:500;">Key Performance Indicators (KPIs)</div>'
+      +'</div>'
+      +filters
+      +'<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:9px; margin-bottom:1.2rem;">'+k+'</div>'+
       '<div class="secthead">Finance functions · click any function to open its full page</div>'+
       '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:9px; margin-bottom:1rem;">'+t+'</div>'+
       '<div class="mcard" style="display:flex; align-items:center; gap:10px;"><i class="ti ti-microphone" style="font-size:20px; color:var(--tx-info);" aria-hidden="true"></i><div style="font-size:13px; color:var(--tx2);">Try the voice assistant: <span style="color:var(--tx1);">"How is liquidity?" · "Open treasury" · "What is the engagement status?" · "Which projects are at risk?"</span></div></div>';
   }
   function bindHome(){
     Array.prototype.forEach.call(document.querySelectorAll(".twr"),function(b){b.onclick=function(){go("tower",b.getAttribute("data-id"));};});
+    Array.prototype.forEach.call(document.querySelectorAll(".kpi-link"),function(b){b.onclick=function(){go(b.getAttribute("data-screen"),b.getAttribute("data-arg"));};});
+    var fe=document.getElementById("filterEntity"), fv=document.getElementById("filterVertical");
+    if(fe){fe.value=S.filterEntity; fe.onchange=function(){S.filterEntity=fe.value;};}
+    if(fv){fv.value=S.filterVertical; fv.onchange=function(){S.filterVertical=fv.value;};}
   }
 
   /* ---------------- render: function page ---------------- */
