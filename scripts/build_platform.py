@@ -91,14 +91,33 @@ def build_command():
   if(window.parent===window) return;  // only when embedded in shell
 
   // ── Wire DEMO_LINKS to platform shell navigation ──────────────────────────
-  // demoBtn() checks DEMO_LINKS[key] and renders an <a href="..."> if set.
-  // We use sentinel hrefs so a click interceptor can route them via postMessage.
+  // launchActivity() and demoBtn() both use DEMO_LINKS[key] to route actions.
+  // Sentinel hrefs trigger either a hashchange (launchActivity path) or a
+  // click intercept (demoBtn <a> path), both of which postMessage to the shell.
   if(typeof DEMO_LINKS !== 'undefined'){
-    DEMO_LINKS.tb       = '#__closeiq';
+    DEMO_LINKS.monthend = '#__closeiq';  // Controllership launchActivity key
+    DEMO_LINKS.tb       = '#__closeiq';  // CFO engagements demoBtn key (backward compat)
     DEMO_LINKS.variance = '#__closeiq';
     DEMO_LINKS.recon    = '#__reconiq';
     DEMO_LINKS.payments = '#__reconiq';
   }
+
+  // hashchange: catches launchActivity()'s window.location.href = '#__...'
+  window.addEventListener('hashchange', function(){
+    var h = window.location.hash;
+    var ov = document.getElementById('activityOverlay');
+    if(h === '#__closeiq'){
+      if(ov) ov.style.display = 'none';
+      history.replaceState(null,'',window.location.pathname);
+      window.parent.postMessage({__navTo:'closeiq'},'*');
+    } else if(h === '#__reconiq'){
+      if(ov) ov.style.display = 'none';
+      history.replaceState(null,'',window.location.pathname);
+      window.parent.postMessage({__navTo:'reconiq'},'*');
+    }
+  });
+
+  // click interceptor: catches demoBtn <a href="#__..."> links (CFO engagements)
   document.addEventListener('click', function(e){
     var t = e.target;
     while(t && t.tagName !== 'A') t = t.parentElement;
