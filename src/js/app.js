@@ -150,7 +150,7 @@ function updateFreshness(){
 const TITLES={
  sources:['Data Sources','Connect or upload source-system extracts · agents ingest and map'],
  exec:['Executive Close Summary','Group consolidated · 10 entities · live drill-down enabled'],
- modB:['Month-End Pack & Variance','Module B · 7 comparison layers · multi-audience output'],
+ modB:['Variance Analysis','7 comparison layers · MoM · QoQ · YTD · Budget · multi-audience output'],
  modA:['Trial Balance Scrutiny','Module A · balance-sheet cleanup · recommended actions'],
  modC:['Intercompany Reconciliation','Module C · ~400 entities · extensible matching platform'],
  je:['JE Accrual Sub-Process','16-step PO-accrual automation · human-in-the-loop posting'],
@@ -691,6 +691,19 @@ function buildExec(){
       <div><div class="kpi-val num" style="font-size:24px;color:var(--ok)">~22 days</div><div class="mini muted">controller capacity returned per month across 10 entities</div></div>
       <div><div class="kpi-val num" style="font-size:24px;color:var(--orange-soft)">${fmt(45700000)}</div><div class="mini muted">P&L + cash opportunity surfaced in month one — exceeds the cost of the programme</div></div>
     </div>
+  </div>
+
+  <div class="card" style="margin-top:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="tag-ag">CFO PACK</span>
+        <span class="chip ok" style="font-size:10px">READY</span>
+      </div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:3px">Month-End Close Pack · May 2026</div>
+      <div class="mini muted">Commentary drafted by Sage · data live from TB ${(()=>{const av=(DATA.tbVersions||[]).find(v=>v.status==='approved');return av?av.version:'—';})()}  · audience: ${(()=>typeof bAudience!=='undefined'?bAudience:'CFO')()} view</div>
+    </div>
+    <button class="btn" onclick="exportPack()"><svg viewBox='0 0 24 24' width='14' height='14' style='vertical-align:-2px;margin-right:5px'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Export pack (PPT)</button>
+    <button class="btn" onclick="emailPack()"><svg viewBox='0 0 24 24' width='14' height='14' style='vertical-align:-2px;margin-right:5px' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email to CFO</button>
   </div>`;
   return wrap;
 }
@@ -745,8 +758,6 @@ function renderModB(){
      <div class="seg" id="audSeg">${AUD.map(a=>`<button onclick="setAud('${a}')" class="${a===bAudience?'on':''}">${a}</button>`).join('')}</div></div>
      <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
        ${(()=>{const av=(DATA.tbVersions||[]).find(v=>v.status==='approved');return av?`<span class="tv-ver-pill" onclick="go('sources')" title="Click to view TB version history">TB ${av.version} · Approved ✓</span>`:'';})()}
-       <button class="btn" style="align-self:flex-end" onclick="exportPack()"><svg viewBox='0 0 24 24'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Export pack (PPT)</button>
-       <button class="btn" style="align-self:flex-end" onclick="emailPack()"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email pack</button>
      </div>
    </div>
    <div id="bBody"></div>
