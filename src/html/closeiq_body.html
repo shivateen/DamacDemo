@@ -117,6 +117,9 @@
   <div class="sage-controls">
     <button class="mode-pill" id="aiMode" onclick="connectAI()" title="Reasoning mode">● Sonnet 4.6</button>
     <select class="voice-sel" id="voiceSel" onchange="setVoice(this.value)" title="Voice"></select>
+    <button class="mode-pill" id="sageMuteBtn" onclick="toggleSageMute()" title="Mute / unmute voice" style="display:flex;align-items:center;gap:4px">
+      <svg id="sageMuteIcon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+    </button>
     <div class="lang-toggle"><button class="on" id="langEN" onclick="setLang('en')">EN</button><button id="langAR" onclick="setLang('ar')">عربي</button></div>
   </div>
   <div class="sage-body" id="sageBody"></div>

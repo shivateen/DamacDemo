@@ -1967,6 +1967,57 @@ function renderProcessFlow(){
 /* ================= SAGE ASSISTANT ================= */
 let SAGE_LANG='en';
 let sageOpened=false;
+let SAGE_MUTED=false;
+function toggleSageMute(){
+  SAGE_MUTED=!SAGE_MUTED;
+  if(SAGE_MUTED&&window.speechSynthesis)speechSynthesis.cancel();
+  const btn=el('sageMuteBtn');const icon=el('sageMuteIcon');
+  if(btn){btn.style.opacity=SAGE_MUTED?'0.45':'1';btn.title=SAGE_MUTED?'Unmute voice':'Mute voice';}
+  if(icon){
+    icon.innerHTML=SAGE_MUTED
+      ?'<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'
+      :'<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/>';
+  }
+}
+function inlineMd(t){
+  return t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*([^*]+?)\*/g,'<em>$1</em>').replace(/`([^`]+?)`/g,'<code style="font-family:var(--mono);background:var(--panel-2);padding:1px 4px;border-radius:3px;font-size:11px">$1</code>');
+}
+function renderSageMd(text){
+  const lines=text.split('\n');
+  let html='',tableRows=[],listItems=[],listType='';
+  function flushTable(){
+    if(!tableRows.length)return;
+    const data=tableRows.filter(r=>!/^\|[\s\-:|]+\|/.test(r.trim()));
+    let thead='',tbody='';
+    data.forEach((row,i)=>{
+      const cells=row.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+      if(i===0)thead=`<thead><tr>${cells.map(c=>`<th>${inlineMd(c)}</th>`).join('')}</tr></thead>`;
+      else tbody+=`<tr>${cells.map(c=>`<td>${inlineMd(c)}</td>`).join('')}</tr>`;
+    });
+    html+=`<table class="sage-tbl">${thead}<tbody>${tbody}</tbody></table>`;
+    tableRows=[];
+  }
+  function flushList(){
+    if(!listItems.length)return;
+    const tag=listType==='ol'?'ol':'ul';
+    html+=`<${tag} style="margin:4px 0 4px 16px;padding:0">${listItems.map(i=>`<li style="margin:2px 0">${i}</li>`).join('')}</${tag}>`;
+    listItems=[];listType='';
+  }
+  lines.forEach(line=>{
+    const t=line.trim();
+    if(/^\|.+\|$/.test(t)){flushList();if(!/^\|[\s\-:|]+\|$/.test(t))tableRows.push(t);return;}
+    if(tableRows.length)flushTable();
+    const bm=t.match(/^[-*]\s+(.+)/);
+    if(bm){if(listType&&listType!=='ul')flushList();listType='ul';listItems.push(inlineMd(bm[1]));return;}
+    const nm=t.match(/^\d+\.\s+(.+)/);
+    if(nm){if(listType&&listType!=='ol')flushList();listType='ol';listItems.push(inlineMd(nm[1]));return;}
+    flushList();
+    if(!t)html+='<br>';
+    else html+=`<p style="margin:3px 0">${inlineMd(t)}</p>`;
+  });
+  flushTable();flushList();
+  return html;
+}
 const SUGGEST=[
  "What's RE-02's margin this month?",
  'Compare Hospitality and Real Estate',
@@ -2271,7 +2322,7 @@ function renderSuggest(){
 function sageMsg(who,text,rtl){
   const b=el('sageBody');const d=document.createElement('div');
   if(who==='u'){d.className='msg u';d.textContent=text;}
-  else{d.className='msg s'+((rtl||SAGE_LANG==='ar')?' rtl':'');d.innerHTML=`<div class="who">SAGE</div><div class="bubble">${text.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</div>`;}
+  else{d.className='msg s'+((rtl||SAGE_LANG==='ar')?' rtl':'');d.innerHTML=`<div class="who">SAGE</div><div class="bubble">${renderSageMd(text)}</div>`;}
   b.appendChild(d);b.scrollTop=b.scrollHeight;return d;
 }
 function askSage(q){el('sageInput').value=q;sendSage();}
@@ -2555,11 +2606,13 @@ JE ACCRUALS:
 ${jeDump}
 
 RULES:
-- Answer in 2-5 sentences, senior-controller voice
-- Ground every figure in the data above
-- When asked for a recommendation, give one — be decisive
+- Senior-controller voice, decisive, grounded in the data above
+- Use **bold** for key figures and recommendations
+- When data has multiple items (entities, balances, comparisons), use a markdown table with | col | col | format
+- When listing action items or steps, use a numbered list (1. item)
+- For bullet points use - item format
+- Answer 2-5 sentences for simple questions; use tables/lists when comparing or enumerating
 - If asked about something outside the close data, say so honestly
-- Use bold (**text**) for emphasis on key figures and recommendations
 ${SAGE_LANG==='ar'?'- Respond entirely in Arabic.':''}`;
 
   const headers={"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
@@ -2637,7 +2690,7 @@ function humanizeForSpeech(t){
   return s.replace(/\s{2,}/g,' ').trim();
 }
 function speak(text){
-  if(!window.speechSynthesis)return;
+  if(!window.speechSynthesis||SAGE_MUTED)return;
   speechSynthesis.cancel();
   const isAr=SAGE_LANG==='ar';
   const u=new SpeechSynthesisUtterance(humanizeForSpeech(text));
