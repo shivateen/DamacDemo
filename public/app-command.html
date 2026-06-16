@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAMAC Finance Command Center — Tiger</title>
+<title>DAMAC Finance AI Console — Tiger</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
 <style>
   :root{
@@ -75,7 +75,7 @@
     <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:1.4rem;">
       <div style="width:52px; height:52px; border-radius:var(--r-md); background:var(--tx1); color:var(--bg1); display:flex; align-items:center; justify-content:center;"><i class="ti ti-building-skyscraper" style="font-size:30px;" aria-hidden="true"></i></div>
       <div style="text-align:center;">
-        <div style="font-size:17px; font-weight:500;">DAMAC finance command center</div>
+        <div style="font-size:17px; font-weight:500;">DAMAC Finance AI Console</div>
         <div style="font-size:12px; color:var(--tx3);">Powered by Tiger</div>
       </div>
     </div>
@@ -124,13 +124,13 @@
 </div>
 
 <div id="shell" style="display:none; position:relative; min-height:680px; background:var(--bg1); border:0.5px solid var(--bd3); border-radius:var(--r-lg); overflow:hidden;">
-<h2 class="sr-only">DAMAC finance command center: navigation with Home, Insights, Engagements and Threads, full detail pages per finance function, KPI drill-downs with conversational chat, the Tiger engagement tracker in the middle of Wave 1, and a voice assistant available on every screen.</h2>
+<h2 class="sr-only">DAMAC Finance AI Console: navigation with Home, Insights, Engagements and Threads, full detail pages per finance function, KPI drill-downs with conversational chat, the Tiger engagement tracker in the middle of Wave 1, and a voice assistant available on every screen.</h2>
 
 <div style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.2rem; border-bottom:0.5px solid var(--bd3);">
   <div style="display:flex; align-items:center; gap:10px;">
     <div style="width:34px; height:34px; border-radius:var(--r-md); background:var(--tx1); color:var(--bg1); display:flex; align-items:center; justify-content:center;"><i class="ti ti-building-skyscraper" style="font-size:20px;" aria-hidden="true"></i></div>
     <div>
-      <div style="font-size:15px; font-weight:500;">DAMAC finance command center</div>
+      <div style="font-size:15px; font-weight:500;">DAMAC Finance AI Console</div>
       <div id="hdrSub" style="font-size:12px; color:var(--tx3);">Powered by Tiger · Group view · AED · FY2026</div>
     </div>
   </div>
@@ -714,7 +714,7 @@ var DEMO_LINKS = {
       var col=sub[1]>=70?"var(--tx-success)":sub[1]>=55?"var(--tx-warning)":"var(--tx-danger)";
       return '<div style="padding:8px 0; border-bottom:0.5px solid var(--bd3);"><div style="display:flex; align-items:center; gap:10px;"><div style="flex:1; font-size:13px; font-weight:500;">'+sub[0]+'</div><div style="width:110px; height:7px; background:var(--bg2); border-radius:99px; overflow:hidden;"><div style="width:'+sub[1]+'%; height:100%; background:'+col+';"></div></div><div style="width:36px; text-align:right; font-size:12px; color:var(--tx2);">'+sub[1]+'%</div></div><div style="font-size:12px; color:var(--tx2); margin-top:2px;">'+sub[2]+'</div></div>';}).join("");
     var li=function(arr,icon,col){return arr.map(function(i){return '<div style="display:flex; gap:8px; align-items:flex-start; padding:5px 0;"><i class="ti '+icon+'" style="font-size:15px; color:'+col+'; margin-top:2px;" aria-hidden="true"></i><span style="font-size:13px; line-height:1.5;">'+i+'</span></div>';}).join("");};
-    return backBtn("home","Command center")+
+    return backBtn("home","Finance AI Console")+
       '<div style="display:flex; align-items:center; gap:11px; margin-bottom:10px;"><div class="'+x.ramp+'" style="width:38px; height:38px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+x.icon+'" style="font-size:21px;" aria-hidden="true"></i></div><div><div style="font-size:18px; font-weight:500;">'+x.name+'</div><div style="font-size:12px; color:'+toneCol(s[0])+';"><i class="ti '+s[2]+'" style="font-size:10px;" aria-hidden="true"></i> '+s[1]+' · '+x.metric+'</div></div></div>'+
       '<div style="font-size:14px; line-height:1.65; color:var(--tx1); margin-bottom:14px; max-width:760px;">'+x.over+'</div>'+
       '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:16px;">'+st+'</div>'+
@@ -1577,7 +1577,7 @@ var DEMO_LINKS = {
       else if(/tiger/.test(q))navHit=["engagementDetail","tiger","Opening the Tiger transformation program."];
       else if(/engage|program|ai project|special project/.test(q))navHit=["engagements",null,"Opening special AI projects."];
       else if(/thread/.test(q))navHit=["threads",null,"Opening threads."];
-      else if(/home|command/.test(q))navHit=["home",null,"Back to the command center."];
+      else if(/home|command/.test(q))navHit=["home",null,"Back to the Finance AI Console."];
     }
     if(navHit && S.persona!=="cfo" && (navHit[0]==="tower"||navHit[0]==="engagements"||navHit[0]==="engagementDetail")) navHit=null;
     if(navHit){go(navHit[0],navHit[1]); pushMsg("bot",navHit[2]); speak(navHit[2]); return;}
