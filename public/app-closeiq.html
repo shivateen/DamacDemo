@@ -2886,19 +2886,19 @@ const SUGGEST=[
 const SAGE_COMMANDS=[
   {cmd:'/sync',     label:'Sync all sources',         desc:'Pull latest data from all source systems',          action:()=>{closeSage();ingestAll();}},
   {cmd:'/restore',  label:'Restore last session',     desc:'Reload data snapshot from the previous session',    action:()=>{closeSage();preloadAll();}},
-  {cmd:'/cfo',      label:'Open CFO summary',          desc:'Navigate to the executive close summary dashboard', action:()=>go('exec')},
-  {cmd:'/sources',  label:'Go to Data Sources',       desc:'Navigate to the data source connection view',       action:()=>go('sources')},
-  {cmd:'/flow',     label:'Open Close Flow',           desc:'Navigate to the close process flow view',           action:()=>go('flow')},
-  {cmd:'/je',       label:'Open Journal Entries',     desc:'Navigate to journal entry review',                  action:()=>go('je')},
-  {cmd:'/recon',    label:'Open IC Reconciliation',   desc:'Navigate to intercompany reconciliation view',      action:()=>go('modC')},
-  {cmd:'/variance', label:'Open Variance Analysis',   desc:'Budget vs actual decomposition with AI commentary', action:()=>go('modB')},
-  {cmd:'/scrutiny', label:'Open TB Scrutiny',         desc:'Trial balance anomaly detection',                   action:()=>go('modA')},
-  {cmd:'/p13',      label:'Open P13 Consolidation',   desc:'Navigate to the period 13 consolidation view',      action:()=>go('p13')},
-  {cmd:'/forecast', label:'Open Cash Forecast',       desc:'13-week AI cash flow forecast',                     action:()=>go('fc')},
+  {cmd:'/cfo',      label:'Open CFO summary',          desc:'Navigate to the executive close summary dashboard', action:()=>{closeSage();go('exec');}},
+  {cmd:'/sources',  label:'Go to Data Sources',       desc:'Navigate to the data source connection view',       action:()=>{closeSage();go('sources');}},
+  {cmd:'/flow',     label:'Open Close Flow',           desc:'Navigate to the close process flow view',           action:()=>{closeSage();go('flow');}},
+  {cmd:'/je',       label:'Open Journal Entries',     desc:'Navigate to journal entry review',                  action:()=>{closeSage();go('je');}},
+  {cmd:'/recon',    label:'Open IC Reconciliation',   desc:'Navigate to intercompany reconciliation view',      action:()=>{closeSage();go('modC');}},
+  {cmd:'/variance', label:'Open Variance Analysis',   desc:'Budget vs actual decomposition with AI commentary', action:()=>{closeSage();go('modB');}},
+  {cmd:'/scrutiny', label:'Open TB Scrutiny',         desc:'Trial balance anomaly detection',                   action:()=>{closeSage();go('modA');}},
+  {cmd:'/p13',      label:'Open P13 Consolidation',   desc:'Navigate to the period 13 consolidation view',      action:()=>{closeSage();go('p13');}},
+  {cmd:'/forecast', label:'Open Cash Forecast',       desc:'13-week AI cash flow forecast',                     action:()=>{closeSage();go('fc');}},
   {cmd:'/download', label:'Download CFO Pack',        desc:'Generate and download the CFO briefing pack',       action:()=>downloadPack()},
-  {cmd:'/email',    label:'Email CFO Pack',           desc:'Open email composer to send the CFO pack',          action:()=>openEmailModal()},
+  {cmd:'/email',    label:'Email CFO Pack',           desc:'Open email composer to send the CFO pack',          action:()=>{closeSage();openEmailModal();}},
   {cmd:'/agents',   label:'Toggle Agent Rail',        desc:'Show or hide the capability mesh agent rail',       action:()=>toggleRail()},
-  {cmd:'/audit',    label:'Open Audit Trail',         desc:'Open the tamper-evident audit chain viewer',        action:()=>openAudit()},
+  {cmd:'/audit',    label:'Open Audit Trail',         desc:'Open the tamper-evident audit chain viewer',        action:()=>{closeSage();openAudit();}},
   {cmd:'/expand',   label:'Expand / Collapse Sage',   desc:'Toggle Sage between compact and wide mode',         action:()=>toggleSageExpand()},
   {cmd:'/live',     label:'Connect Claude API',       desc:'Authenticate with Claude Sonnet 4.6',               action:()=>connectAI()},
   {cmd:'/mute',     label:'Toggle voice mute',        desc:'Mute or unmute Sage voice output',                  action:()=>toggleSageMute()},
@@ -2922,9 +2922,8 @@ function runSageCmd(cmdStr){
   if(!found)return;
   hideCmdPalette();
   el('sageInput').value='';
-  sageMsg('u',cmdStr);
-  sageMsg('s',`**${found.label}** — running now.`);
-  setTimeout(()=>found.action(),200);
+  // For nav commands that will close Sage, just execute directly
+  found.action();
 }
 
 /* ─── Drag & expand ───────────────────────────────────────────────────────── */
