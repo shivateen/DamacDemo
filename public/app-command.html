@@ -171,7 +171,7 @@
   <div style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1rem; border-bottom:0.5px solid var(--bd3);">
     <div style="display:flex; align-items:center; gap:8px;">
       <span id="voiceDot" style="width:9px; height:9px; border-radius:50%; background:var(--tx3);"></span>
-      <span style="font-size:14px; font-weight:500;">Tiger assistant</span>
+      <span style="font-size:14px; font-weight:500;">Sage</span>
       <span id="voiceState" style="font-size:11px; color:var(--tx3);"></span>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
@@ -1085,7 +1085,7 @@ var DEMO_LINKS = {
       homeHeading:"My performance &amp; KPIs",hdrSub:"Powered by Tiger · FP&A Analyst workspace · AED",
       voiceHint:'"What\'s due today?" · "Open forecasting" · "G&A variance" · "How am I doing?"',
       chips:["What's due today?","Open forecasting","G&A variance","How am I doing?"],
-      intro:"Hi — I'm your Tiger assistant. Ask about your open activities, a workstream, or any department metric. Try 'what's due today' or 'open forecasting', or open an activity to complete it.",
+      intro:"Hi — I'm Sage. Ask about your open activities, a workstream, or any department metric. Try 'what's due today' or 'open forecasting', or open an activity to complete it.",
       qa:[
         [/due|open activit|to.?do|my task|what.*do today|what.*work/,"You have 15 open activities, 8 due this week. Top priority: the Q3 rolling forecast refresh due today and the June budget-variance commentary due tomorrow. Reconciling the cost center master against ERP is overdue and blocked awaiting access from IT.",["Open activities","15 · 8 due this week","warning","Q3 forecast refresh due today"]],
         [/how am i|my performance|on.?time|productiv|am i doing/,"You are tracking well — 94 percent on-time delivery over the last 90 days, 28 tasks completed this month, average turnaround 1.8 days. Five queries are open, two ageing.",["On-time delivery","94%","success","28 done MTD · 1.8 day avg"]],
@@ -1095,7 +1095,7 @@ var DEMO_LINKS = {
       homeHeading:"My queue &amp; KPIs",hdrSub:"Powered by Tiger · Financial Shared Services workspace · AED",
       voiceHint:'"What\'s due today?" · "Open reconciliations" · "Open payments" · "How am I doing?"',
       chips:["What's due today?","Open reconciliations","Open payments","How am I doing?"],
-      intro:"Hi — I'm your Tiger assistant. Ask about reconciliations, payments, exceptions or open items. Try 'what's due today' or 'open reconciliations', or open an activity to complete it.",
+      intro:"Hi — I'm Sage. Ask about reconciliations, payments, exceptions or open items. Try 'what's due today' or 'open reconciliations', or open an activity to complete it.",
       wsShort:{recon:"Reconciliations",payments:"Payments",ar:"Receivables",master:"Master data"},
       kpis:[["Open items","37","12 due today","warning"],["Touchless AP","81%","rising","success"],["Invoices (MTD)","94k","processed","info"],["Auto-match rate","92%","reconciliations","success"],["Payment runs","14","this week","info"],["Open exceptions","210","18 ageing","warning"]],
       activities:[
@@ -1232,7 +1232,7 @@ var DEMO_LINKS = {
       homeHeading:"My close &amp; KPIs",hdrSub:"Powered by Tiger · Controllership workspace · AED",
       voiceHint:'"What\'s due today?" · "Open month-end close" · "Intercompany status" · "Close cycle"',
       chips:["What's due today?","Open month-end close","Intercompany status","Close cycle"],
-      intro:"Hi — I'm your Tiger assistant. Ask about the close, intercompany, consolidation or statutory work. Try 'what's due today' or 'open month-end close', or open an activity to complete it.",
+      intro:"Hi — I'm Sage. Ask about the close, intercompany, consolidation or statutory work. Try 'what's due today' or 'open month-end close', or open an activity to complete it.",
       wsShort:{close:"Month-end",intercompany:"Intercompany",consol:"Consolidation",statutory:"Statutory"},
       kpis:[["Close day","3 / 7","warning"],["Open activities","14","5 due this week","warning"],["IC unmatched","AED 34M","warning"],["Journals (MTD)","2.8k","info"],["Audit adjustments","3","success"],["Controls automated","57%","warning"]],
       activities:[
@@ -1755,7 +1755,7 @@ var DEMO_LINKS = {
       renderNav(); renderMain();
       msgs.length=0;
       pushMsg("bot",(S.persona==="cfo")
-        ? "Hi — I'm your Tiger assistant, available on every screen. Ask about any number, any function, or the AI projects. Say “open treasury” to navigate, or turn on hands-free and we can just talk."
+        ? "Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the AI projects. Say “open treasury” to navigate, or turn on hands-free and we can just talk."
         : op().intro);
     },3000);
   }
@@ -1793,7 +1793,7 @@ var DEMO_LINKS = {
   Array.prototype.forEach.call(document.querySelectorAll(".att"),function(b){b.onclick=function(){addAttach(b.getAttribute("data-t"));};});
   if(window.speechSynthesis)speechSynthesis.onvoiceschanged=function(){};
 
-  pushMsg("bot","Hi — I'm your Tiger assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
+  pushMsg("bot","Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
   renderNav();renderMain();renderChips(chipsByPersona.cfo);
 })();
 </script>
