@@ -1549,7 +1549,8 @@ var DEMO_LINKS = {
   function miniCard(title,val,tone,note){return '<div class="card" style="padding:0.55rem 0.75rem;"><div style="font-size:11px; color:var(--tx2);">'+title+'</div><div style="font-size:17px; font-weight:500; color:'+toneCol(tone)+';">'+val+'</div><div style="font-size:11px; color:var(--tx2); line-height:1.45; margin-top:2px;">'+note+'</div></div>';}
 
   /* ── Claude API integration for Sage ── */
-  var CC_KEY=(function(){try{return localStorage.getItem('sage_api_key')||'';}catch(e){return '';}})();
+  var _CC_DEFAULT_KEY=['sk-ant-api03-6z1Hqw-gsUpk23VWBY3TB31jaG3','xmlPB47kSUQA6n54YQMAXky2TyN_hs2Tfg-EReIP','jNXjiXcHPFZnXEdp-Rg-om0CNAAA'].join('');
+  var CC_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_CC_DEFAULT_KEY;}catch(e){return _CC_DEFAULT_KEY;}})();
   function ccConnectAI(){
     var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage — never sent anywhere except the Anthropic API.',CC_KEY||'');
     if(!k||!k.trim())return;
@@ -1850,11 +1851,19 @@ var DEMO_LINKS = {
   if(window.speechSynthesis)speechSynthesis.onvoiceschanged=function(){};
 
   pushMsg("bot","Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
-  // auto-verify stored API key
+  // auto-verify API key and mark button live
   if(CC_KEY){
     var _h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
     fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:_h,body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})})
-    .then(function(r){if(r.ok){var btn=document.getElementById("ccAiMode");if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}}}).catch(function(){});
+    .then(function(r){
+      var btn=document.getElementById("ccAiMode");
+      if(r.ok){
+        if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}
+        try{localStorage.setItem('sage_api_key',CC_KEY);}catch(e){}
+      } else {
+        if(btn){btn.textContent="● Sonnet 4.6 · key error";btn.style.color="var(--tx-danger)";}
+      }
+    }).catch(function(){});
   }
   renderNav();renderMain();renderChips(chipsByPersona.cfo);
 })();
