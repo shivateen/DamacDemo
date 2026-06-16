@@ -46,6 +46,10 @@
     .c-pink{background:#72243e; color:#f4c0d1;} .c-gray{background:#444441; color:#d3d1c7;}
   }
   .card{border:0.5px solid var(--bd3); border-radius:var(--r-lg); padding:0.9rem 1rem; background:var(--bg1);}
+  .cc-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:6px 0;border-radius:6px;overflow:hidden}
+  .cc-tbl th{background:rgba(240,140,30,.12);color:var(--tx2);font-weight:600;padding:5px 8px;border:1px solid var(--bd3);text-align:left;font-size:11px}
+  .cc-tbl td{padding:4px 8px;border:1px solid var(--bd3);color:var(--tx1);vertical-align:top}
+  .cc-tbl tr:nth-child(even) td{background:var(--bg2)}
   .mcard{background:var(--bg2); border-radius:var(--r-md); padding:0.6rem 0.8rem;}
   select.fsel{font-family:var(--font);font-size:12px;color:var(--tx1);background:var(--bg2);border:0.5px solid var(--bd2);border-radius:var(--r-md);padding:5px 10px;cursor:pointer;outline:none;min-width:160px;}
   .pill{font-size:11px; padding:3px 9px; border-radius:99px; display:inline-flex; align-items:center; gap:4px;}
@@ -1538,11 +1542,27 @@ var DEMO_LINKS = {
     Array.prototype.forEach.call(document.querySelectorAll(".qchip"),function(b){b.onclick=function(){pushMsg("user",b.getAttribute("data-q")); botRespond(b.getAttribute("data-q"));};});
   }
   function pushMsg(role,text,content){msgs.push({role:role,text:text,content:content||""}); renderMsgs();}
+  function renderCCMd(t){
+    if(!t)return '';
+    // tables
+    t=t.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g,function(_,hdr,rows){
+      var ths=hdr.split('|').filter(function(x){return x.trim();}).map(function(x){return '<th>'+x.trim()+'</th>';}).join('');
+      var trs=rows.trim().split('\n').map(function(r){return '<tr>'+r.split('|').filter(function(x){return x.trim();}).map(function(x){return '<td>'+x.trim()+'</td>';}).join('')+'</tr>';}).join('');
+      return '<table class="cc-tbl"><thead><tr>'+ths+'</tr></thead><tbody>'+trs+'</tbody></table>';
+    });
+    // lists
+    t=t.replace(/^(\s*[-*]\s+.+)(\n\s*[-*]\s+.+)*/gm,function(b){return '<ul>'+b.replace(/\s*[-*]\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ul>';});
+    t=t.replace(/^(\s*\d+\.\s+.+)(\n\s*\d+\.\s+.+)*/gm,function(b){return '<ol>'+b.replace(/\s*\d+\.\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ol>';});
+    // inline
+    t=t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>');
+    t=t.replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+    return t;
+  }
   function renderMsgs(){
     var c=document.getElementById("msgs");
     c.innerHTML=msgs.map(function(m){
       if(m.role==="user")return '<div style="align-self:flex-end; max-width:85%; background:var(--tx1); color:var(--bg1); padding:8px 12px; border-radius:14px 14px 3px 14px; font-size:13px; line-height:1.5;">'+m.text+'</div>';
-      return '<div style="align-self:flex-start; max-width:92%;"><div style="background:var(--bg2); padding:8px 12px; border-radius:14px 14px 14px 3px; font-size:13px; line-height:1.55;">'+m.text+'</div>'+(m.content?'<div style="margin-top:7px;">'+m.content+'</div>':'')+'</div>';
+      return '<div style="align-self:flex-start; max-width:92%;"><div style="background:var(--bg2); padding:8px 12px; border-radius:14px 14px 14px 3px; font-size:13px; line-height:1.55;">'+renderCCMd(m.text)+'</div>'+(m.content?'<div style="margin-top:7px;">'+m.content+'</div>':'')+'</div>';
     }).join("");
     c.scrollTop=c.scrollHeight;
   }
@@ -1552,6 +1572,12 @@ var DEMO_LINKS = {
   var _CC_DEFAULT_KEY=['sk-ant-api03-6z1Hqw-gsUpk23VWBY3TB31jaG3','xmlPB47kSUQA6n54YQMAXky2TyN_hs2Tfg-EReIP','jNXjiXcHPFZnXEdp-Rg-om0CNAAA'].join('');
   var CC_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_CC_DEFAULT_KEY;}catch(e){return _CC_DEFAULT_KEY;}})();
   function ccConnectAI(){
+    var btn=document.getElementById("ccAiMode");
+    if(CC_KEY && btn && btn.textContent.indexOf('live')>=0){
+      openChat();
+      pushMsg("bot","Connected to Claude Sonnet 4.6 — ask me anything about the financials, the Tiger program, or any use case.");
+      return;
+    }
     var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage — never sent anywhere except the Anthropic API.',CC_KEY||'');
     if(!k||!k.trim())return;
     CC_KEY=k.trim();
@@ -1560,7 +1586,8 @@ var DEMO_LINKS = {
     .then(function(r){
       if(r.ok){
         try{localStorage.setItem('sage_api_key',CC_KEY);}catch(e){}
-        var btn=document.getElementById("ccAiMode");if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}
+        if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}
+        openChat();
         pushMsg("bot","**Connected to Claude Sonnet 4.6.** I can now answer any question using the full data context — KPIs, finance functions, engagement status, and more.");
       } else {CC_KEY=''; pushMsg("bot","API key check failed — please verify the key and try again.");}
     }).catch(function(e){CC_KEY=''; pushMsg("bot","Connection failed: "+e.message);});
@@ -1653,12 +1680,7 @@ var DEMO_LINKS = {
       botRespondLive(qOrig,function(){pushMsg("bot","I can pull liquidity, collections, project margins, escrow, funding, or any Tiger use case — reconciliation, payments, trial balance scrutiny, variance analysis. Or say 'open treasury' to navigate. What would you like?");});
       return;
     }
-    // scripted match found — try to enrich with Claude if key available, else use scripted
-    if(CC_KEY && !content){
-      botRespondLive(qOrig,function(){pushMsg("bot",text,content);speak(text);});
-    } else {
-      pushMsg("bot",text,content); speak(text);
-    }
+    pushMsg("bot",text,content); speak(text);
   }
 
   /* speech synthesis */
