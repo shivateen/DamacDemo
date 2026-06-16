@@ -269,7 +269,7 @@ tr.tap:hover td{background:var(--panel-2);color:var(--ink)}
 .lang-toggle button{font-size:10px;padding:4px 8px;border-radius:5px;color:var(--ink-3)}
 .lang-toggle button.on{background:var(--orange-tint);color:var(--orange-soft)}
 .sage-head .sage-id{flex:1;min-width:0}
-.sage-x{flex:none;margin-left:auto;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:20px;border:1px solid var(--line);background:var(--panel-2)}
+.sage-x{flex:none;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:20px;border:1px solid var(--line);background:var(--panel-2)}
 .sage-x:hover{background:var(--risk-tint);color:var(--risk);border-color:var(--risk)}
 .sage-controls{display:flex;align-items:center;gap:7px;padding:9px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--panel)}
 .sage-controls .voice-sel{flex:1;min-width:90px;max-width:none}
@@ -304,7 +304,25 @@ tr.tap:hover td{background:var(--panel-2);color:var(--ink)}
 .sage-suggest{display:flex;gap:7px;flex-wrap:wrap;padding:0 16px 10px}
 .sugg{font-size:11px;padding:6px 11px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-2);transition:.15s}
 .sugg:hover{border-color:var(--orange-dim);color:var(--orange-soft)}
-.sage-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px}
+/* expand + drag */
+.sage-head{cursor:grab;}
+.sage-head:active{cursor:grabbing;}
+.sage-head-tools{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.sage-expand{flex:none;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);border:1px solid var(--line);background:var(--panel-2);cursor:pointer;}
+.sage-expand:hover{background:var(--orange-tint);color:var(--orange-soft);border-color:var(--orange-dim);}
+.sage-expand svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.sage.expanded{width:min(720px,96vw);height:min(88vh,920px);}
+.sage.dragged{border-radius:18px;}
+/* command palette */
+.cmd-palette{position:absolute;bottom:65px;left:0;right:0;background:var(--panel);border-top:1px solid var(--line-2);z-index:10;max-height:260px;overflow-y:auto;box-shadow:0 -12px 30px rgba(0,0,0,.28);}
+.cmd-pal-hdr{padding:5px 14px;font-size:9.5px;color:var(--ink-3);font-family:var(--mono);border-bottom:1px solid var(--line);background:var(--panel-2);letter-spacing:.04em;}
+.cmd-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:.1s;border-bottom:1px solid var(--line);}
+.cmd-item:last-child{border-bottom:none;}
+.cmd-item:hover,.cmd-item.sel{background:var(--orange-tint);}
+.cmd-item .ci-key{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--orange-soft);min-width:88px;flex:none;}
+.cmd-item .ci-lbl{font-size:12px;color:var(--ink);flex:none;margin-right:4px;}
+.cmd-item .ci-desc{font-size:11px;color:var(--ink-3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sage-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px;position:relative;}
 .sage-input{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--ink);font-family:inherit;font-size:13px;resize:none;max-height:90px}
 .sage-input:focus{outline:none;border-color:var(--orange-dim)}
 .mic-btn,.send-btn{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;transition:.15s}
@@ -703,10 +721,15 @@ body{background:var(--bg)}
 </button>
 
 <div class="sage" id="sage">
-  <div class="sage-head">
+  <div class="sage-head" id="sageHead">
     <div class="sage-orb" id="sageOrb"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div>
     <div class="sage-id"><div class="n">Sage</div><div class="r" id="sageRole">Finance knowledge assistant</div></div>
-    <div class="sage-x" onclick="closeSage()" title="Close" aria-label="Close">×</div>
+    <div class="sage-head-tools">
+      <button class="sage-expand" id="sageExpandBtn" onclick="toggleSageExpand()" title="Expand Sage">
+        <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      <div class="sage-x" onclick="closeSage()" title="Close" aria-label="Close">×</div>
+    </div>
   </div>
   <div class="sage-controls">
     <button class="mode-pill" id="aiMode" onclick="connectAI()" title="Reasoning mode">● Sonnet 4.6</button>
@@ -719,6 +742,7 @@ body{background:var(--bg)}
   <div class="sage-body" id="sageBody"></div>
   <div class="sage-suggest" id="sageSuggest"></div>
   <div class="voice-hint" id="voiceHint"></div>
+  <div class="cmd-palette" id="cmdPalette" style="display:none;"></div>
   <div class="sage-foot">
     <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Voice"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg></button>
     <textarea class="sage-input" id="sageInput" rows="1" placeholder="Ask about the close, an entity, a variance…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSage()}"></textarea>
@@ -2857,6 +2881,94 @@ const SUGGEST=[
  'What should I approve before signing?',
  "What's our cash position in August?",
 ];
+
+/* ─── Slash commands ──────────────────────────────────────────────────────── */
+const SAGE_COMMANDS=[
+  {cmd:'/sync',     label:'Sync all sources',         desc:'Pull latest data from all source systems',          action:()=>{closeSage();ingestAll();}},
+  {cmd:'/restore',  label:'Restore last session',     desc:'Reload data snapshot from the previous session',    action:()=>{closeSage();preloadAll();}},
+  {cmd:'/cfo',      label:'Open CFO summary',          desc:'Navigate to the executive close summary dashboard', action:()=>go('exec')},
+  {cmd:'/sources',  label:'Go to Data Sources',       desc:'Navigate to the data source connection view',       action:()=>go('sources')},
+  {cmd:'/flow',     label:'Open Close Flow',           desc:'Navigate to the close process flow view',           action:()=>go('flow')},
+  {cmd:'/je',       label:'Open Journal Entries',     desc:'Navigate to journal entry review',                  action:()=>go('je')},
+  {cmd:'/recon',    label:'Open IC Reconciliation',   desc:'Navigate to intercompany reconciliation view',      action:()=>go('modC')},
+  {cmd:'/variance', label:'Open Variance Analysis',   desc:'Budget vs actual decomposition with AI commentary', action:()=>go('modB')},
+  {cmd:'/scrutiny', label:'Open TB Scrutiny',         desc:'Trial balance anomaly detection',                   action:()=>go('modA')},
+  {cmd:'/p13',      label:'Open P13 Consolidation',   desc:'Navigate to the period 13 consolidation view',      action:()=>go('p13')},
+  {cmd:'/forecast', label:'Open Cash Forecast',       desc:'13-week AI cash flow forecast',                     action:()=>go('fc')},
+  {cmd:'/download', label:'Download CFO Pack',        desc:'Generate and download the CFO briefing pack',       action:()=>downloadPack()},
+  {cmd:'/email',    label:'Email CFO Pack',           desc:'Open email composer to send the CFO pack',          action:()=>openEmailModal()},
+  {cmd:'/agents',   label:'Toggle Agent Rail',        desc:'Show or hide the capability mesh agent rail',       action:()=>toggleRail()},
+  {cmd:'/audit',    label:'Open Audit Trail',         desc:'Open the tamper-evident audit chain viewer',        action:()=>openAudit()},
+  {cmd:'/expand',   label:'Expand / Collapse Sage',   desc:'Toggle Sage between compact and wide mode',         action:()=>toggleSageExpand()},
+  {cmd:'/live',     label:'Connect Claude API',       desc:'Authenticate with Claude Sonnet 4.6',               action:()=>connectAI()},
+  {cmd:'/mute',     label:'Toggle voice mute',        desc:'Mute or unmute Sage voice output',                  action:()=>toggleSageMute()},
+  {cmd:'/clear',    label:'Clear chat history',       desc:'Remove all messages from the current conversation', action:()=>{el('sageBody').innerHTML='';renderSuggest();}},
+];
+
+/* ─── Command palette ─────────────────────────────────────────────────────── */
+let _cmdSel=-1, _cmdFiltered=[];
+function showCmdPalette(filter){
+  _cmdFiltered=filter?SAGE_COMMANDS.filter(c=>c.cmd.slice(1).startsWith(filter)||c.label.toLowerCase().includes(filter)):SAGE_COMMANDS;
+  if(!_cmdFiltered.length){hideCmdPalette();return;}
+  if(_cmdSel<0||_cmdSel>=_cmdFiltered.length)_cmdSel=0;
+  const pal=el('cmdPalette');
+  pal.innerHTML='<div class="cmd-pal-hdr">↑↓ navigate &nbsp;·&nbsp; Enter execute &nbsp;·&nbsp; Esc cancel</div>'+
+    _cmdFiltered.map((c,i)=>`<div class="cmd-item${i===_cmdSel?' sel':''}" onclick="runSageCmd('${c.cmd}')"><span class="ci-key">${c.cmd}</span><span class="ci-lbl">${c.label}</span><span class="ci-desc">${c.desc}</span></div>`).join('');
+  pal.style.display='block';
+}
+function hideCmdPalette(){const p=el('cmdPalette');if(p){p.style.display='none';p.innerHTML='';}  _cmdSel=-1;}
+function runSageCmd(cmdStr){
+  const found=SAGE_COMMANDS.find(c=>c.cmd===cmdStr);
+  if(!found)return;
+  hideCmdPalette();
+  el('sageInput').value='';
+  sageMsg('u',cmdStr);
+  sageMsg('s',`**${found.label}** — running now.`);
+  setTimeout(()=>found.action(),200);
+}
+
+/* ─── Drag & expand ───────────────────────────────────────────────────────── */
+let _sageDragged=false,_sageDragPos={left:0,top:0},_sageDragState={active:false,startX:0,startY:0,initLeft:0,initTop:0};
+let _sageExpanded=false;
+function toggleSageExpand(){
+  _sageExpanded=!_sageExpanded;
+  el('sage').classList.toggle('expanded',_sageExpanded);
+  const btn=el('sageExpandBtn');if(!btn)return;
+  btn.title=_sageExpanded?'Collapse Sage':'Expand Sage';
+  btn.querySelector('svg').innerHTML=_sageExpanded
+    ?'<path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>'
+    :'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+}
+function initSageDrag(){
+  const panel=el('sage'),head=el('sageHead');if(!panel||!head)return;
+  function startDrag(cx,cy){
+    const rect=panel.getBoundingClientRect();
+    _sageDragState={active:true,startX:cx,startY:cy,initLeft:rect.left,initTop:rect.top};
+    panel.style.transition='none';
+  }
+  function moveDrag(cx,cy){
+    if(!_sageDragState.active)return;
+    const dx=cx-_sageDragState.startX,dy=cy-_sageDragState.startY;
+    if(!_sageDragged&&Math.abs(dx)+Math.abs(dy)>6){
+      _sageDragged=true;panel.classList.add('dragged');
+      panel.style.bottom='auto';panel.style.right='auto';
+    }
+    if(_sageDragged){
+      const w=panel.offsetWidth,h=panel.offsetHeight;
+      const l=Math.max(0,Math.min(window.innerWidth-w,_sageDragState.initLeft+dx));
+      const t=Math.max(0,Math.min(window.innerHeight-h,_sageDragState.initTop+dy));
+      panel.style.left=l+'px';panel.style.top=t+'px';
+      _sageDragPos={left:l,top:t};
+    }
+  }
+  function endDrag(){_sageDragState.active=false;panel.style.transition='.34s cubic-bezier(.4,0,.2,1)';}
+  head.addEventListener('mousedown',e=>{if(e.target.closest('.sage-x,.sage-expand,.sage-orb'))return;e.preventDefault();startDrag(e.clientX,e.clientY);});
+  document.addEventListener('mousemove',e=>{moveDrag(e.clientX,e.clientY);});
+  document.addEventListener('mouseup',endDrag);
+  head.addEventListener('touchstart',e=>{if(e.target.closest('.sage-x,.sage-expand,.sage-orb'))return;const t=e.touches[0];startDrag(t.clientX,t.clientY);},{passive:true});
+  document.addEventListener('touchmove',e=>{if(_sageDragState.active){const t=e.touches[0];moveDrag(t.clientX,t.clientY);}},{passive:true});
+  document.addEventListener('touchend',endDrag);
+}
 // agent sequences per intent — drives the visible "agents working" animation
 function pickAgents(q){
   q=q.toLowerCase();
@@ -3095,9 +3207,21 @@ const AR={
 };
 
 function openSage(){
-  el('sage').classList.add('on'); el('sageFab').style.display='none';
+  const panel=el('sage');
+  if(_sageDragged){panel.style.left=_sageDragPos.left+'px';panel.style.top=_sageDragPos.top+'px';}
+  panel.classList.add('on'); el('sageFab').style.display='none';
   const b=el('sageFab').querySelector('.badge'); if(b)b.remove();
-  if(!sageOpened){ sageOpened=true; renderSuggest(); renderVoicePicker();
+  if(!sageOpened){ sageOpened=true; initSageDrag(); renderSuggest(); renderVoicePicker();
+    // wire input event for slash commands
+    const inp=el('sageInput');
+    inp.addEventListener('input',function(){const v=this.value;if(v.startsWith('/'))showCmdPalette(v.slice(1).toLowerCase());else hideCmdPalette();});
+    inp.addEventListener('keydown',function(e){
+      const pal=el('cmdPalette');if(!pal||pal.style.display==='none')return;
+      if(e.key==='ArrowDown'){e.preventDefault();_cmdSel=Math.min(_cmdSel+1,_cmdFiltered.length-1);showCmdPalette(this.value.slice(1).toLowerCase());}
+      else if(e.key==='ArrowUp'){e.preventDefault();_cmdSel=Math.max(_cmdSel-1,0);showCmdPalette(this.value.slice(1).toLowerCase());}
+      else if(e.key==='Escape'){hideCmdPalette();}
+      else if(e.key==='Tab'&&_cmdFiltered.length){e.preventDefault();this.value=_cmdFiltered[_cmdSel>=0?_cmdSel:0].cmd;showCmdPalette('');}
+    });
     // artifact auto-probe: in Claude.ai artifact runtime the API authenticates transparently;
     // outside artifact, this will fail silently and the user clicks the pill to enter a key
     const probeHeaders={"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
@@ -3159,6 +3283,19 @@ function sageMsg(who,text,rtl){
 function askSage(q){el('sageInput').value=q;sendSage();}
 function sendSage(){
   const inp=el('sageInput');const q=inp.value.trim();if(!q)return;
+  hideCmdPalette();
+  // slash command interception
+  if(q.startsWith('/')){
+    const token=q.split(' ')[0].toLowerCase();
+    const found=SAGE_COMMANDS.find(c=>c.cmd===token);
+    if(found){runSageCmd(found.cmd);return;}
+    // /help — list all commands
+    if(token==='/help'||token==='/'){
+      inp.value='';sageMsg('u',q);
+      sageMsg('s','**Available slash commands:**\n\n'+SAGE_COMMANDS.map(c=>`**${c.cmd}** — ${c.label}: ${c.desc}`).join('\n'));
+      return;
+    }
+  }
   inp.value='';sageMsg('u',q);
   el('sageSuggest').style.display='none';
   runAgentSequence(q);
