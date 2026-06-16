@@ -118,7 +118,7 @@
       <div style="font-size:20px; font-weight:500;">Select your workspace</div>
       <div style="font-size:13px; color:var(--tx2); margin-top:4px;">Signed in as cfo@damac.ae · your command center adapts to your role</div>
     </div>
-    <div id="personaGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px;"></div>
+    <div id="personaGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;"></div>
     <div id="personaMsg" style="text-align:center; font-size:13px; color:var(--tx2); margin-top:18px; min-height:20px;"></div>
   </div>
 </div>
@@ -1692,15 +1692,21 @@ var DEMO_LINKS = {
     {id:"cfo",role:"Chief Financial Officer",name:"Group CFO",icon:"ti-user-star",ramp:"c-blue",
      focus:"Enterprise-wide view across every finance function and the Tiger program",
      fns:["All 8 functions","Board & investors","Capital allocation","Transformation"],live:true},
-    {id:"fpaanalyst",role:"FP&A — Analyst",name:"Senior FP&A Analyst",icon:"ti-chart-dots",ramp:"c-amber",
-     focus:"Variance analysis, budget support and report production",
-     fns:["Variance analysis","Budgeting","Reporting","Data prep"],live:true},
     {id:"fss",role:"Financial Shared Services",name:"FSS Lead",icon:"ti-stack-2",ramp:"c-teal",
      focus:"Reconciliations, payments and the transactional finance engine",
      fns:["Reconciliation","Payments","Receivables","Master data"],live:true},
     {id:"controllership",role:"Controllership",name:"Group Controller",icon:"ti-file-check",ramp:"c-purple",
      focus:"Month-end close, consolidation and the control environment",
-     fns:["Month-end closure","Consolidation","Statutory","Controls"],live:true}
+     fns:["Month-end closure","Consolidation","Statutory","Controls"],live:true},
+    {id:"mis",role:"MIS · Management Information",name:"MIS Lead",icon:"ti-layout-dashboard",ramp:"c-coral",
+     focus:"Management reporting, dashboards and business intelligence across the group",
+     fns:["MI reports","Dashboards","Data governance","Board pack"],live:false},
+    {id:"overheads",role:"Overheads · Cost Management",name:"Head of Overheads",icon:"ti-building",ramp:"c-pink",
+     focus:"G&A cost control, headcount planning and overhead variance management",
+     fns:["G&A tracking","Headcount","Cost centres","Overhead variance"],live:false},
+    {id:"fpaanalyst",role:"FP&A — Analyst",name:"Senior FP&A Analyst",icon:"ti-chart-dots",ramp:"c-amber",
+     focus:"Variance analysis, budget support and report production",
+     fns:["Variance analysis","Budgeting","Reporting","Data prep"],live:true}
   ];
   function renderPersonas(){
     document.getElementById("personaGrid").innerHTML=personas.map(function(p){
