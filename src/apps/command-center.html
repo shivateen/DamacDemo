@@ -175,6 +175,7 @@
       <span id="voiceState" style="font-size:11px; color:var(--tx3);"></span>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
+      <button id="ccAiMode" onclick="ccConnectAI()" title="Connect Claude API for live reasoning" style="font-size:10.5px; padding:4px 8px; border:1px solid var(--bd3); border-radius:6px; background:var(--bg2); cursor:pointer; color:var(--tx2);">● Sonnet 4.6</button>
       <button id="convToggle" class="btn" title="Hands-free conversation: keeps listening after each reply" style="font-size:11px; padding:4px 8px;"><i class="ti ti-refresh" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Hands-free: off</button>
       <button id="chatClose" aria-label="Close assistant" style="border:none; background:none; cursor:pointer; padding:2px; color:var(--tx2);"><i class="ti ti-x" style="font-size:20px;" aria-hidden="true"></i></button>
     </div>
@@ -1547,7 +1548,47 @@ var DEMO_LINKS = {
   }
   function miniCard(title,val,tone,note){return '<div class="card" style="padding:0.55rem 0.75rem;"><div style="font-size:11px; color:var(--tx2);">'+title+'</div><div style="font-size:17px; font-weight:500; color:'+toneCol(tone)+';">'+val+'</div><div style="font-size:11px; color:var(--tx2); line-height:1.45; margin-top:2px;">'+note+'</div></div>';}
 
+  /* ── Claude API integration for Sage ── */
+  var CC_KEY=(function(){try{return localStorage.getItem('sage_api_key')||'';}catch(e){return '';}})();
+  function ccConnectAI(){
+    var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage — never sent anywhere except the Anthropic API.',CC_KEY||'');
+    if(!k||!k.trim())return;
+    CC_KEY=k.trim();
+    var h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})})
+    .then(function(r){
+      if(r.ok){
+        try{localStorage.setItem('sage_api_key',CC_KEY);}catch(e){}
+        var btn=document.getElementById("ccAiMode");if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}
+        pushMsg("bot","**Connected to Claude Sonnet 4.6.** I can now answer any question using the full data context — KPIs, finance functions, engagement status, and more.");
+      } else {CC_KEY=''; pushMsg("bot","API key check failed — please verify the key and try again.");}
+    }).catch(function(e){CC_KEY=''; pushMsg("bot","Connection failed: "+e.message);});
+  }
+  function ccSysPrompt(){
+    var kpiText=kpis.map(function(k){return k[0]+": "+k[1]+" ("+k[2]+")";}).join(", ");
+    var towerText=towers.map(function(t){return t.name+": "+t.metric+" — "+t.sum;}).join("\n");
+    var ucText=useCases.map(function(u){return u.n+" ("+u.fn+"): "+u.pct+"% complete, state: "+u.state+", scope: "+u.scope.join("; ");}).join("\n");
+    return "You are Sage, a finance AI assistant embedded in DAMAC Group's Finance AI Console, built by Tiger Analytics. You are precise, decisive, and grounded in the data below. Answer in 3-5 sentences in a senior CFO-advisor voice. Use **bold** for key figures.\n\nGROUP KPIs: "+kpiText+"\n\nFINANCE FUNCTIONS:\n"+towerText+"\n\nTIGER WAVE 1 USE CASES:\n"+ucText+"\n\nENGAGEMENT: "+prog.value+" program, "+prog.waves+" waves, "+prog.uc+" use cases, started "+prog.start+", sponsor: "+prog.sponsor+". Wave 1 is on track and on budget.\n\nRULES:\n- Ground every figure in the data above\n- If asked something outside this context, say so honestly\n- When asked for a recommendation, give one decisively";
+  }
+  function botRespondLive(q,fallback){
+    if(!CC_KEY){fallback();return;}
+    var h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+    var typing=document.createElement('div');typing.style.cssText='font-size:13px;color:var(--tx3);padding:4px 0;';typing.textContent='Sage is thinking…';
+    document.getElementById("msgs").appendChild(typing);
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,system:ccSysPrompt(),messages:[{role:"user",content:q}]})
+    }).then(function(r){
+      typing.remove();
+      if(!r.ok){fallback();return;}
+      r.json().then(function(d){
+        var txt=(d.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join(' ').trim();
+        if(txt){pushMsg("bot",txt);speak(txt);}else{fallback();}
+      }).catch(function(){fallback();});
+    }).catch(function(){typing.remove();fallback();});
+  }
+
   function botRespond(q){
+    var qOrig=q;
     q=(q||"").toLowerCase();var text,content="";
     if(S.persona!=="cfo"){
       var o=op();
@@ -1606,8 +1647,17 @@ var DEMO_LINKS = {
     else if(/fraud|duplicate|sod|control/.test(q)){text="Zero high-severity findings, but assurance is sample-based. 12 duplicate-payment alerts a month are caught after the fact — the payments use case moves that pre-release. 23 SoD conflicts are open. Continuous monitoring is the Wave 2 answer.";content=miniCard("Risk & controls","0 high findings","success","57% automated · 23 SoD conflicts open");}
     else if(/thread/.test(q)){text="Opened. This thread is voice-first — speak your ideas and attach images, video, documents or data. I can pull live numbers in as we go.";}
     else if(/help|what can you/.test(q)){text="Ask me anything on the numbers — liquidity, DSO, margins, escrow, funding — or the Tiger program and its use cases. I can also navigate: say 'open treasury' or 'show insights'. Turn on hands-free mode and we can just talk.";}
-    else{text="I can pull liquidity, collections, project margins, escrow, funding, or any Tiger use case — reconciliation, payments, trial balance scrutiny, variance analysis. Or say 'open treasury' to navigate. What would you like?";}
-    pushMsg("bot",text,content); speak(text);
+    else{
+      // no scripted match — try Claude API live, then generic fallback
+      botRespondLive(qOrig,function(){pushMsg("bot","I can pull liquidity, collections, project margins, escrow, funding, or any Tiger use case — reconciliation, payments, trial balance scrutiny, variance analysis. Or say 'open treasury' to navigate. What would you like?");});
+      return;
+    }
+    // scripted match found — try to enrich with Claude if key available, else use scripted
+    if(CC_KEY && !content){
+      botRespondLive(qOrig,function(){pushMsg("bot",text,content);speak(text);});
+    } else {
+      pushMsg("bot",text,content); speak(text);
+    }
   }
 
   /* speech synthesis */
@@ -1800,6 +1850,12 @@ var DEMO_LINKS = {
   if(window.speechSynthesis)speechSynthesis.onvoiceschanged=function(){};
 
   pushMsg("bot","Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
+  // auto-verify stored API key
+  if(CC_KEY){
+    var _h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:_h,body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})})
+    .then(function(r){if(r.ok){var btn=document.getElementById("ccAiMode");if(btn){btn.textContent="● Sonnet 4.6 · live";btn.style.color="var(--tx-success)";}}}).catch(function(){});
+  }
   renderNav();renderMain();renderChips(chipsByPersona.cfo);
 })();
 </script>

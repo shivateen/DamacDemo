@@ -3067,13 +3067,14 @@ function connectAI(){
   }).then(r=>{
     if(r.ok){
       window._liveOK=true;
+      try{localStorage.setItem('sage_api_key',LIVE_KEY);}catch(e){}
       const mp=el('aiMode');if(mp){mp.classList.add('live');mp.textContent='● Sonnet 4.6 · live';}
       sageMsg('s','**Connected to Claude Sonnet 4.6.** I now reason live over every entity in this close — ask me anything, however open-ended.');
     } else {
       r.json().then(j=>sageMsg('s','API error: '+(j.error?.message||r.status)+'. Check your key and try again.')).catch(()=>sageMsg('s','API returned '+r.status+'. Check your key.'));
-      LIVE_KEY='';
+      LIVE_KEY=''; try{localStorage.removeItem('sage_api_key');}catch(e){}
     }
-  }).catch(e=>{sageMsg('s','Connection failed: '+e.message);LIVE_KEY='';});
+  }).catch(e=>{sageMsg('s','Connection failed: '+e.message);LIVE_KEY='';try{localStorage.removeItem('sage_api_key');}catch(e){}});
 }
 function renderVoicePicker(){
   const sel=el('voiceSel'); if(!sel)return;
@@ -3335,7 +3336,7 @@ function hosMarginDelta(){
   const cP=DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Direct Cost').reduce((s,r)=>s+r.prior,0);
   return ((rP-cP)/rP*100-(rC-cC)/rC*100);
 }
-let LIVE_KEY=""; // set via connectAI() pill click, or auto-detected in artifact runtime
+let LIVE_KEY=(()=>{try{return localStorage.getItem('sage_api_key')||'';}catch(e){return '';}})(); // persisted across sessions
 function entityContextDump(){
   return DATA.entities.map(e=>{const a=entAgg(e.code);const exc=DATA.scrutiny.filter(s=>s.entity===e.code);
     return e.code+" ("+e.name+", "+e.vertical+"): revenue "+fmt(a.rev)+", EBITDA "+fmt(a.eb)+", margin "+a.mgn.toFixed(1)+"%, MoM "+pct(a.rev,entAgg(e.code,"prior").rev).toFixed(1)+"%"+(exc.length?", open items: "+exc.map(s=>s.acct+" "+fmt(s.amount)+" ("+s.rec+")").join("; "):"");
