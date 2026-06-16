@@ -135,8 +135,15 @@
     </div>
   </div>
   <div style="display:flex; align-items:center; gap:8px;">
-    <button id="hdrMic" class="btn" style="display:flex; align-items:center; gap:6px;"><i class="ti ti-microphone" style="font-size:16px;" aria-hidden="true"></i> Talk to Tiger</button>
+    <button id="hdrMic" class="btn" style="display:flex; align-items:center; gap:6px;"><i class="ti ti-microphone" style="font-size:16px;" aria-hidden="true"></i> Sage</button>
     <span class="pill" style="color:var(--tx-success); background:var(--bg-success);"><i class="ti ti-circle-filled" style="font-size:7px;" aria-hidden="true"></i> Live</span>
+    <div style="display:flex; align-items:center; gap:8px; padding:5px 11px 5px 6px; border:0.5px solid var(--bd3); border-radius:20px; background:var(--bg1);">
+      <div style="width:26px; height:26px; border-radius:50%; background:var(--tx1); color:var(--bg1); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">S</div>
+      <div>
+        <div style="font-size:12px; font-weight:600; line-height:1.15; color:var(--tx1);">Siva</div>
+        <div id="hdrRole" style="font-size:10px; color:var(--tx3); line-height:1.15;">Group Controller</div>
+      </div>
+    </div>
     <button id="hdrSwitch" class="btn" aria-label="Switch workspace" title="Switch workspace" style="padding:7px 9px;"><i class="ti ti-arrows-left-right" style="font-size:17px;" aria-hidden="true"></i></button>
     <button id="hdrLogout" class="btn" aria-label="Log out" title="Log out" style="padding:7px 9px;"><i class="ti ti-logout" style="font-size:17px;" aria-hidden="true"></i></button>
   </div>
@@ -1743,6 +1750,8 @@ var DEMO_LINKS = {
       sh.style.display="block";
       sh.classList.add("fadein");
       document.getElementById("hdrSub").textContent=(S.persona==="cfo")?"Powered by Tiger · Group view · AED · FY2026":op().hdrSub;
+      var roleMap={cfo:"Chief Financial Officer",analyst:"FP&A Analyst",fssc:"FSSC Lead",controllership:"Group Controller",treasury:"Head of Treasury",tax:"Head of Tax",fpa:"Head of FP&A"};
+      document.getElementById("hdrRole").textContent=roleMap[S.persona]||"Group Controller";
       renderNav(); renderMain();
       msgs.length=0;
       pushMsg("bot",(S.persona==="cfo")
