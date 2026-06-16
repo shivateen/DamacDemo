@@ -563,17 +563,80 @@ function buildExec(){
   const cur=consol('cur'),prior=consol('prior'),bud=consol('bud');
   const wrap=document.createElement('div');
   const revD=pct(cur.rev,prior.rev), ebD=pct(cur.ebitda,prior.ebitda), budD=pct(cur.ebitda,bud.ebitda);
-  // hospitality margin finding
   const hosRevC=-DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Revenue').reduce((s,r)=>s+r.cur,0);
   const hosRevP=-DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Revenue').reduce((s,r)=>s+r.prior,0);
   const hosCostC=DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Direct Cost').reduce((s,r)=>s+r.cur,0);
   const hosCostP=DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Direct Cost').reduce((s,r)=>s+r.prior,0);
   const marginC=(hosRevC-hosCostC)/hosRevC*100, marginP=(hosRevP-hosCostP)/hosRevP*100;
-  wrap.innerHTML=`
-  <div class="eyebrow">Close period May 2026 · agents reporting</div>
-  <div class="h1">Group close is on track. Three items need your attention.</div>
-  <p class="lead">Agents have closed and analysed 10 entities. Headline numbers are below — but the close engine surfaced three strategic findings worth <b style="color:var(--orange-soft)">AED 45.7M</b> in combined P&L and cash impact. Each is one click from the underlying transaction.</p>
 
+  // Group KPIs (Command Centre style)
+  const groupKpis=[
+    {l:'YTD Revenue',v:'AED 12.3B',c:'+18% YoY',ok:true},
+    {l:'YTD EBITDA',v:'AED 4.1B',c:'+23% YoY',ok:true},
+    {l:'EBITDA Margin',v:'34.2%',c:'+1.4 pts YoY',ok:true},
+    {l:'Group Cash',v:'AED 8.4B',c:'+0.6B vs plan',ok:true},
+    {l:'Liquidity',v:'AED 12.1B',c:'9.2 mo opex cover',ok:true},
+    {l:'CT Compliance',v:'100% on-time',c:'CT readiness 45%',ok:false}
+  ];
+
+  // Finance function tiles
+  const fnTiles=[
+    {icon:'<path d="M9 11l3 3 8-8M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',label:'Controllership',metric:'Close day 3 · 96% confidence',status:'ok',nav:"go('sources')"},
+    {icon:'<path d="M3 13h4v8H3zM10 3h4v18h-4zM17 9h4v12h-4z"/>',label:'FP&A · Variance',metric:'7 layers · budget vs actual',status:'ok',nav:"go('modB')"},
+    {icon:'<path d="M9 11l3 3 8-8M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>',label:'Trial Balance · Scrutiny',metric:'487 balances · 12 exceptions',status:'ok',nav:"go('modA')"},
+    {icon:'<circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h10M5 8v8M19 8v8M7 18h10"/>',label:'Intercompany · Recon',metric:`${DATA.stats.ic_matched}/${DATA.stats.ic_total} matched · ${fmt(DATA.stats.ic_unmatched_val)} open`,status:'warn',nav:"go('modC')"},
+    {icon:'<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',label:'P13 · Consolidation',metric:'Pending sign-off items',status:'warn',nav:"go('p13')"},
+    {icon:'<path d="M3 17l5-6 4 3 5-7 4 5M3 21h18"/>',label:'Cash Flow Forecast',metric:'6-month projection · live',status:'ok',nav:"go('fc')"}
+  ];
+
+  const kpiCards=groupKpis.map(k=>`
+    <div class="card" style="padding:14px 16px">
+      <div class="kpi-label">${k.l}</div>
+      <div class="kpi-val num" style="font-size:20px;margin:4px 0">${k.v}</div>
+      <div class="mini" style="color:${k.ok?'var(--ok)':'var(--risk)'}">${k.c}</div>
+    </div>`).join('');
+
+  const fnCards=fnTiles.map(t=>`
+    <div class="card tap" style="padding:14px 16px;cursor:pointer" onclick="${t.nav}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--orange-dim,rgba(240,140,30,.15));display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--orange-soft,#F5A93E)" stroke-width="1.8">${t.icon}</svg>
+        </div>
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--ink-3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:3px;color:var(--ink)">${t.label}</div>
+      <div class="mini muted">${t.metric}</div>
+      <div style="width:100%;height:3px;border-radius:2px;background:var(--line);margin-top:10px;overflow:hidden">
+        <div style="height:100%;width:${t.status==='ok'?'92':'48'}%;background:${t.status==='ok'?'var(--ok)':'var(--risk)'}"></div>
+      </div>
+    </div>`).join('');
+
+  wrap.innerHTML=`
+  <!-- ═══ SECTION 1: GROUP COMMAND CENTRE KPIs ═══ -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div class="eyebrow">Group CFO Dashboard · May 2026 · FY2026 YTD</div>
+      <div class="h1" style="margin-bottom:0">Key Performance Indicators</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn pri" onclick="downloadPack()" style="display:flex;align-items:center;gap:6px;padding:9px 16px;font-size:12.5px">
+        <svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2.2'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Download Pack
+      </button>
+      <button class="btn" onclick="emailPack()" style="display:flex;align-items:center;gap:6px;padding:9px 14px;font-size:12.5px">
+        <svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email to CFO
+      </button>
+    </div>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:22px">${kpiCards}</div>
+
+  <!-- ═══ SECTION 2: FINANCE FUNCTIONS ═══ -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <span class="tag-ag">FINANCE FUNCTIONS</span>
+    <span class="muted mini">click any function to open its analysis</span>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:26px">${fnCards}</div>
+
+  <!-- ═══ SECTION 3: CLOSE ANALYSIS ═══ -->
   <div class="insight-band">
     <div class="ib-head">
       <div class="ib-avatar"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div>
@@ -589,9 +652,9 @@ function buildExec(){
   </div>
 
   <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:22px">
-    <div class="card tap" onclick="drillRevenue()"><div class="kpi-label">Group Revenue</div><div class="kpi-val num cu">${fmt(cur.rev)}</div>
+    <div class="card tap" onclick="drillRevenue()"><div class="kpi-label">Group Revenue · May</div><div class="kpi-val num cu">${fmt(cur.rev)}</div>
       <div class="kpi-sub"><span class="${revD>=0?'pos':'neg'}">${revD>=0?'▲':'▼'} ${Math.abs(revD).toFixed(1)}%</span> vs prior month</div></div>
-    <div class="card tap" onclick="drillEbitda()"><div class="kpi-label">EBITDA</div><div class="kpi-val num cu">${fmt(cur.ebitda)}</div>
+    <div class="card tap" onclick="drillEbitda()"><div class="kpi-label">EBITDA · May</div><div class="kpi-val num cu">${fmt(cur.ebitda)}</div>
       <div class="kpi-sub"><span class="${ebD>=0?'pos':'neg'}">${ebD>=0?'▲':'▼'} ${Math.abs(ebD).toFixed(1)}%</span> MoM · <span class="${budD>=0?'pos':'neg'}">${budD>=0?'+':''}${budD.toFixed(1)}%</span> vs budget</div></div>
     <div class="card"><div class="kpi-label">Recoverable on BS</div><div class="kpi-val num cu" style="color:var(--orange-soft)">${fmt(DATA.stats.recoverable)}</div>
       <div class="kpi-sub">flagged by scrutiny agent · 8 items</div></div>
@@ -608,6 +671,7 @@ function buildExec(){
     <div class="vs-item"><div class="vs-n">100%</div><div class="vs-l">Drill-down to transaction</div></div>
   </div>
 
+  <!-- ═══ SECTION 4: STRATEGIC FINDINGS ═══ -->
   <div style="display:flex;align-items:center;gap:10px;margin:26px 0 12px">
     <span class="tag-ag">AGENTS · STRATEGIC FINDINGS</span>
     <span class="muted mini">ranked by impact · click any card to drill to evidence</span>
@@ -636,6 +700,7 @@ function buildExec(){
     </div>
   </div>
 
+  <!-- ═══ SECTION 5: CHARTS ═══ -->
   <div class="grid" style="grid-template-columns:1.15fr .85fr;margin-top:18px">
     <div class="card chart-card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="tag-ag">VARIANCE</span>
@@ -658,6 +723,7 @@ function buildExec(){
     </div>
   </div>
 
+  <!-- ═══ SECTION 6: ENTITY TABLE ═══ -->
   <div class="card" style="margin-top:18px;padding:0;overflow:hidden">
     <div style="display:flex;align-items:center;gap:10px;padding:18px 20px 12px">
       <span class="tag-ag">ENTITY PERFORMANCE</span>
@@ -672,6 +738,7 @@ function buildExec(){
     </tbody></table>
   </div>
 
+  <!-- ═══ SECTION 7: AGENTS AT WORK ═══ -->
   <div class="card" style="margin-top:18px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <span class="tag-ag">AGENTS AT WORK</span>
@@ -693,19 +760,36 @@ function buildExec(){
     </div>
   </div>
 
-  <div class="card" style="margin-top:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-    <div style="flex:1;min-width:200px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span class="tag-ag">CFO PACK</span>
-        <span class="chip ok" style="font-size:10px">READY</span>
+  <!-- ═══ SECTION 8: CFO PACK + DOWNLOAD ═══ -->
+  <div class="card" style="margin-top:18px;background:linear-gradient(135deg,var(--panel) 0%,rgba(240,140,30,.06) 100%);border-color:var(--orange-dim,rgba(240,140,30,.22))">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="tag-ag">CFO PACK</span>
+          <span class="chip ok" style="font-size:10px">READY</span>
+        </div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--ink)">Month-End Close Pack · May 2026</div>
+        <div class="mini muted" style="line-height:1.6">Commentary drafted by Sage · data live from TB ${(()=>{const av=(DATA.tbVersions||[]).find(v=>v.status==='approved');return av?av.version:'—';})()}  · audience: ${(()=>typeof bAudience!=='undefined'?bAudience:'CFO')()} view<br>Includes: executive narrative · EBITDA bridge · entity scorecard · 3 strategic findings · agent audit chain</div>
       </div>
-      <div style="font-size:14px;font-weight:500;margin-bottom:3px">Month-End Close Pack · May 2026</div>
-      <div class="mini muted">Commentary drafted by Sage · data live from TB ${(()=>{const av=(DATA.tbVersions||[]).find(v=>v.status==='approved');return av?av.version:'—';})()}  · audience: ${(()=>typeof bAudience!=='undefined'?bAudience:'CFO')()} view</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <button class="btn pri" onclick="downloadPack()" style="display:flex;align-items:center;gap:7px;padding:10px 20px;font-size:13px;font-weight:600">
+          <svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='2.2'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Download Pack (PPTX)
+        </button>
+        <button class="btn" onclick="emailPack()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;font-size:12.5px">
+          <svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email to CFO
+        </button>
+        <button class="btn" onclick="exportPack()" style="display:flex;align-items:center;gap:7px;padding:8px 16px;font-size:12.5px">
+          <svg viewBox='0 0 24 24' width='14' height='14' fill='none' stroke='currentColor' stroke-width='2'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'/><path d='M17 8l-5-5-5 5M12 3v12'/></svg>Export Pack (PPT)
+        </button>
+      </div>
     </div>
-    <button class="btn" onclick="exportPack()"><svg viewBox='0 0 24 24' width='14' height='14' style='vertical-align:-2px;margin-right:5px'><path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>Export pack (PPT)</button>
-    <button class="btn" onclick="emailPack()"><svg viewBox='0 0 24 24' width='14' height='14' style='vertical-align:-2px;margin-right:5px' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,12 2,6'/></svg>Email to CFO</button>
   </div>`;
   return wrap;
+}
+function downloadPack(){
+  emit('COMMENTARY','CFO pack download initiated','generating PPTX · Sage commentary + data live\nentity scorecard · EBITDA bridge · 3 findings','act');
+  toast('CFO pack download started — PPTX generating');
+  setTimeout(()=>exportPack(),400);
 }
 function findingHospitality(mc,mp){
   emit('COMMENTARY','CFO opened Hospitality margin finding','re-grounding narrative on GL 5100 drivers\nvendor-level cost attribution running','act');
