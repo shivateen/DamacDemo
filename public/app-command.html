@@ -82,6 +82,10 @@
   .cc-sage-pulse{width:7px;height:7px;border-radius:50%;background:#fff;animation:cc-pulse2 1.8s infinite;}
   .cc-sage{position:fixed;bottom:0;right:16px;width:440px;max-width:96vw;height:min(680px,90vh);background:var(--bg1);border:1px solid var(--bd3);border-radius:18px 18px 0 0;z-index:120;display:flex;flex-direction:column;transform:translateY(105%);transition:.34s cubic-bezier(.4,0,.2,1);box-shadow:-20px -10px 60px rgba(0,0,0,.22);overflow:hidden;}
   .cc-sage.on{transform:none;}
+  .cc-sage.expanded{width:min(720px,96vw);height:min(88vh,920px);}
+  .cc-sage.dragged{border-radius:18px;}
+  .cc-sage-head{cursor:grab;}
+  .cc-sage-head:active{cursor:grabbing;}
   .cc-sage-head{padding:16px 18px;border-bottom:1px solid var(--bd3);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg2),var(--bg1));}
   .cc-sage-orb{width:38px;height:38px;border-radius:11px;background:var(--cc-orange-tint);border:1px solid var(--cc-orange-dim);display:flex;align-items:center;justify-content:center;flex:none;position:relative;}
   .cc-sage-orb svg{width:20px;height:20px;stroke:var(--cc-orange-soft);fill:none;stroke-width:1.8;}
@@ -220,7 +224,7 @@
 
 <!-- SAGE PANEL -->
 <div class="cc-sage" id="chatPanel">
-  <div class="cc-sage-head">
+  <div class="cc-sage-head" id="ccSageHead">
     <div class="cc-sage-orb" id="ccSageOrb">
       <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>
     </div>
@@ -228,7 +232,12 @@
       <div class="n">Sage</div>
       <div class="r">Finance AI assistant &nbsp;<span id="voiceState" style="color:var(--tx-success);"></span></div>
     </div>
-    <div class="cc-sage-x" id="chatClose" onclick="closeChat()" title="Close">×</div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+      <button class="cc-sage-x" id="ccExpandBtn" onclick="toggleCCExpand()" title="Expand Sage" style="font-size:13px;">
+        <svg id="ccExpandIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      <div class="cc-sage-x" id="chatClose" onclick="closeChat()" title="Close">×</div>
+    </div>
   </div>
   <div class="cc-sage-controls">
     <button class="cc-mode-pill" id="ccAiMode" onclick="ccConnectAI()" title="Claude Sonnet 4.6 live reasoning">● Sonnet 4.6</button>
@@ -1585,7 +1594,40 @@ var DEMO_LINKS = {
   var chipsByPersona={
     cfo:["How is liquidity?","Special AI projects","Which projects are at risk?","Open treasury"]
   };
-  function openChat(){document.getElementById("chatPanel").classList.add("on"); renderChips(S.persona==="cfo"?chipsByPersona.cfo:op().chips);}
+  /* ── CC Sage drag & expand ── */
+  var _ccExpanded=false,_ccDragged=false,_ccDragPos={left:0,top:0},_ccDS={active:false,startX:0,startY:0,initLeft:0,initTop:0};
+  function toggleCCExpand(){
+    _ccExpanded=!_ccExpanded;
+    var panel=document.getElementById("chatPanel");panel.classList.toggle("expanded",_ccExpanded);
+    var icon=document.getElementById("ccExpandIcon");if(!icon)return;
+    icon.innerHTML=_ccExpanded
+      ?'<path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>'
+      :'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+    document.getElementById("ccExpandBtn").title=_ccExpanded?"Collapse Sage":"Expand Sage";
+  }
+  function initCCSageDrag(){
+    var panel=document.getElementById("chatPanel"),head=document.getElementById("ccSageHead");if(!panel||!head)return;
+    function sD(cx,cy){var r=panel.getBoundingClientRect();_ccDS={active:true,startX:cx,startY:cy,initLeft:r.left,initTop:r.top};panel.style.transition="none";}
+    function mD(cx,cy){if(!_ccDS.active)return;var dx=cx-_ccDS.startX,dy=cy-_ccDS.startY;
+      if(!_ccDragged&&Math.abs(dx)+Math.abs(dy)>6){_ccDragged=true;panel.classList.add("dragged");panel.style.bottom="auto";panel.style.right="auto";}
+      if(_ccDragged){var w=panel.offsetWidth,h=panel.offsetHeight,l=Math.max(0,Math.min(window.innerWidth-w,_ccDS.initLeft+dx)),t=Math.max(0,Math.min(window.innerHeight-h,_ccDS.initTop+dy));panel.style.left=l+"px";panel.style.top=t+"px";_ccDragPos={left:l,top:t};}
+    }
+    function eD(){_ccDS.active=false;panel.style.transition=".34s cubic-bezier(.4,0,.2,1)";}
+    head.addEventListener("mousedown",function(e){if(e.target.closest(".cc-sage-x,.cc-sage-orb"))return;e.preventDefault();sD(e.clientX,e.clientY);});
+    document.addEventListener("mousemove",function(e){mD(e.clientX,e.clientY);});
+    document.addEventListener("mouseup",eD);
+    head.addEventListener("touchstart",function(e){if(e.target.closest(".cc-sage-x,.cc-sage-orb"))return;var t=e.touches[0];sD(t.clientX,t.clientY);},{passive:true});
+    document.addEventListener("touchmove",function(e){if(_ccDS.active){var t=e.touches[0];mD(t.clientX,t.clientY);}},{passive:true});
+    document.addEventListener("touchend",eD);
+  }
+  var _ccDragInit=false;
+  function openChat(){
+    var panel=document.getElementById("chatPanel");
+    if(_ccDragged){panel.style.left=_ccDragPos.left+"px";panel.style.top=_ccDragPos.top+"px";}
+    panel.classList.add("on");
+    if(!_ccDragInit){_ccDragInit=true;initCCSageDrag();}
+    renderChips(S.persona==="cfo"?chipsByPersona.cfo:op().chips);
+  }
   function closeChat(){document.getElementById("chatPanel").classList.remove("on"); stopVoice(); window.speechSynthesis&&speechSynthesis.cancel();}
   function renderChips(arr){
     document.getElementById("chipRow").innerHTML=arr.map(function(c){return '<button class="qchip" data-q="'+c+'">'+c+'</button>';}).join("");

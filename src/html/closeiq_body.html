@@ -109,10 +109,15 @@
 </button>
 
 <div class="sage" id="sage">
-  <div class="sage-head">
+  <div class="sage-head" id="sageHead">
     <div class="sage-orb" id="sageOrb"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div>
     <div class="sage-id"><div class="n">Sage</div><div class="r" id="sageRole">Finance knowledge assistant</div></div>
-    <div class="sage-x" onclick="closeSage()" title="Close" aria-label="Close">×</div>
+    <div class="sage-head-tools">
+      <button class="sage-expand" id="sageExpandBtn" onclick="toggleSageExpand()" title="Expand Sage">
+        <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      <div class="sage-x" onclick="closeSage()" title="Close" aria-label="Close">×</div>
+    </div>
   </div>
   <div class="sage-controls">
     <button class="mode-pill" id="aiMode" onclick="connectAI()" title="Reasoning mode">● Sonnet 4.6</button>
@@ -125,6 +130,7 @@
   <div class="sage-body" id="sageBody"></div>
   <div class="sage-suggest" id="sageSuggest"></div>
   <div class="voice-hint" id="voiceHint"></div>
+  <div class="cmd-palette" id="cmdPalette" style="display:none;"></div>
   <div class="sage-foot">
     <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Voice"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg></button>
     <textarea class="sage-input" id="sageInput" rows="1" placeholder="Ask about the close, an entity, a variance…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSage()}"></textarea>
