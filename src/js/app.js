@@ -2216,8 +2216,11 @@ function openSage(){
   el('sage').classList.add('on'); el('sageFab').style.display='none';
   const b=el('sageFab').querySelector('.badge'); if(b)b.remove();
   if(!sageOpened){ sageOpened=true; renderSuggest(); renderVoicePicker();
-    // artifact auto-probe: try the API silently; flip pill if it responds
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+    // artifact auto-probe: in Claude.ai artifact runtime the API authenticates transparently;
+    // outside artifact, this will fail silently and the user clicks the pill to enter a key
+    const probeHeaders={"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+    if(LIVE_KEY) probeHeaders["x-api-key"]=LIVE_KEY;
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:probeHeaders,
       body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})
     }).then(r=>{if(r.ok||r.status===200){window._liveOK=true;const mp=el('aiMode');if(mp){mp.classList.add('live');mp.textContent='● Sonnet 4.6 · live';}}}).catch(()=>{});
     sageMsg('s', SAGE_LANG==='ar'?'مرحباً، أنا Sage، مساعدك المالي. كيف يمكنني المساعدة في إغلاق هذا الشهر؟':"I'm Sage. I've read every entity in this close and I reason over the live numbers — so ask me anything, not just the obvious. Try a specific entity, a comparison, a ranking, or a decision: \"what's RE-02's margin?\", \"compare Hospitality and Real Estate\", \"which entity grew the most?\", \"what should I approve?\"");
@@ -2231,7 +2234,24 @@ function setLang(l){SAGE_LANG=l;el('langEN').classList.toggle('on',l==='en');el(
   renderSuggest(); renderVoicePicker();
 }
 function connectAI(){
-  sageMsg('s','Running on claude-sonnet-4-6 — ask me anything, however open-ended. I reason over every entity in this close.');
+  const cur=LIVE_KEY;
+  const k=prompt('Paste your Anthropic API key (sk-ant-…).\nIt stays in browser memory only — never stored or sent anywhere except the Anthropic API.',cur||'');
+  if(!k||!k.trim())return;
+  LIVE_KEY=k.trim();
+  // verify the key
+  const headers={"Content-Type":"application/json","x-api-key":LIVE_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})
+  }).then(r=>{
+    if(r.ok){
+      window._liveOK=true;
+      const mp=el('aiMode');if(mp){mp.classList.add('live');mp.textContent='● Sonnet 4.6 · live';}
+      sageMsg('s','**Connected to Claude Sonnet 4.6.** I now reason live over every entity in this close — ask me anything, however open-ended.');
+    } else {
+      r.json().then(j=>sageMsg('s','API error: '+(j.error?.message||r.status)+'. Check your key and try again.')).catch(()=>sageMsg('s','API returned '+r.status+'. Check your key.'));
+      LIVE_KEY='';
+    }
+  }).catch(e=>{sageMsg('s','Connection failed: '+e.message);LIVE_KEY='';});
 }
 function renderVoicePicker(){
   const sel=el('voiceSel'); if(!sel)return;
@@ -2294,18 +2314,26 @@ function deliverAnswer(q){
   const b=el('sageBody');
   const typing=document.createElement('div');typing.className='msg s';typing.innerHTML='<div class="who">SAGE</div><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
   b.appendChild(typing);b.scrollTop=b.scrollHeight;
-  // hybrid: try live API, fall back to scripted
+  // hybrid: try live API, fall back to local reasoning engine
   liveAnswer(q).then(ans=>{
     typing.remove();
     const d=sageMsg('s',ans);
     const mp=el('aiMode');if(mp){mp.classList.add('live');mp.textContent='● Sonnet 4.6 · live';}
     speak(ans);
-  }).catch(()=>{
+  }).catch(err=>{
     typing.remove();
-    const ans=SAGE_LANG==='ar'?(scriptedAnswerAR(q)):reasonLocal(q);
-    const d=sageMsg('s',ans);
-    if(LIVE_KEY||window._liveOK)d.querySelector('.who').textContent='SAGE';
-    speak(ans);
+    if(err.message==='no-key'){
+      // no key and not in artifact — use local reasoning but hint about live mode
+      const ans=SAGE_LANG==='ar'?(scriptedAnswerAR(q)):reasonLocal(q);
+      sageMsg('s',ans);
+      speak(ans);
+    } else {
+      // API call failed — fall back to local reasoning, log the error
+      console.warn('Sage live API error:',err.message);
+      const ans=SAGE_LANG==='ar'?(scriptedAnswerAR(q)):reasonLocal(q);
+      const d=sageMsg('s',ans);
+      speak(ans);
+    }
   });
 }
 function scriptedAnswerAR(q){const s=q.toLowerCase();if(/summar|لخص|إغلاق/.test(s))return AR.summar;return AR.default;}
@@ -2485,23 +2513,66 @@ function hosMarginDelta(){
   const cP=DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Direct Cost').reduce((s,r)=>s+r.prior,0);
   return ((rP-cP)/rP*100-(rC-cC)/rC*100);
 }
-let LIVE_KEY=""; // artifact runtime: no key needed — Claude.ai authenticates transparently
+let LIVE_KEY=""; // set via connectAI() pill click, or auto-detected in artifact runtime
 function entityContextDump(){
   return DATA.entities.map(e=>{const a=entAgg(e.code);const exc=DATA.scrutiny.filter(s=>s.entity===e.code);
     return e.code+" ("+e.name+", "+e.vertical+"): revenue "+fmt(a.rev)+", EBITDA "+fmt(a.eb)+", margin "+a.mgn.toFixed(1)+"%, MoM "+pct(a.rev,entAgg(e.code,"prior").rev).toFixed(1)+"%"+(exc.length?", open items: "+exc.map(s=>s.acct+" "+fmt(s.amount)+" ("+s.rec+")").join("; "):"");
   }).join("\n");
 }
 async function liveAnswer(q){
+  // Require a key when running outside Claude.ai artifact runtime
+  if(!LIVE_KEY && !window._liveOK) throw new Error('no-key');
   const c=consol('cur'), md=hosMarginDelta().toFixed(1);
-  const sys="You are Sage, a finance knowledge assistant embedded in DAMAC's month-end close cockpit. You speak with senior-controller / CFO-advisor experience: precise, decisive, no fluff. Context you know about this close (May 2026): group revenue "+fmt(c.rev)+" for the month, slightly ahead of budget; EBITDA "+fmt(c.ebitda)+". Hospitality entity HOS-01 margin compressed "+md+" points as operating cost rose 34% on flat revenue (agency labour + utilities); JV HOS-02 unaffected. Balance sheet carries "+fmt(DATA.stats.recoverable)+" recoverable aged positions; "+fmt(DATA.stats.writeback)+" is clean write-back this period (largest: Arabtec contractor advance AED 11.8M, 18 months aged, PO expired). Drake & Scull advance AED 9.2M is doubtful (liquidation) — provision. "+DATA.stats.ic_matched+" of "+DATA.stats.ic_total+" intercompany pairs auto-matched; "+fmt(DATA.stats.ic_unmatched_val)+" unmatched is timing + FX. Real Estate entities RE-01..03 carry the most balance-sheet risk. PO accruals this month "+fmt(DATA.stats.je_total)+" across 8 lines, 2 auto-swept on rules. 6-month cash projection: collections exceed construction payments every month. Governance: agents read freely but the only write path to Fusion is behind a human approval gate issuing signed tokens; every recommendation carries a hash-chained evidence trail. Per-entity figures this close:\n"+entityContextDump()+"\nAnswer in 2-4 sentences in a senior-controller voice, ground every figure in the data above, and give a recommendation when asked."+(SAGE_LANG==='ar'?" Respond in Arabic.":"");
-  const headers={"Content-Type":"application/json"};
+  // Build rich system prompt with full close context
+  const icSummary=DATA.ic?DATA.ic.map(p=>`${p.a} ↔ ${p.b}: ${p.status}${p.gap?' (gap '+fmt(p.gap)+', '+p.gapType+')':''}`).join('; '):'';
+  const scrutinyDump=DATA.scrutiny?DATA.scrutiny.map(s=>`${s.entity} ${s.acct}: ${fmt(s.amount)}, aged ${s.age}, risk ${s.risk}, confidence ${s.confidence}%, rec: ${s.rec}`).join('\n'):'';
+  const jeDump=DATA.je?DATA.je.map(j=>`PO ${j.po||j.id}: ${fmt(j.amount||j.consumed)}, ${j.desc||j.vendor||''}`).join('; '):'';
+  const sys=`You are Sage, a finance knowledge assistant embedded in DAMAC Group's month-end close cockpit (CloseIQ by Tiger Analytics). You have deep senior-controller / CFO-advisor expertise. You are precise, decisive, and you ground every answer in the data below — never invent figures.
+
+CLOSE PERIOD: May 2026
+
+GROUP SUMMARY:
+- Revenue: ${fmt(c.rev)}, slightly ahead of budget
+- EBITDA: ${fmt(c.ebitda)}
+- Hospitality (HOS-01) margin compressed ${md} pts — operating cost +34% on flat revenue (agency labour + utilities true-up). JV HOS-02 unaffected.
+- Balance sheet: ${fmt(DATA.stats.recoverable)} recoverable aged positions; ${fmt(DATA.stats.writeback)} clean write-back eligible (largest: Arabtec contractor advance AED 11.8M, 18 months aged, PO expired, no GRN). Drake & Scull AED 9.2M doubtful (in liquidation) — provision.
+- IC: ${DATA.stats.ic_matched}/${DATA.stats.ic_total} pairs matched; ${fmt(DATA.stats.ic_unmatched_val)} unmatched (timing + FX)
+- PO accruals: ${fmt(DATA.stats.je_total)} across ${DATA.je?DATA.je.length:8} lines, 2 auto-swept on rules
+- Cash projection: collections exceed construction payments every month for next 6 months
+- Governance: agents have read-only access; write path to Oracle Fusion behind human approval gate with signed tokens; HMAC-chained audit trail on every decision
+
+PER-ENTITY DATA:
+${entityContextDump()}
+
+SCRUTINY FLAGS:
+${scrutinyDump}
+
+IC PAIRS:
+${icSummary}
+
+JE ACCRUALS:
+${jeDump}
+
+RULES:
+- Answer in 2-5 sentences, senior-controller voice
+- Ground every figure in the data above
+- When asked for a recommendation, give one — be decisive
+- If asked about something outside the close data, say so honestly
+- Use bold (**text**) for emphasis on key figures and recommendations
+${SAGE_LANG==='ar'?'- Respond entirely in Arabic.':''}`;
+
+  const headers={"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+  if(LIVE_KEY) headers["x-api-key"]=LIVE_KEY;
   const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,
     body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:sys,messages:[{role:"user",content:q}]})});
-  if(!r.ok)throw new Error('api');
+  if(!r.ok){
+    const err=await r.json().catch(()=>({}));
+    throw new Error(err.error?.message||'API returned '+r.status);
+  }
   window._liveOK=true;
   const data=await r.json();
   const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
-  if(!txt)throw new Error('empty');
+  if(!txt)throw new Error('empty response');
   return txt;
 }
 
