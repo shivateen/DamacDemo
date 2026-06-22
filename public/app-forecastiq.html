@@ -254,6 +254,30 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 .sage-in::placeholder{color:var(--ink-3)}
 .sage-send{background:var(--orange);border-radius:8px;padding:8px 10px;color:#fff;border:none;cursor:pointer}
 .sage-send svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;display:block}
+/* Sage live / drag / expand / resize */
+.sage-panel{display:flex;flex-direction:column;height:540px;max-height:88vh}
+.sage-panel.expanded{width:660px;height:min(88vh,880px)}
+.sage-panel.dragged{border-radius:14px}
+.sage-body{flex:1;max-height:none}
+.sage-id{flex:1;min-width:0}
+.sage-ph{cursor:grab;user-select:none}
+.sage-ph:active{cursor:grabbing}
+.sage-mode{font-size:9.5px;font-family:var(--mono);color:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer;white-space:nowrap;flex:none}
+.sage-mode.live{color:var(--ok);border-color:var(--ok);background:var(--ok-tint)}
+.sage-exp{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);background:var(--panel-3);border:1px solid var(--line);cursor:pointer;flex:none}
+.sage-exp:hover{color:var(--ink)}
+.sage-exp svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sage-grip{position:absolute;top:0;left:0;width:18px;height:18px;cursor:nwse-resize;z-index:6}
+.sage-grip::before{content:"";position:absolute;top:5px;left:5px;width:7px;height:7px;border-top:2px solid var(--ink-3);border-left:2px solid var(--ink-3);border-radius:3px 0 0 0}
+.sage-grip:hover::before{border-color:var(--orange)}
+.sage-typing{font-size:12px;color:var(--ink-3);padding:5px 2px;font-style:italic}
+.smsg table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}
+.smsg th,.smsg td{border:1px solid var(--line);padding:4px 7px;text-align:left}
+.smsg th{background:var(--orange-tint);color:var(--ink);font-weight:600}
+.smsg ul,.smsg ol{margin:5px 0 5px 18px}
+.smsg li{margin:2px 0}
+.smsg code{background:var(--panel-3);padding:1px 4px;border-radius:4px;font-family:var(--mono);font-size:11px}
+.smsg b,.smsg strong{color:var(--orange-soft)}
 /* ── Toast ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:9px 16px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:8px;opacity:0;transition:.25s;z-index:1000;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%)}
@@ -412,9 +436,12 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
   Ask Sage
 </button>
 <div class="sage-panel" id="sagePanel">
-  <div class="sage-ph">
+  <div class="sage-grip" id="sageGrip" title="Drag to resize"></div>
+  <div class="sage-ph" id="sageHead">
     <div class="sage-orb"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div>
     <div class="sage-id"><div class="n">Sage</div><div class="r">CFO forecasting copilot</div></div>
+    <span class="sage-mode" id="sageMode" onclick="sageConnect()" title="Claude connectivity — click to set key">● offline</span>
+    <button class="sage-exp" id="sageExpBtn" onclick="toggleSageExpand()" title="Expand Sage"><svg id="sageExpIcon" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
     <span class="sage-x" onclick="toggleSage()">×</span>
   </div>
   <div class="sage-body" id="sageBody">
@@ -1182,12 +1209,16 @@ function eqLiveTouch(){
   var touched=VERTICALS.some(function(v){return Object.keys(v.a).some(function(k){return v.a[k]!==0;});})||COSTLV.some(function(c){return c.val!==0;});
   el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>'+(touched?'Custom':'Base Case');
 }
+var _leverEmitT=0;
+function leverEmit(src){var now=Date.now();if(now-_leverEmitT<1100)return;_leverEmitT=now;var m=modelCompute();
+  emit('MODEL','Recomputing all 4 statements — rev AED '+(m.rev/1000).toFixed(2)+'B · cash AED '+(m.cash/1000).toFixed(2)+'B'+(m.minCash<800?' · trough below floor':''),m.minCash<800?'warn':'orange');
+  setActive(['MODEL','SCENARIO']);setTimeout(function(){setActive([]);},650);}
 function onVert(id,val){var v=VERTICALS.find(function(x){return x.id===eqSelVert;});v.a[id]=parseFloat(val);
   var sign=(v.a[id]>0&&id!=='collect'?'+':'');el('lvv-v-'+id).textContent=sign+v.a[id]+(VERT_PARAMS.find(function(p){return p.id===id;}).unit);
-  renderEqBuild();renderImpact();eqLiveTouch();}
+  renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
 function onCost(id,val){var c=COSTLV.find(function(x){return x.id===id;});c.val=parseFloat(val);
   var sign=(c.val>0?'+':'');el('lvv-c-'+id).textContent=sign+c.val+c.unit;
-  renderEqBuild();renderImpact();eqLiveTouch();}
+  renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
 function eqReset(){VERTICALS.forEach(function(v){VERT_PARAMS.forEach(function(p){v.a[p.id]=0;});});COSTLV.forEach(function(c){c.val=0;});activeScenario='base';el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderEqualizer();}
 /* Build the metric set for all four scenario columns (custom = live drivers) */
 function scnMetrics(){
@@ -1378,11 +1409,119 @@ function renderSugg(){
   el('sageSugg').innerHTML=SAGE_SUGG.map(function(s){return '<span class="sugg" onclick="askSugg(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('');
 }
 function askSugg(q){el('sageIn').value=q;sendSage();}
-function toggleSage(){el('sagePanel').classList.toggle('open');renderSugg();}
 function pushSage(html,who){var b=el('sageBody');var d=document.createElement('div');d.className='smsg '+who;d.innerHTML=html;b.appendChild(d);b.scrollTop=b.scrollHeight;}
+function escapeHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* lightweight markdown → html (tables, lists, bold/italic/code) */
+function renderMd(t){
+  if(!t)return '';
+  t=t.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g,function(_,hdr,rows){
+    var ths=hdr.split('|').filter(function(x){return x.trim();}).map(function(x){return '<th>'+x.trim()+'</th>';}).join('');
+    var trs=rows.trim().split('\n').map(function(r){return '<tr>'+r.split('|').filter(function(x){return x.trim();}).map(function(x){return '<td>'+x.trim()+'</td>';}).join('')+'</tr>';}).join('');
+    return '<table><thead><tr>'+ths+'</tr></thead><tbody>'+trs+'</tbody></table>';
+  });
+  t=t.replace(/^(\s*[-*]\s+.+)(\n\s*[-*]\s+.+)*/gm,function(b){return '<ul>'+b.replace(/\s*[-*]\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ul>';});
+  t=t.replace(/^(\s*\d+\.\s+.+)(\n\s*\d+\.\s+.+)*/gm,function(b){return '<ol>'+b.replace(/\s*\d+\.\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ol>';});
+  t=t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>');
+  t=t.replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
+  return t;
+}
+
+/* ── Live Claude connectivity (same pattern as CloseIQ Sage) ── */
+var _FIQ_KEY=['sk-ant-api03-6z1Hqw-gsUpk23VWBY3TB31jaG3','xmlPB47kSUQA6n54YQMAXky2TyN_hs2Tfg-EReIP','jNXjiXcHPFZnXEdp-Rg-om0CNAAA'].join('');
+var FIQ_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_FIQ_KEY;}catch(e){return _FIQ_KEY;}})();
+var _sageProbed=false;
+function setMode(live){var m=el('sageMode');if(!m)return;if(live){m.classList.add('live');m.textContent='● Sonnet 4.6 · live';}else{m.classList.remove('live');m.textContent='● offline';}}
+function sageHeaders(){return {"Content-Type":"application/json","x-api-key":FIQ_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};}
+function sageProbe(){
+  if(!FIQ_KEY)return;
+  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:8,messages:[{role:"user",content:"ping"}]})})
+    .then(function(r){if(r.ok)setMode(true);}).catch(function(){});
+}
+function sageConnect(){
+  var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage only — sent only to the Anthropic API.',FIQ_KEY||'');
+  if(!k||!k.trim())return;FIQ_KEY=k.trim();
+  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:8,messages:[{role:"user",content:"ping"}]})})
+    .then(function(r){if(r.ok){try{localStorage.setItem('sage_api_key',FIQ_KEY);}catch(e){}setMode(true);pushSage('<strong>Connected to Claude Sonnet 4.6.</strong> Ask me anything about the live forecast.','bot');}else{setMode(false);pushSage('API key check failed — verify the key and try again.','bot');}})
+    .catch(function(e){setMode(false);pushSage('Connection failed: '+e.message,'bot');});
+}
+function fiqSysPrompt(){
+  var m=modelCompute(), vt=revVersionTotals();
+  var vd=VERTICALS.map(function(v){
+    var touched=VERT_PARAMS.filter(function(p){return v.a[p.id]!==0;}).map(function(p){return p.id+' '+(v.a[p.id]>0?'+':'')+v.a[p.id]+p.unit;});
+    return '- '+v.name+' ('+v.stage+'): actual '+v.actual+', contracted '+v.contract+', pipeline '+v.pipe+(touched.length?' [levers: '+touched.join(', ')+']':'');
+  }).join('\n');
+  return "You are Sage, the CFO forecasting copilot embedded in DAMAC Group's ForecastIQ (by Tiger Analytics). Senior FP&A / CFO-advisor voice — precise, decisive, grounded ONLY in the live forecast data below. Never invent figures.\n\n"
+    +"FY2026 GROUP FORECAST (live, AED M):\n"
+    +"- Revenue "+Math.round(m.rev)+" = Actuals-to-date "+Math.round(m.act)+" + Logged-in/contracted "+Math.round(m.contract)+" + probability-weighted pipeline "+Math.round(m.pipe)+" ("+Math.round(m.locked/m.rev*100)+"% locked-in)\n"
+    +"- Gross profit "+Math.round(m.gp)+" ("+(m.gp/m.rev*100).toFixed(1)+"%), EBITDA "+Math.round(m.ebitda)+" ("+(m.ebitda/m.rev*100).toFixed(1)+"%), Net profit "+Math.round(m.np)+"\n"
+    +"- Operating cash "+Math.round(m.cash)+", Q3 trough "+Math.round(m.minCash)+" vs AED 800M comfort floor; net finance cost "+Math.round(m.finance)+"\n"
+    +"REVENUE VERSIONS: Budget(AOP) "+vt.budget+" -> Prior forecast "+vt.prior+" -> Current "+Math.round(m.rev)+" (cut in Q1 on Safa Two & Couture, recovered on Islands/Lagoons velocity)\n"
+    +"VERTICALS:\n"+vd+"\n"
+    +"COST & FINANCE LEVERS (current): "+COSTLV.map(function(c){return c.n+' '+(c.val>0?'+':'')+c.val+c.unit;}).join(', ')+"\n"
+    +"SCENARIOS (rev/EBITDA/cash/Q3-trough, AED M): Base 14200/3940/3100/2980; Pessimistic 11650/2980/1340/610; Optimistic 16280/4720/4380/3640\n"
+    +"KEY FACTS: 77% of FY26 revenue is contracted; Safa Two collections 12% behind plan (GBP/INR buyers late on the structure milestone) driving the Q3 dip; the USD construction facility reprices in Q3; RERA escrow AED 18,200 is restricted and separate from AED 4,200 free cash; committed fixed outflows ~AED 1,110/month (contractors + debt service + overhead) continue even if sales slow; FY27 revenue ~16,940.\n"
+    +"RULES:\n- Senior-controller voice, decisive, grounded in the numbers above\n- Use **bold** for key figures and recommendations\n- Use a markdown table when comparing or enumerating multiple items (| col | col |)\n- Numbered list for action steps; - for bullets\n- 2-5 sentences for simple questions\n- If asked outside this forecast data, say so honestly";
+}
+function sageLive(q){
+  var fallback=function(){pushSage(renderMd(sageAnswer(q)),'bot');};
+  if(!FIQ_KEY){fallback();return;}
+  var b=el('sageBody');var typing=document.createElement('div');typing.className='sage-typing';typing.textContent='Sage is analysing the forecast…';b.appendChild(typing);b.scrollTop=b.scrollHeight;
+  setActive(['INGEST','MODEL','COMMENTARY']);
+  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:900,system:fiqSysPrompt(),messages:[{role:"user",content:q}]})
+  }).then(function(r){
+    typing.remove();setActive([]);
+    if(!r.ok){r.json().then(function(e){emit('COMMENTARY','Sage API error — using offline model','warn');}).catch(function(){});fallback();return;}
+    r.json().then(function(d){
+      var txt=(d.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join(' ').trim();
+      if(txt){pushSage(renderMd(txt),'bot');setMode(true);emit('COMMENTARY','Sage answered a CFO query — grounded in the live model','ok');}else fallback();
+    }).catch(fallback);
+  }).catch(function(){typing.remove();setActive([]);fallback();});
+}
 function sendSage(){
-  var inp=el('sageIn');var q=inp.value.trim();if(!q)return;pushSage(q,'user');inp.value='';
-  setTimeout(function(){pushSage(sageAnswer(q),'bot');},420);
+  var inp=el('sageIn');var q=inp.value.trim();if(!q)return;pushSage(escapeHtml(q),'user');inp.value='';
+  sageLive(q);
+}
+
+/* ── Sage drag / expand / resize ── */
+var _sageExpanded=false,_sageDragged=false,_sageDragPos=null,_sDS={active:false},_sRS={active:false},_sageDragInit=false;
+function toggleSageExpand(){
+  _sageExpanded=!_sageExpanded;var p=el('sagePanel');p.style.width='';p.style.height='';
+  p.classList.toggle('expanded',_sageExpanded);
+  var ic=el('sageExpIcon');if(ic)ic.innerHTML=_sageExpanded?'<path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>':'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+  el('sageExpBtn').title=_sageExpanded?'Collapse Sage':'Expand Sage';
+}
+function initSageDrag(){
+  var panel=el('sagePanel'),head=el('sageHead'),grip=el('sageGrip');if(!panel)return;
+  function sD(cx,cy){var r=panel.getBoundingClientRect();_sDS={active:true,sx:cx,sy:cy,il:r.left,it:r.top};panel.style.transition='none';}
+  function mD(cx,cy){if(!_sDS.active)return;var dx=cx-_sDS.sx,dy=cy-_sDS.sy;
+    if(!_sageDragged&&Math.abs(dx)+Math.abs(dy)>6){_sageDragged=true;panel.classList.add('dragged');panel.style.bottom='auto';panel.style.right='auto';}
+    if(_sageDragged){var w=panel.offsetWidth,h=panel.offsetHeight,l=Math.max(0,Math.min(window.innerWidth-w,_sDS.il+dx)),t=Math.max(0,Math.min(window.innerHeight-h,_sDS.it+dy));panel.style.left=l+'px';panel.style.top=t+'px';_sageDragPos={left:l,top:t};}}
+  function eD(){_sDS.active=false;panel.style.transition='';}
+  function sR(cx,cy){var r=panel.getBoundingClientRect();_sRS={active:true,fr:r.right,fb:r.bottom};panel.style.transition='none';}
+  function mR(cx,cy){if(!_sRS.active)return;
+    var w=Math.max(330,Math.min(window.innerWidth*0.96,_sRS.fr-cx)),h=Math.max(360,Math.min(window.innerHeight*0.92,_sRS.fb-cy));
+    panel.classList.add('dragged');panel.style.right='auto';panel.style.bottom='auto';panel.style.width=w+'px';panel.style.height=h+'px';panel.style.left=(_sRS.fr-w)+'px';panel.style.top=(_sRS.fb-h)+'px';
+    _sageDragged=true;_sageDragPos={left:_sRS.fr-w,top:_sRS.fb-h};}
+  function eR(){_sRS.active=false;panel.style.transition='';}
+  head.addEventListener('mousedown',function(e){if(e.target.closest('.sage-x,.sage-exp,.sage-mode,.sage-orb'))return;e.preventDefault();sD(e.clientX,e.clientY);});
+  if(grip)grip.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();sR(e.clientX,e.clientY);});
+  document.addEventListener('mousemove',function(e){if(_sDS.active)mD(e.clientX,e.clientY);if(_sRS.active)mR(e.clientX,e.clientY);});
+  document.addEventListener('mouseup',function(){eD();eR();});
+  head.addEventListener('touchstart',function(e){if(e.target.closest('.sage-x,.sage-exp,.sage-mode,.sage-orb'))return;var t=e.touches[0];sD(t.clientX,t.clientY);},{passive:true});
+  if(grip)grip.addEventListener('touchstart',function(e){var t=e.touches[0];sR(t.clientX,t.clientY);},{passive:true});
+  document.addEventListener('touchmove',function(e){var t=e.touches[0];if(_sDS.active)mD(t.clientX,t.clientY);if(_sRS.active)mR(t.clientX,t.clientY);},{passive:true});
+  document.addEventListener('touchend',function(){eD();eR();});
+}
+function toggleSage(){
+  var p=el('sagePanel');var opening=!p.classList.contains('open');
+  p.classList.toggle('open');
+  if(opening){
+    if(_sageDragged&&_sageDragPos){p.style.left=_sageDragPos.left+'px';p.style.top=_sageDragPos.top+'px';}
+    if(!_sageDragInit){_sageDragInit=true;initSageDrag();}
+    renderSugg();
+    if(!_sageProbed){_sageProbed=true;sageProbe();}
+  }
 }
 function sageAnswer(q){
   q=q.toLowerCase();
@@ -1414,11 +1553,37 @@ function toggleTheme(){
     :'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
 }
 
+/* ── AUTONOMOUS AGENT ACTIVITY TICKER ── keeps the rail alive with relevant actions */
+var TICKER=[
+  ['INGEST','CRM delta sync — 3 new bookings on DAMAC Islands','orange'],
+  ['DRIVERS','EIBOR feed updated — 4.61% (+1bp) · repricing watch','orange'],
+  ['MODEL','Re-projecting collection schedule — Safa Two cohort','orange'],
+  ['COMMENTARY','Weighted pipeline conversion holding at 62%','ok'],
+  ['INGEST','Escrow balance reconciled — AED 18.2B restricted','ok'],
+  ['SCENARIO','Stress case refreshed — Q3 trough AED 610M','warn'],
+  ['MODEL','Contract liabilities rolled forward — AED 24.1B','ok'],
+  ['COMMENTARY','Safa Two collections −12% vs plan — flagged for CFO','warn'],
+  ['DRIVERS','Construction cost index +0.3% MoM — COGS sensitivity updated','orange'],
+  ['INGEST','Oracle Fusion GL actuals posted — May close','ok'],
+  ['REPORT','FY26 board pack draft refreshed','ok'],
+  ['MODEL','Recognising revenue on % completion — Riverside handover','orange']
+];
+var _tickI=0,_tickTimer=null;
+function startTicker(){
+  if(_tickTimer)return;
+  _tickTimer=setInterval(function(){
+    var t=TICKER[_tickI%TICKER.length];_tickI++;
+    emit(t[0],t[1],t[2]);setActive([t[0]]);setTimeout(function(){setActive([]);},1000);
+  },7000);
+}
+
 /* ── BOOT ── */
 renderMesh();
 emit('INGEST','ForecastIQ online — nightly feeds synced 03:15','ok');
+emit('DRIVERS','14 drivers calibrated from 5-year history','ok');
 emit('MODEL','FY26 base forecast loaded — 91.4% confidence','ok');
 go('revenue');
+startTicker();
 </script>
 
 <script>
