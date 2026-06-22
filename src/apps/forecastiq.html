@@ -266,6 +266,28 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 .sk-block{height:280px;border-radius:12px}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .fadein{animation:fadein .4s ease both}
+/* ── Segmented control ── */
+.seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;margin-bottom:14px}
+.seg button{padding:7px 14px;border-radius:7px;font-size:11.5px;font-weight:500;color:var(--ink-3);background:none;transition:.15s;white-space:nowrap}
+.seg button.on{background:var(--orange);color:#fff}
+.seg button:not(.on):hover{color:var(--ink)}
+/* ── Config bar ── */
+.cfg-bar{display:flex;flex-wrap:wrap;gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.cfg-grp{display:flex;align-items:center;gap:10px}
+.cfg-lbl{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.colpick{display:flex;flex-wrap:wrap;gap:6px}
+.colchip{font-size:10.5px;color:var(--ink-3);background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:5px 11px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
+.colchip.on{color:var(--orange-soft);background:var(--orange-tint);border-color:var(--orange-dim)}
+.colchip.locked-on{cursor:default}
+.colchip .dotc{width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex-shrink:0}
+.colchip.on .dotc{background:var(--orange)}
+/* coverage mini bar in cell */
+.covcell{display:inline-flex;align-items:center;gap:7px;justify-content:flex-end}
+.covbar{width:46px;height:6px;border-radius:4px;background:var(--panel-3);overflow:hidden}
+.covbar i{display:block;height:100%;border-radius:4px}
+/* compare table delta */
+.scn-delta{font-size:9.5px;font-family:var(--mono);display:block;margin-top:2px}
+.cmp-tbl td{vertical-align:top}
 </style>
 </head>
 <body>
@@ -277,6 +299,10 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
   <button class="nav-btn active" id="nb-overview" onclick="go('overview')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Overview
+  </button>
+  <button class="nav-btn" id="nb-revenue" onclick="go('revenue')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/></svg>
+    Revenue
   </button>
   <button class="nav-btn" id="nb-pnl" onclick="go('pnl')">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
@@ -543,6 +569,7 @@ function renderMesh(){
 /* ── VIEW META + AGENT SEQUENCES ── */
 var VIEWS={
   overview:['Portfolio Forecast — FY2026','6 projects · AED 14.2B revenue · AED 3.1B operating cash · driven by CRM + ERP'],
+  revenue:['Revenue Forecast — Version Comparison','Budget vs Prior Forecast vs Locked-in vs Current · configurable column cuts'],
   pnl:['P&L Forecast','Actual FY25 → Forecast FY26 / FY27 · AI-driven · IFRS 15'],
   cash:['Cash Flow Forecast','18-month rolling · inflow vs outflow · escrow vs free cash · runway by project'],
   bs:['Balance Sheet Forecast','FY25 actual → FY26 forecast · WIP, contract liabilities, escrow'],
@@ -551,6 +578,7 @@ var VIEWS={
 };
 var VIEW_SEQ={
   overview:[['INGEST','Pulling CRM bookings, ERP actuals, escrow & treasury feeds','orange'],['DRIVERS','Detecting drivers: sales velocity, milestone schedule, FX, EIBOR','orange'],['MODEL','Projecting P&L, cash & balance sheet across 6 projects','orange'],['SCENARIO','Base case locked — stress & upside pre-computed','orange'],['COMMENTARY','Flagging Safa Two collections −12% and Q3 USD reprice','warn'],['REPORT','FY26 forecast pack ready — AED 14.2B revenue','ok']],
+  revenue:[['INGEST','Reconciling booked SPAs from CRM against budget baseline','orange'],['DRIVERS','Layering locked-in contracted revenue net of cancellation','orange'],['MODEL','Bridging Budget → Prior → Locked-in → Current by cut','orange'],['COMMENTARY','77% of FY26 forecast already contracted — Safa Two behind plan','ok']],
   pnl:[['INGEST','Loading GL actuals FY25 + booked revenue pipeline','orange'],['MODEL','Recognising development revenue on % completion (IFRS 15)','orange'],['COMMENTARY','Gross margin holding 41.5% · EBITDA AED 3.94B','ok']],
   cash:[['INGEST','Mapping installment plans → collection schedule','orange'],['MODEL','Netting construction drawdowns vs collections by month','orange'],['COMMENTARY','Q3 cash dip flagged — Safa Two + USD facility reprice','warn']],
   bs:[['MODEL','Rolling WIP, contract assets/liabilities & escrow','orange'],['COMMENTARY','Contract liabilities AED 24.1B — strong forward cover','ok']],
@@ -568,6 +596,7 @@ function go(view){
   setTimeout(function(){
     setActive([]);
     if(view==='overview')renderOverview();
+    else if(view==='revenue')renderRevenue();
     else if(view==='pnl')renderPNL();
     else if(view==='cash')renderCash();
     else if(view==='bs')renderBS();
@@ -644,6 +673,119 @@ function cmpRow(a,b){return '<div style="display:flex;gap:10px;align-items:cente
 function confRow(lbl,pct){
   var tone=pct>=90?'var(--ok)':pct>=86?'var(--orange)':'var(--warn)';
   return '<div class="runway-row"><span class="rn">'+lbl+'</span><div class="runway-track"><div class="runway-fill" style="width:'+pct+'%;background:'+tone+'"></div></div><span class="rv">'+pct+'% conf</span></div>';
+}
+
+/* ── REVENUE — version comparison (Budget vs Prior vs Locked-in vs Current) ── */
+/* Per-project momentum: factor >1 means current forecast is BELOW budget (behind plan) */
+var REV_PF={'DAMAC Lagoons':0.96,'DAMAC Islands':0.95,'Safa Two':1.08,'DAMAC Bay':1.01,'Riverside Views':0.98,'Couture by Cavalli':1.04,'Recurring Income':1.00};
+/* Coverage = locked-in / current, and Attainment = actuals YTD / current, by stage */
+var REV_COV={Launch:0.52,Construction:0.78,'Near-handover':0.94,Handover:0.99,Operating:0.85};
+var REV_ATT={Launch:0.18,Construction:0.40,'Near-handover':0.62,Handover:0.80,Operating:0.46};
+/* [project, stream, unitType, region, stage, currentForecast(AED M)] — rolls up to 14,200 */
+var REV_RAW=[
+  ['DAMAC Lagoons','Development','Villa','GCC','Construction',1180],
+  ['DAMAC Lagoons','Development','Townhouse','India','Construction',1140],
+  ['DAMAC Lagoons','Development','Villa','UAE','Near-handover',800],
+  ['DAMAC Islands','Development','Branded Residence','UK / Europe','Launch',1300],
+  ['DAMAC Islands','Development','Villa','GCC','Construction',1100],
+  ['DAMAC Islands','Development','Apartment','UAE','Launch',580],
+  ['Safa Two','Development','Apartment','India','Construction',1000],
+  ['Safa Two','Development','Apartment','UK / Europe','Construction',760],
+  ['Safa Two','Development','Branded Residence','GCC','Near-handover',650],
+  ['DAMAC Bay','Development','Branded Residence','GCC','Construction',1040],
+  ['DAMAC Bay','Development','Apartment','India','Construction',800],
+  ['Riverside Views','Development','Apartment','UAE','Near-handover',900],
+  ['Riverside Views','Development','Townhouse','GCC','Handover',720],
+  ['Couture by Cavalli','Development','Branded Residence','UK / Europe','Launch',760],
+  ['Couture by Cavalli','Development','Branded Residence','CIS / Other','Launch',470],
+  ['Recurring Income','Rental','Retail','UAE','Operating',320],
+  ['Recurring Income','Rental','Apartment','UAE','Operating',230],
+  ['Recurring Income','Hospitality','Hotel','UAE','Operating',450]
+];
+var REV_DATA=REV_RAW.map(function(r){
+  var pf=REV_PF[r[0]]||1, cov=REV_COV[r[4]], att=REV_ATT[r[4]], cur=r[5];
+  return {project:r[0],stream:r[1],unitType:r[2],region:r[3],phase:r[4],
+    current:cur, budget:Math.round(cur*pf), prior:Math.round(cur*(1+(pf-1)*0.45)),
+    locked:Math.round(cur*cov), actual:Math.round(cur*att)};
+});
+var REV_DIM='project';
+var REV_DIMS=[['project','Project'],['stream','Revenue Stream'],['unitType','Unit Type'],['region','Buyer Region'],['phase','Stage']];
+var REVCOLS=[
+  {id:'budget',label:'Budget (AOP)',on:true},
+  {id:'prior',label:'Prior Forecast',on:true},
+  {id:'locked',label:'Locked-in',on:true},
+  {id:'current',label:'Current Forecast',on:true,lock:true},
+  {id:'actual',label:'Actuals YTD',on:false},
+  {id:'varCB',label:'Δ vs Budget',on:true},
+  {id:'varCP',label:'Δ vs Prior',on:false},
+  {id:'cov',label:'Coverage %',on:true},
+  {id:'attain',label:'Attainment %',on:false}
+];
+function setRevDim(d){REV_DIM=d;renderRevenue();}
+function toggleCol(id){var c=REVCOLS.find(function(x){return x.id===id;});if(c.lock)return;c.on=!c.on;renderRevenue();}
+function aggRev(dim){
+  var m={};
+  REV_DATA.forEach(function(r){var k=r[dim];if(!m[k])m[k]={budget:0,prior:0,locked:0,current:0,actual:0};
+    ['budget','prior','locked','current','actual'].forEach(function(f){m[k][f]+=r[f];});});
+  return Object.keys(m).map(function(k){var o=m[k];o.name=k;
+    o.varCB=o.current-o.budget;o.varCP=o.current-o.prior;
+    o.cov=o.current?o.locked/o.current:0;o.attain=o.current?o.actual/o.current:0;return o;})
+    .sort(function(a,b){return b.current-a.current;});
+}
+function covColor(c){return c>=0.8?'var(--ok)':c>=0.6?'var(--warn)':'var(--risk)';}
+function revCell(o,col){
+  if(col.id==='cov'){var p=Math.round(o.cov*100);return '<td class="num"><div class="covcell"><div class="covbar"><i style="width:'+p+'%;background:'+covColor(o.cov)+'"></i></div>'+p+'%</div></td>';}
+  if(col.id==='attain'){return '<td class="num">'+Math.round(o.attain*100)+'%</td>';}
+  if(col.id==='varCB'||col.id==='varCP'){var v=o[col.id];var c=v>=0?'var(--ok)':'var(--risk)';return '<td class="num" style="color:'+c+'">'+(v>=0?'+':'')+v.toLocaleString()+'</td>';}
+  return '<td class="num'+(col.id==='current'?' fc-col':'')+'">'+o[col.id].toLocaleString()+'</td>';
+}
+function renderRevenue(){
+  var rows=aggRev(REV_DIM);
+  var tot={budget:0,prior:0,locked:0,current:0,actual:0};
+  rows.forEach(function(o){['budget','prior','locked','current','actual'].forEach(function(f){tot[f]+=o[f];});});
+  tot.name='Total — AED M';tot.varCB=tot.current-tot.budget;tot.varCP=tot.current-tot.prior;
+  tot.cov=tot.locked/tot.current;tot.attain=tot.actual/tot.current;
+  var pctCB=tot.varCB/tot.budget*100;
+  var h='<div class="kpi-row fadein">'
+    +kpi('Current Forecast','AED '+(tot.current/1000).toFixed(2)+'B','live · bottom-up','ok')
+    +kpi('vs Budget (AOP)',(tot.varCB>=0?'+':'−')+'AED '+Math.abs(tot.varCB).toLocaleString()+'M',(pctCB>=0?'+':'')+pctCB.toFixed(1)+'% vs plan',pctCB>=0?'ok':'risk')
+    +kpi('vs Prior Forecast',(tot.varCP>=0?'+':'−')+'AED '+Math.abs(tot.varCP).toLocaleString()+'M','since last cycle',tot.varCP>=0?'ok':'warn')
+    +kpi('Locked-in Coverage',Math.round(tot.cov*100)+'%','AED '+(tot.locked/1000).toFixed(2)+'B contracted','info')
+    +kpi('Attainment YTD',Math.round(tot.attain*100)+'%','recognised vs current','info')
+    +'</div>';
+  h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="4" height="9" rx="1"/><rect x="10" y="4" width="4" height="16" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/></svg></div><h3>Revenue Bridge — Budget → Prior → Locked-in → Current</h3><span class="badge">configurable</span></div>'
+    +'<p><strong>Locked-in</strong> is contracted revenue from signed SPAs net of expected cancellation — the highest-certainty layer of the forecast. <strong>'+Math.round(tot.cov*100)+'%</strong> of the current FY26 number is already secured. Use the controls to cut revenue by project, stream, unit type, buyer region or stage, and toggle any version or variance column on or off — every cut re-aggregates live, no model rebuild.</p></div>';
+  // config bar
+  h+='<div class="cfg-bar fadein"><div class="cfg-grp"><span class="cfg-lbl">Cut by</span><div class="seg" style="margin:0">'
+    +REV_DIMS.map(function(d){return '<button class="'+(REV_DIM===d[0]?'on':'')+'" onclick="setRevDim(\''+d[0]+'\')">'+d[1]+'</button>';}).join('')
+    +'</div></div><div class="cfg-grp" style="flex:1;align-items:flex-start"><span class="cfg-lbl" style="padding-top:6px">Columns</span><div class="colpick">'
+    +REVCOLS.map(function(c){return '<span class="colchip'+(c.on?' on':'')+(c.lock?' locked-on':'')+'" onclick="toggleCol(\''+c.id+'\')"><span class="dotc"></span>'+c.label+(c.lock?' 🔒':'')+'</span>';}).join('')
+    +'</div></div></div>';
+  // grid
+  var onCols=REVCOLS.filter(function(c){return c.on;});
+  var dimLabel=REV_DIMS.find(function(d){return d[0]===REV_DIM;})[1];
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>'+dimLabel+'</th>'+onCols.map(function(c){return '<th class="num">'+c.label+'</th>';}).join('')+'</tr></thead><tbody>';
+  rows.forEach(function(o){h+='<tr class="clickable" onclick="openRevRow(\''+o.name.replace(/'/g,"")+'\')"><td style="font-weight:600">'+o.name+'</td>'+onCols.map(function(c){return revCell(o,c);}).join('')+'</tr>';});
+  h+='<tr class="total"><td>'+tot.name+'</td>'+onCols.map(function(c){return revCell(tot,c);}).join('')+'</tr>';
+  h+='</tbody></table></div>';
+  el('content').innerHTML=h;
+}
+function openRevRow(name){
+  var rows=aggRev(REV_DIM);var o=rows.find(function(x){return x.name===name;});if(!o)return;
+  var unsec=o.current-o.locked;
+  var h='<div class="drw-head"><div><div class="drw-title">'+o.name+'</div><div class="drw-sub">'+REV_DIMS.find(function(d){return d[0]===REV_DIM;})[1]+' cut · FY26 revenue versions</div></div><div class="drw-x" onclick="closeDrawer()">×</div></div><div class="drw-body">';
+  h+='<div class="drw-sect"><h3>Version Bridge (AED M)</h3>'
+    +drwRow('Budget (AOP)',o.budget.toLocaleString())
+    +drwRow('Prior Forecast',o.prior.toLocaleString())
+    +drwRow('Locked-in (contracted)',o.locked.toLocaleString())
+    +drwRow('Current Forecast',o.current.toLocaleString())
+    +drwRow('Actuals YTD',o.actual.toLocaleString())
+    +'</div>';
+  h+='<div class="drw-sect"><h3>De-risking</h3>'
+    +'<div class="res-box info"><div class="rtitle">'+Math.round(o.cov*100)+'% locked-in</div><div class="rbody">AED '+o.locked.toLocaleString()+'M contracted via signed SPAs; AED '+unsec.toLocaleString()+'M still to sell / convert. '+(o.cov>=0.85?'Strongly de-risked — mostly a delivery question now.':o.cov>=0.65?'Moderately covered — watch the unsold tail.':'Early stage — significant sales runway remains.')+'</div></div></div>';
+  h+='<div class="drw-sect"><h3>vs Budget</h3><div class="res-box '+(o.varCB>=0?'info':'orange')+'"><div class="rtitle">'+(o.varCB>=0?'+':'−')+'AED '+Math.abs(o.varCB).toLocaleString()+'M vs plan</div><div class="rbody">'+(o.varCB>=0?'Tracking ahead of the annual operating plan on stronger velocity / price.':'Behind plan — principal driver is collection / conversion timing. See the project drill-down on Overview.')+'</div></div></div>';
+  h+='<button class="btn-act" style="width:100%" onclick="go(\'scn\');closeDrawer()">Stress this in Scenario Planner →</button></div>';
+  openDrawer(h);
 }
 
 /* ── P&L ── */
@@ -771,7 +913,20 @@ function renderBS(){
 }
 
 /* ── SCENARIO PLANNER ── */
+var scnMode='plan';
+var SCN_PRESETS={
+  base:{velocity:0,price:0,constcost:0,delay:0,eibor:0,cancel:0},
+  stress:{velocity:-30,price:-5,constcost:8,delay:2,eibor:150,cancel:6},
+  upside:{velocity:15,price:8,constcost:-2,delay:0,eibor:-25,cancel:0}
+};
+function setScnMode(m){scnMode=m;renderScenarios();}
 function renderScenarios(){
+  var h='<div class="seg fadein"><button class="'+(scnMode==='plan'?'on':'')+'" onclick="setScnMode(\'plan\')">Driver Planner</button>'
+    +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button></div><div id="scnInner"></div>';
+  el('content').innerHTML=h;
+  if(scnMode==='plan')renderScnPlanner();else renderScnCompare();
+}
+function renderScnPlanner(){
   var h='<div class="scn-tabs fadein">';
   ['base','stress','upside'].forEach(function(k){
     var s=SCENARIOS[k];
@@ -779,27 +934,75 @@ function renderScenarios(){
   });
   h+='</div>';
   h+='<div class="grid-2" style="grid-template-columns:1.15fr 1fr">';
-  // drivers
   h+='<div class="block fadein"><h3>Forecast Drivers</h3><div class="h-sub">drag to model — P&L & cash recompute live · no builder needed</div><div id="driverWrap"></div>'
     +'<div style="display:flex;gap:8px;margin-top:6px"><button class="btn-ghost" onclick="resetDrivers()">Reset</button><button class="btn-act" onclick="commitScenario()">Save as scenario</button></div></div>';
-  // impact
   h+='<div id="impactWrap"></div>';
   h+='</div>';
-  el('content').innerHTML=h;
+  el('scnInner').innerHTML=h;
   renderDrivers();
   renderImpact();
 }
 function pickScenario(k){
   activeScenario=k;
-  // preset driver values per scenario
-  var presets={base:{velocity:0,price:0,constcost:0,delay:0,eibor:0,cancel:0},
-    stress:{velocity:-30,price:-5,constcost:8,delay:2,eibor:150,cancel:6},
-    upside:{velocity:15,price:8,constcost:-2,delay:0,eibor:-25,cancel:0}};
-  DRIVERS.forEach(function(d){d.val=presets[k][d.id];});
+  DRIVERS.forEach(function(d){d.val=SCN_PRESETS[k][d.id];});
   el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>'+SCENARIOS[k].n;
   emit('SCENARIO','Loaded '+SCENARIOS[k].n+' — drivers preset, recomputing','orange');
   setActive(['SCENARIO']);setTimeout(function(){setActive([]);},700);
-  renderScenarios();
+  renderScnPlanner();
+}
+/* Build the metric set for all four scenario columns (custom = live drivers) */
+function scnMetrics(){
+  function m(o){return {rev:o.rev,ebitda:o.ebitda,np:o.np,cash:o.cash,minCash:o.minCash,margin:o.ebitda/o.rev*100};}
+  var ci=computeImpact();
+  var custTrough=3100+DRIVERS.reduce(function(a,d){return a+d.val*d.sensCash;},0)-120;
+  var c={rev:Math.round(ci.rev),ebitda:Math.round(ci.ebitda),np:Math.round(ci.np),cash:Math.round(ci.cash),minCash:Math.round(custTrough)};
+  c.margin=c.ebitda/c.rev*100;
+  return {base:m(SCENARIOS.base),stress:m(SCENARIOS.stress),upside:m(SCENARIOS.upside),custom:c};
+}
+function renderScnCompare(){
+  var M=scnMetrics();
+  var cols=[['base','Base','var(--ink-2)'],['stress','Stress','var(--risk)'],['upside','Upside','var(--ok)'],['custom','Live / Custom','var(--orange-soft)']];
+  var rows=[['Revenue','rev','amt'],['EBITDA','ebitda','amt'],['EBITDA margin','margin','pct'],['Net Profit','np','amt'],['Operating Cash','cash','amt'],['Q3 cash trough','minCash','trough']];
+  function fv(kind,v){return kind==='pct'?v.toFixed(1)+'%':bn(Math.round(v));}
+  function fd(kind,v,b){var d=v-b;if(Math.abs(d)<0.05)return '<span class="scn-delta" style="color:var(--ink-3)">— base</span>';
+    var up=d>=0,col=up?'var(--ok)':'var(--risk)';
+    var txt=kind==='pct'?((d>=0?'+':'')+d.toFixed(1)+'pp'):((d>=0?'+':'−')+bn(Math.round(Math.abs(d))));
+    return '<span class="scn-delta" style="color:'+col+'">'+(up?'▲ ':'▼ ')+txt+'</span>';}
+  var h='<div class="sec-h fadein"><h2>Scenario Comparison — all cases side by side</h2><span class="meta">deltas vs Base · the live column reflects your current driver settings</span></div>';
+  h+='<div class="tbl-wrap fadein"><table class="cmp-tbl"><thead><tr><th>Metric</th>'
+    +cols.map(function(c){return '<th class="num" style="color:'+c[2]+'">'+c[1]+'</th>';}).join('')+'</tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr><td style="font-weight:600">'+r[0]+'</td>';
+    cols.forEach(function(c){
+      var v=M[c[0]][r[1]],base=M.base[r[1]],tone='';
+      if(r[2]==='trough')tone='color:'+(v<800?'var(--risk)':v<1800?'var(--warn)':'var(--ok)');
+      h+='<td class="num" style="'+tone+'">'+fv(r[2],v)+(c[0]==='base'?'':fd(r[2],v,base))+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  // trough chart vs floor + driver assumptions
+  h+='<div class="grid-2"><div class="block fadein"><h3>Q3 Cash Trough vs AED 800M Floor</h3><div class="h-sub">lowest projected liquidity point under each case</div>';
+  var mxs=5000,floorPct=800/mxs*100;
+  h+='<div class="chart" style="position:relative">';
+  h+='<div style="position:absolute;left:0;right:0;bottom:'+floorPct+'%;border-top:1.5px dashed var(--risk);z-index:2"><span style="position:absolute;right:0;top:-13px;font-size:9px;color:var(--risk);font-family:var(--mono)">800M floor</span></div>';
+  cols.forEach(function(c){var v=M[c[0]].minCash,hp=Math.max(v/mxs*100,1);
+    h+='<div class="bar-col"><div class="bar-val">'+bnShort(v)+'</div><div class="bar-stack"><div class="bar" style="height:'+hp+'%;background:'+c[2]+';opacity:.88"></div></div><div class="bar-lbl">'+c[1].replace(' / Custom','')+'</div></div>';});
+  h+='</div></div>';
+  h+='<div class="block fadein"><h3>Driver Assumptions by Scenario</h3><div class="h-sub">what differs under the hood</div><table style="width:100%"><thead><tr><th>Driver</th><th class="num">Base</th><th class="num" style="color:var(--risk)">Stress</th><th class="num" style="color:var(--ok)">Upside</th><th class="num" style="color:var(--orange-soft)">Live</th></tr></thead><tbody>';
+  DRIVERS.forEach(function(d){
+    function pv(v){return (v>0&&d.unit!=='mo'&&d.id!=='cancel'&&d.id!=='constcost'?'+':'')+v+(d.unit==='%'?'%':d.unit==='bps'?'bp':d.unit==='mo'?'mo':'');}
+    h+='<tr><td style="font-size:11.5px">'+d.n+'</td><td class="num">'+pv(SCN_PRESETS.base[d.id])+'</td><td class="num">'+pv(SCN_PRESETS.stress[d.id])+'</td><td class="num">'+pv(SCN_PRESETS.upside[d.id])+'</td><td class="num" style="color:var(--orange-soft)">'+pv(d.val)+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+  // narratives side by side
+  h+='<div class="grid-3">';
+  [['base'],['stress'],['upside']].forEach(function(s){
+    var sc=SCENARIOS[s[0]];
+    h+='<div class="block fadein"><h3>'+sc.n+'</h3><div class="h-sub">'+sc.d+'</div><p style="font-size:11.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">'+sc.narrative+'</p></div>';
+  });
+  h+='</div>';
+  el('scnInner').innerHTML=h;
 }
 function renderDrivers(){
   var h=DRIVERS.map(function(d){
@@ -924,7 +1127,7 @@ function openPnlLine(line){
 }
 
 /* ── SAGE ── */
-var SAGE_SUGG=['Why the Q3 cash dip?','What if velocity drops 30%?','Explain the EBITDA bridge','Safa Two collections','Draft the board narrative'];
+var SAGE_SUGG=['Why the Q3 cash dip?','How much revenue is locked in?','Current vs budget?','Compare scenarios side by side','What if velocity drops 30%?','Draft the board narrative'];
 function renderSugg(){
   el('sageSugg').innerHTML=SAGE_SUGG.map(function(s){return '<span class="sugg" onclick="askSugg(\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>';}).join('');
 }
@@ -943,6 +1146,9 @@ function sageAnswer(q){
   if(/safa/.test(q)) return 'Safa Two is 88% sold but <strong>collections are 12% behind</strong> plan — a cohort of international (GBP/INR) buyers are late on the structure-milestone installment. It\'s the binding constraint on Q3 liquidity (4-month runway). Recommended: collections push (+AED 290M into Q3) and a cancellation-provision review at 4%.';
   if(/board|narrative|commentary|pack/.test(q)) return 'Draft board narrative: <em>"FY2026 group revenue is forecast at AED 14.2B (+16.2%), with EBITDA of AED 3.94B and net profit of AED 2.86B. Forward cover remains strong at AED 24.1B of contract liabilities. The principal watch-item is a temporary Q3 liquidity dip driven by Safa Two collection timing and the USD facility reprice, both mitigated within existing facilities."</em> Shall I export the full pack?';
   if(/anaplan/.test(q)) return 'Versus Anaplan: ForecastIQ ingests CRM/ERP/escrow automatically each night (no manual loads), lets you change drivers without a certified builder, writes the variance narrative itself, and models RERA escrow + IFRS 15 natively rather than via generic templates. Same planning rigour, self-serve and explainable.';
+  if(/locked|contracted|coverage|de-risk|how much revenue/.test(q)) return '<strong>77% of the FY26 forecast is locked-in</strong> — AED 10.9B of contracted SPAs net of expected cancellation, out of AED 14.2B. Coverage varies by stage: near-handover projects like Riverside and Safa Two\'s structure tranche are 94%+ secured, while early launches like Couture sit near 52%. Open the <strong>Revenue</strong> tab and cut by Stage to see the gradient — toggle the Coverage % column on.';
+  if(/budget|aop|vs plan|prior forecast|version/.test(q)) return 'Against the AOP <strong>budget</strong>, the current forecast is broadly on plan in aggregate but with offsetting moves: Lagoons and Islands run ahead on velocity, while <strong>Safa Two is ~8% behind</strong> on international-buyer timing. The Revenue tab shows Budget vs Prior Forecast vs Locked-in vs Current with Δ columns — cut by project to see the swing, or by region to isolate the GBP/INR cohort.';
+  if(/compare|side.by.side|side by side|stress vs|all scenario/.test(q)) return 'Open <strong>Scenarios → Side-by-Side Compare</strong>. It puts Base, Stress, Upside and your live custom mix in adjacent columns across revenue, EBITDA, margin, net profit, operating cash and the Q3 trough — each with a delta vs base, the underlying driver assumptions, and a trough chart against the AED 800M floor.';
   if(/escrow|rera|restricted/.test(q)) return 'Of the AED 22.4B total cash, <strong>AED 18.2B is RERA escrow</strong> — restricted to each linked project\'s construction and not available for group liquidity. Only the <strong>AED 4.2B free cash</strong> (plus AED 3.5B undrawn facilities) funds dividends and corporate needs. I model these separately, which generic tools tend to blur.';
   if(/revenue|14|forecast/.test(q)) return 'FY26 group revenue forecasts to <strong>AED 14.2B</strong> — AED 13.05B development (recognised on % completion) plus AED 1.15B rental & hospitality. 92% is already contracted in the order book, giving 91% model confidence. FY27 steps to AED 16.9B as Islands and Bay reach handover.';
   return 'I can break that down from the live forecast. Try asking about the Q3 cash dip, a velocity what-if, the EBITDA bridge, Safa Two, RERA escrow, or "draft the board narrative". I can also queue actions back to the source systems.';
