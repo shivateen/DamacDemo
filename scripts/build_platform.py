@@ -272,6 +272,20 @@ def build_paymentsiq():
     return html.replace('</body>', inject + '</body>')
 
 
+# ── 5b. Build ForecastIQ (pass-through with shell nav hook) ─────────────────
+def build_forecastiq():
+    html = read(APPS / 'forecastiq.html')
+    inject = """
+<script>
+(function(){
+  if(window.parent===window) return;
+  window.parent.postMessage({__showBar:true},'*');
+})();
+</script>
+"""
+    return html.replace('</body>', inject + '</body>')
+
+
 # ── 6. Build the shell ───────────────────────────────────────────────────────
 def build_shell():
     shell = read(APPS / 'shell.html')
@@ -280,6 +294,7 @@ def build_shell():
     shell = shell.replace('__CLOSEIQ_SRC__',    'app-closeiq.html')
     shell = shell.replace('__RECONIQ_SRC__',    'app-reconiq.html')
     shell = shell.replace('__PAYMENTSIQ_SRC__', 'app-paymentsiq.html')
+    shell = shell.replace('__FORECASTIQ_SRC__', 'app-forecastiq.html')
     return shell
 
 
@@ -292,12 +307,13 @@ def main():
     write(OUT / 'app-command.html',    build_command());     print("  ✓ app-command.html")
     write(OUT / 'app-reconiq.html',    build_reconiq());     print("  ✓ app-reconiq.html")
     write(OUT / 'app-paymentsiq.html', build_paymentsiq());  print("  ✓ app-paymentsiq.html")
+    write(OUT / 'app-forecastiq.html', build_forecastiq());  print("  ✓ app-forecastiq.html")
     write(OUT / 'index.html',          build_shell());        print("  ✓ index.html (shell)")
 
     total = sum((OUT / f).stat().st_size for f in
                 ['index.html','app-closeiq.html','app-evolution.html','app-command.html',
-                 'app-reconiq.html','app-paymentsiq.html'])
-    print(f"\n✓ Platform built — {total//1024} KB total across 6 files")
+                 'app-reconiq.html','app-paymentsiq.html','app-forecastiq.html'])
+    print(f"\n✓ Platform built — {total//1024} KB total across 7 files")
     print(f"  Built {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 if __name__ == '__main__':
