@@ -1,20 +1,31 @@
-name: Build & Deploy CloseIQ
+name: Build & Deploy to public site
+
+# Builds the platform in THIS private source repo and publishes ONLY the
+# compiled output (public/) to a separate PUBLIC repo, which serves GitHub
+# Pages. Source, history and docs stay private; only built assets are public.
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:       # allow manual trigger from GitHub UI
+  workflow_dispatch:       # allow manual trigger from the Actions tab
+
+# ── One-time setup required for this workflow to succeed ──────────────────────
+# 1. Create a PUBLIC repo:  shivateen/damac-finiq   (can be empty)
+# 2. Create a fine-grained Personal Access Token:
+#      Resource owner = shivateen
+#      Repository access = Only select repositories → damac-finiq
+#      Permissions → Repository permissions → Contents: Read and write
+# 3. In THIS repo: Settings → Secrets and variables → Actions → New secret
+#      Name = SITE_DEPLOY_TOKEN   Value = the token from step 2
+# 4. After the first successful run, in damac-finiq:
+#      Settings → Pages → Source = Deploy from a branch → main → / (root)
 
 jobs:
-  # ── Job 1: Build ──────────────────────────────────────────────────────────
-  build:
-    name: Build
+  build-deploy:
+    name: Build & publish
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout (private source)
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -22,87 +33,23 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Build index.html
+      - name: Build platform
         run: python3 scripts/build_platform.py
 
       - name: Verify output
         run: |
-          ls -lah public/index.html
-          grep -q "Finance AI Platform" public/index.html && test -f public/app-closeiq.html && echo "✓ Platform build verified"
+          test -f public/index.html
+          test -f public/app-closeiq.html
+          test -d public/valuationiq
+          grep -q "Finance AI Platform" public/index.html
+          echo "✓ Platform build verified"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Publish compiled site to public repo
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: closeiq-dist
-          path: public/
-          retention-days: 7
-
-  # ── Job 2a: Deploy to GitHub Pages ────────────────────────────────────────
-  # Enable this if you want to host on https://[org].github.io/closeiq
-  # Set Settings → Pages → Source = GitHub Actions in your repo first.
-  deploy-pages:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: closeiq-dist
-          path: public/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload to Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: public/
-
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  # ── Job 2b: Deploy to VPS via SSH ─────────────────────────────────────────
-  # Uncomment and configure if you have a VPS.
-  # Add these to GitHub repo Settings → Secrets → Actions:
-  #   VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_DEPLOY_PATH
-  #
-  # deploy-vps:
-  #   name: Deploy to VPS
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #
-  #   steps:
-  #     - name: Download artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: closeiq-dist
-  #         path: public/
-  #
-  #     - name: Deploy via rsync over SSH
-  #       uses: burnett01/rsync-deployments@6.0.0
-  #       with:
-  #         switches: -avzr --delete
-  #         path: public/
-  #         remote_path: ${{ secrets.VPS_DEPLOY_PATH }}
-  #         remote_host: ${{ secrets.VPS_HOST }}
-  #         remote_user: ${{ secrets.VPS_USER }}
-  #         remote_key:  ${{ secrets.VPS_SSH_KEY }}
-  #
-  #     - name: Reload Nginx
-  #       uses: appleboy/ssh-action@v1
-  #       with:
-  #         host:     ${{ secrets.VPS_HOST }}
-  #         username: ${{ secrets.VPS_USER }}
-  #         key:      ${{ secrets.VPS_SSH_KEY }}
-  #         script:   sudo systemctl reload nginx
+          personal_token: ${{ secrets.SITE_DEPLOY_TOKEN }}
+          external_repository: shivateen/damac-finiq
+          publish_branch: main
+          publish_dir: ./public
+          force_orphan: true          # keep only the latest build — no history in the public repo
+          commit_message: "Deploy build ${{ github.sha }}"
