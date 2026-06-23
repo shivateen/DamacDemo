@@ -860,6 +860,8 @@ var DEMO_LINKS = {
   var aiProjects=[
     {id:"tiger",name:"Tiger — finance transformation",icon:"ti-briefcase",ramp:"c-blue",lead:"Partner-led program · Tiger",
      obj:"The flagship 3-wave, 44-use-case finance transformation program delivered with Tiger.",pill:["In delivery · Wave 1","success"]},
+    {id:"valuationiq",launch:"valuationiq",name:"ValuationIQ — M&A & data-center valuation co-pilot",icon:"ti-building-bank",ramp:"c-amber",lead:"Office of the CFO · Tiger",
+     obj:"Conversational CFO co-pilot for IRR / CAPEX, multi-method enterprise value, risk sensitivities and an investment-committee memo — voice or typed. Click to open the live co-pilot.",pill:["Live · launch co-pilot","info"]},
     {id:"liquidity",name:"AI liquidity forecasting",icon:"ti-chart-dots",ramp:"c-teal",lead:"Treasury · Tiger data science",
      obj:"Machine-learning 13-week and 12-month cash-flow forecasting across all entities and escrow cycles.",pill:["Pilot · 96% accuracy","info"],
      meta:{sponsor:"Group CFO",lead:"Treasury + Tiger DS",start:"Mar 2026",stage:"Pilot"},
@@ -887,7 +889,7 @@ var DEMO_LINKS = {
   ];
   function aiProjectsHtml(){
     var cards=aiProjects.map(function(p){
-      return '<button class="aiproj card" data-id="'+p.id+'" style="text-align:left; cursor:pointer;">'+
+      return '<button class="aiproj card" data-id="'+p.id+'"'+(p.launch?' data-launch="'+p.launch+'"':'')+' style="text-align:left; cursor:pointer;">'+
         '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">'+
           '<div style="display:flex; align-items:center; gap:10px;"><div class="'+p.ramp+'" style="width:34px; height:34px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+p.icon+'" style="font-size:19px;" aria-hidden="true"></i></div>'+
           '<div><div style="font-size:14px; font-weight:500;">'+p.name+'</div><div style="font-size:11px; color:var(--tx3);">'+p.lead+'</div></div></div>'+
@@ -900,7 +902,11 @@ var DEMO_LINKS = {
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">'+cards+'</div>';
   }
   function bindAiProjects(){
-    Array.prototype.forEach.call(document.querySelectorAll(".aiproj"),function(b){b.onclick=function(){go("engagementDetail",b.getAttribute("data-id"));};});
+    Array.prototype.forEach.call(document.querySelectorAll(".aiproj"),function(b){b.onclick=function(){
+      var lk=b.getAttribute("data-launch");
+      if(lk){ if(window.parent!==window){ window.parent.postMessage({__navTo:lk},'*'); } return; }
+      go("engagementDetail",b.getAttribute("data-id"));
+    };});
   }
   function aiProjectDetail(){
     if(S.aiProj==="tiger") return backBtn("engagements","All AI projects")+engagementsHtml();

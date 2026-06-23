@@ -7,7 +7,7 @@ injecting shell-navigation hooks into Evolution and Command Center.
 Run:  python scripts/build_platform.py
 Output: public/index.html (shell) + public/app-*.html (the three apps)
 """
-import json, pathlib, re
+import json, pathlib, re, shutil
 from datetime import datetime
 
 ROOT   = pathlib.Path(__file__).parent.parent
@@ -286,6 +286,26 @@ def build_forecastiq():
     return html.replace('</body>', inject + '</body>')
 
 
+# ── 5c. Build ValuationIQ (multi-file ES-module app, copied as a folder) ────
+def build_valuationiq():
+    src = APPS / 'valuationiq'
+    dst = OUT / 'valuationiq'
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+    # Inject shell nav hook into the app's index.html (reveal the switcher bar)
+    idx = dst / 'index.html'
+    inject = """
+<script>
+(function(){
+  if(window.parent===window) return;
+  window.parent.postMessage({__showBar:true},'*');
+})();
+</script>
+"""
+    write(idx, read(idx).replace('</body>', inject + '</body>'))
+
+
 # ── 6. Build the shell ───────────────────────────────────────────────────────
 def build_shell():
     shell = read(APPS / 'shell.html')
@@ -295,6 +315,7 @@ def build_shell():
     shell = shell.replace('__RECONIQ_SRC__',    'app-reconiq.html')
     shell = shell.replace('__PAYMENTSIQ_SRC__', 'app-paymentsiq.html')
     shell = shell.replace('__FORECASTIQ_SRC__', 'app-forecastiq.html')
+    shell = shell.replace('__VALUATIONIQ_SRC__', 'valuationiq/index.html')
     return shell
 
 
@@ -308,12 +329,15 @@ def main():
     write(OUT / 'app-reconiq.html',    build_reconiq());     print("  ✓ app-reconiq.html")
     write(OUT / 'app-paymentsiq.html', build_paymentsiq());  print("  ✓ app-paymentsiq.html")
     write(OUT / 'app-forecastiq.html', build_forecastiq());  print("  ✓ app-forecastiq.html")
+    build_valuationiq();                                      print("  ✓ valuationiq/ (M&A valuation co-pilot)")
     write(OUT / 'index.html',          build_shell());        print("  ✓ index.html (shell)")
 
-    total = sum((OUT / f).stat().st_size for f in
-                ['index.html','app-closeiq.html','app-evolution.html','app-command.html',
-                 'app-reconiq.html','app-paymentsiq.html','app-forecastiq.html'])
-    print(f"\n✓ Platform built — {total//1024} KB total across 7 files")
+    files = ['index.html','app-closeiq.html','app-evolution.html','app-command.html',
+             'app-reconiq.html','app-paymentsiq.html','app-forecastiq.html']
+    val = OUT / 'valuationiq'
+    total = sum((OUT / f).stat().st_size for f in files)
+    total += sum(p.stat().st_size for p in val.glob('*') if p.is_file())
+    print(f"\n✓ Platform built — {total//1024} KB total across 7 apps + ValuationIQ")
     print(f"  Built {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 if __name__ == '__main__':
