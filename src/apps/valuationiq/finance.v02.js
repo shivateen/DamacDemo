@@ -1,11 +1,11 @@
-export * from "../finance.js";
+export * from "./finance.js";
 import {
   calculateIrrScenario,
   runSensitivityAnalysis,
   realtimeFinanceTools,
   sessionInstructions,
   baseCase
-} from "../finance.js";
+} from "./finance.js";
 
 function round(value, digits = 1) { return Math.round(value * (10 ** digits)) / (10 ** digits); }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
