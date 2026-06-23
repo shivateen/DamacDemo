@@ -576,9 +576,15 @@ function applyCF(id){
     setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
     showToast(s.n+' applied — cash forecast re-stressed');
   }
-  renderCash();
+  rerenderStress();
 }
-function resetCF(){activeCF=null;renderCash();}
+function resetCF(){activeCF=null;rerenderStress();}
+/* re-render whichever surface the stress controls live on (Scenarios tab,
+   else fall back to the Cash Flow view if invoked from there) */
+function rerenderStress(){
+  if(typeof scnMode!=='undefined' && scnMode==='stress' && el('scnInner'))renderStress();
+  else if(el('content'))renderCash();
+}
 function renderCashScenarios(){
   function bcol(v,base){
     if(v===base)return '<td class="num">'+bn(v)+'</td>';
@@ -587,7 +593,7 @@ function renderCashScenarios(){
   }
   var btns=CASHFLOW_SCENARIOS.map(function(s){return '<button class="shock-btn'+(activeCF===s.id?' on':'')+'" onclick="applyCF(\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';}).join('');
   var h='<div class="sec-h fadein" style="margin-top:22px"><h2>Cash-flow scenarios · stress the cash forecast</h2><button class="btn-ghost" onclick="resetCF()">↺ Reset to baseline</button></div>';
-  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Toggle a cash lever to re-stress the headline live, or read the impact matrix below (each scenario vs base). The KPIs and Q3 trough above move with your selection.</div>';
+  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Toggle a cash lever to re-stress the forecast, or read the impact matrix below (each scenario vs base). The Cash Flow tab\'s headline KPIs and Q3 trough move with your selection.</div>';
   h+='<div class="shock-grid">'+btns+'</div>';
   if(activeCF){
     var a=CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;});
@@ -811,7 +817,7 @@ var VIEWS={
   cash:['Cash Flow Forecast','18-month rolling · inflow vs outflow · escrow vs free cash · runway by project'],
   bs:['Balance Sheet Forecast','FY25 actual → FY26 / FY27 / FY28 forecast · WIP, contract liabilities, escrow'],
   lrp:['3-Year Plan — FY26 → FY28','Long-range model · revenue, EBITDA, profit & cash trajectory · CAGR & board view'],
-  scn:['Scenario Planner','Base / Stress / Upside · self-serve driver sliders · instant P&L + cash impact'],
+  scn:['Scenario Planner','Equalizer levers · side-by-side compare · stress tests (cash-flow scenarios + external shocks)'],
   agents:['ForecastIQ Agent Pipeline','6 agents · INGEST → DRIVERS → MODEL → SCENARIO → COMMENTARY → REPORT']
 };
 var VIEW_SEQ={
@@ -1222,7 +1228,8 @@ function renderCash(){
   });
   h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5">Safa Two at 4 months is the binding constraint — the Q3 dip traces here. Click into the project from Overview for the resolution path.</div></div>';
   h+='</div>';
-  h+=renderCashScenarios();
+  if(activeCF){var cfa=CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;});h+='<div class="reforecast-banner fadein"><div><div class="rf-k">Active stress · '+cfa.n+'</div></div><div><div class="rf-k">these KPIs reflect the scenario set in Scenarios → Stress Tests</div></div></div>';}
+  h+='<button class="btn-act fadein" style="width:100%;margin-top:4px" onclick="goStress()">Run cash-flow scenarios &amp; external shocks in Scenarios →</button>';
   el('content').innerHTML=h;
 }
 
@@ -1363,6 +1370,7 @@ var SCN_PRESETS={
   upside:{velocity:15,price:8,constcost:-2,delay:0,eibor:-25,cancel:0}
 };
 function setScnMode(m){scnMode=m;renderScenarios();}
+function goStress(){scnMode='stress';go('scn');}
 
 /* ── EXTERNAL SHOCKS — stress the forecast against macro events ──
    Anchored to ForecastIQ's own base case (operating cash AED 3.10B,
@@ -1394,9 +1402,9 @@ function applyShock(id){
   }else{
     el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';
   }
-  renderScnCompare();
+  renderStress();
 }
-function resetShock(){activeShock=null;el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderScnCompare();}
+function resetShock(){activeShock=null;el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderStress();}
 function renderExternalShocks(){
   function mo(m){return '~'+m.toFixed(1)+' mo';}
   function cashCell(v){
@@ -1436,9 +1444,20 @@ function renderExternalShocks(){
 
 function renderScenarios(){
   var h='<div class="seg fadein"><button class="'+(scnMode==='plan'?'on':'')+'" onclick="setScnMode(\'plan\')">Equalizer · Levers</button>'
-    +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button></div><div id="scnInner"></div>';
+    +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button>'
+    +'<button class="'+(scnMode==='stress'?'on':'')+'" onclick="setScnMode(\'stress\')">Stress Tests · Cash &amp; Shocks</button></div><div id="scnInner"></div>';
   el('content').innerHTML=h;
-  if(scnMode==='plan')renderEqualizer();else renderScnCompare();
+  if(scnMode==='plan')renderEqualizer();
+  else if(scnMode==='stress')renderStress();
+  else renderScnCompare();
+}
+/* ── STRESS TESTS — all "what could go wrong" scenarios in one place:
+   cash-flow scenarios + external macro shocks ── */
+function renderStress(){
+  var h='<div class="sec-h fadein"><h2>Stress Tests — cash-flow scenarios &amp; external shocks</h2><span class="meta">toggle any cash lever or macro shock to re-stress the forecast · impact matrices below</span></div>';
+  h+=renderCashScenarios();
+  h+=renderExternalShocks();
+  el('scnInner').innerHTML=h;
 }
 /* ── EQUALIZER — per-vertical revenue levers + cost levers, lockstep recompute ── */
 var eqSelVert='lagoons';
@@ -1563,8 +1582,8 @@ function renderScnCompare(){
     h+='<div class="block fadein"><h3>'+sc.n+'</h3><div class="h-sub">'+sc.d+'</div><p style="font-size:11.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">'+sc.narrative+'</p></div>';
   });
   h+='</div>';
-  // ── External shocks · stress the forecast ──
-  h+=renderExternalShocks();
+  // External shocks + cash-flow scenarios now live in the "Stress Tests" segment
+  h+='<button class="btn-ghost fadein" style="width:100%;margin-top:14px" onclick="setScnMode(\'stress\')">↳ Go to Stress Tests — cash-flow scenarios &amp; external shocks</button>';
   el('scnInner').innerHTML=h;
 }
 function renderDrivers(){
