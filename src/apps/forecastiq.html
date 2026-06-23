@@ -57,6 +57,23 @@ input,textarea{font-family:var(--font);background:none;border:none;outline:none;
 .tb-sub{font-size:11px;color:var(--ink-3)}
 .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .scenario-pill{display:flex;align-items:center;gap:6px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--orange-soft);font-family:var(--mono);font-weight:600}
+/* External shocks */
+.shock-grid{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+.shock-btn{display:flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 13px;font-size:12px;font-weight:500;color:var(--ink);cursor:pointer;transition:.15s}
+.shock-btn:hover{border-color:var(--orange-dim);background:var(--orange-tint)}
+.shock-btn.on{border-color:var(--orange);background:var(--orange-tint);color:var(--orange-soft);box-shadow:0 0 0 1px var(--orange-dim) inset}
+.shock-btn .shock-ic{font-size:13px}
+.shock-tbl{width:100%;border-collapse:collapse}
+.shock-tbl th,.shock-tbl td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:12px}
+.shock-tbl th.num,.shock-tbl td.num{text-align:right;font-family:var(--mono)}
+.shock-tbl tbody tr.shock-active{background:var(--orange-tint)}
+.shock-tbl tbody tr.shock-base.on{background:rgba(255,255,255,.04)}
+.reforecast-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:10px;padding:11px 14px;margin-bottom:12px}
+.reforecast-banner .rf-k{font-size:10px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.reforecast-banner .rf-v{font-size:14px;font-weight:600;color:var(--ink)}
+.shock-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.shock-chip{display:flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:11.5px;color:var(--ink-2);cursor:pointer;transition:.15s}
+.shock-chip:hover{border-color:var(--orange-dim);color:var(--orange-soft)}
 .theme-toggle{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;transition:.15s;border:1px solid var(--line)}
 :root.theme-light .theme-toggle{background:var(--panel-2)}
 .theme-toggle:hover{background:var(--panel-3)}
@@ -1150,6 +1167,77 @@ var SCN_PRESETS={
   upside:{velocity:15,price:8,constcost:-2,delay:0,eibor:-25,cancel:0}
 };
 function setScnMode(m){scnMode=m;renderScenarios();}
+
+/* ── EXTERNAL SHOCKS — stress the forecast against macro events ──
+   Anchored to ForecastIQ's own base case (operating cash AED 3.10B,
+   EBITDA margin 27.7%). Each shock re-stresses the headline live. */
+var SHOCK_BASE={cash:3100,margin:27.7,liq:9.5,cov:2.7};
+var SHOCKS=[
+  {id:'conflict',n:'Regional conflict / war',ic:'⚠️',cash:2360,margin:24.4,liq:9.6,cov:2.3,
+   story:'Foreign-buyer velocity −18%, EIBOR +120bps, construction +6% on logistics & insurance. Sharpest margin compression of the set.'},
+  {id:'recession',n:'Global recession',ic:'📉',cash:2270,margin:26.8,liq:10.5,cov:2.3,
+   story:'Demand −22%, realised prices −5%, but opex discipline and slower draws extend the cash runway even as the balance thins.'},
+  {id:'rate',n:'Rate shock +200bps',ic:'%',cash:2800,margin:27.7,liq:9.6,cov:2.6,
+   story:'EIBOR +200bps on floating debt. Operating margin is untouched; the hit is finance cost and covenant headroom.'},
+  {id:'energy',n:'Energy price spike',ic:'🔥',cash:3125,margin:24.9,liq:8.6,cov:2.7,
+   story:'Construction and facilities-management costs +9%. Revenue holds, so cash is broadly flat but EBITDA margin compresses.'},
+  {id:'supply',n:'Supply-chain disruption',ic:'📦',cash:3150,margin:25.6,liq:9.4,cov:2.7,
+   story:'Handover delays +2 months and material costs +5%; revenue recognition slips right, modestly lifting period-end cash.'},
+  {id:'capital',n:'Capital flight / peg stress',ic:'⇄',cash:2510,margin:26.3,liq:8.9,cov:2.6,
+   story:'Cancellations +6%, EIBOR +90bps, foreign-buyer velocity −10%. Liquidity is the tightest at ~8.9 months.'}
+];
+var activeShock=null;
+function applyShock(id){
+  activeShock=(activeShock===id?null:id);
+  if(activeShock){
+    var s=SHOCKS.find(function(x){return x.id===id;});
+    el('scnPill').innerHTML='<span class="live-dot" style="background:var(--risk)"></span>Shock · '+s.n;
+    emit('SCENARIO','Stress applied — '+s.n+' · operating cash '+bn(s.cash)+(s.cov<2.5?' · covenant thins to '+s.cov.toFixed(1)+'x':''),s.cov<2.5?'warn':'orange');
+    setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
+    showToast(s.n+' applied — forecast re-stressed');
+  }else{
+    el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';
+  }
+  renderScnCompare();
+}
+function resetShock(){activeShock=null;el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderScnCompare();}
+function renderExternalShocks(){
+  function mo(m){return '~'+m.toFixed(1)+' mo';}
+  function cashCell(v){
+    if(v===SHOCK_BASE.cash)return '<td class="num">'+bn(v)+'</td>';
+    var d=v-SHOCK_BASE.cash,up=d>=0;
+    return '<td class="num">'+bn(v)+' <span class="scn-delta" style="color:'+(up?'var(--ok)':'var(--risk)')+'">('+(up?'+':'−')+(Math.abs(d)/1000).toFixed(1)+'B)</span></td>';
+  }
+  var btns=SHOCKS.map(function(s){return '<button class="shock-btn'+(activeShock===s.id?' on':'')+'" onclick="applyShock(\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';}).join('');
+  var h='<div class="sec-h fadein" style="margin-top:22px"><h2>External shocks · stress the forecast</h2><button class="btn-ghost" onclick="resetShock()">↺ Reset to baseline</button></div>';
+  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Apply a shock to re-stress the headline live, or read the impact matrix below (each shock vs base).</div>';
+  h+='<div class="shock-grid">'+btns+'</div>';
+  // live reforecast banner when a shock is active
+  if(activeShock){
+    var a=SHOCKS.find(function(x){return x.id===activeShock;});
+    h+='<div class="reforecast-banner"><div><div class="rf-k">Reforecast · '+a.n+'</div></div>'
+      +'<div><div class="rf-k">Operating cash</div><div class="rf-v">'+bn(a.cash)+'</div></div>'
+      +'<div><div class="rf-k">EBITDA margin</div><div class="rf-v">'+a.margin.toFixed(1)+'%</div></div>'
+      +'<div><div class="rf-k">Liquidity</div><div class="rf-v">'+mo(a.liq)+'</div></div>'
+      +'<div><div class="rf-k">Covenant</div><div class="rf-v" style="color:'+(a.cov<2.5?'var(--warn)':'var(--ink)')+'">'+a.cov.toFixed(1)+'x</div></div></div>';
+  }
+  // impact matrix
+  h+='<table class="shock-tbl"><thead><tr><th>External shock</th><th class="num">Operating cash</th><th class="num">EBITDA margin</th><th class="num">Liquidity</th><th class="num">Covenant</th></tr></thead><tbody>';
+  h+='<tr class="shock-base'+(activeShock===null?' on':'')+'"><td style="font-weight:600">Base</td><td class="num">'+bn(SHOCK_BASE.cash)+'</td><td class="num">'+SHOCK_BASE.margin.toFixed(1)+'%</td><td class="num">'+mo(SHOCK_BASE.liq)+'</td><td class="num">'+SHOCK_BASE.cov.toFixed(1)+'x</td></tr>';
+  SHOCKS.forEach(function(s){
+    h+='<tr class="'+(activeShock===s.id?'shock-active':'')+'"><td>'+s.n+'</td>'+cashCell(s.cash)
+      +'<td class="num">'+s.margin.toFixed(1)+'%</td><td class="num">'+mo(s.liq)+'</td>'
+      +'<td class="num" style="'+(s.cov<2.5?'color:var(--warn)':'')+'">'+s.cov.toFixed(1)+'x</td></tr>';
+  });
+  h+='</tbody></table>';
+  // Sage narrative + voice prompts
+  h+='<div class="acard fadein" style="margin:14px 0 0"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage reads the shock matrix</h3><span class="badge">AI narrative</span></div>'
+    +'<p style="font-size:12px">Global recession and regional conflict hit operating cash hardest (−AED 0.8B and −AED 0.7B); conflict carries the sharpest margin compression (to ~24%). Covenant headroom stays positive across every modelled shock but thins to <strong>2.3x</strong> under recession and conflict — still inside the 2.0x threshold, with the AED 3.5B standby facility as the backstop.</p>'
+    +'<div class="shock-chips"><div class="shock-chip" onclick="askSugg(\'Run the downside scenario\')">🎙 Run the downside scenario</div><div class="shock-chip" onclick="askSugg(\'Model a regional conflict shock\')">🎙 Model a regional conflict shock</div><div class="shock-chip" onclick="askSugg(\'How much idle cash can we mobilise?\')">🎙 How much idle cash can we mobilise?</div></div></div>';
+  h+='</div>';
+  return h;
+}
+
 function renderScenarios(){
   var h='<div class="seg fadein"><button class="'+(scnMode==='plan'?'on':'')+'" onclick="setScnMode(\'plan\')">Equalizer · Levers</button>'
     +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button></div><div id="scnInner"></div>';
@@ -1279,6 +1367,8 @@ function renderScnCompare(){
     h+='<div class="block fadein"><h3>'+sc.n+'</h3><div class="h-sub">'+sc.d+'</div><p style="font-size:11.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">'+sc.narrative+'</p></div>';
   });
   h+='</div>';
+  // ── External shocks · stress the forecast ──
+  h+=renderExternalShocks();
   el('scnInner').innerHTML=h;
 }
 function renderDrivers(){
