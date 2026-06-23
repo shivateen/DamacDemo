@@ -2677,7 +2677,7 @@ function hosMarginDelta(){
   const cP=DATA.tb.filter(r=>r.entity==='HOS-01'&&r.l2==='Direct Cost').reduce((s,r)=>s+r.prior,0);
   return ((rP-cP)/rP*100-(rC-cC)/rC*100);
 }
-const _SAGE_DEFAULT_KEY=['sk-ant-api03-6z1Hqw-gsUpk23VWBY3TB31jaG3','xmlPB47kSUQA6n54YQMAXky2TyN_hs2Tfg-EReIP','jNXjiXcHPFZnXEdp-Rg-om0CNAAA'].join('');
+const _SAGE_DEFAULT_KEY='';  /* no hardcoded key — paste one via the Sage "connect" prompt (stored in localStorage only) */
 let LIVE_KEY=(()=>{try{return localStorage.getItem('sage_api_key')||_SAGE_DEFAULT_KEY;}catch(e){return _SAGE_DEFAULT_KEY;}})();
 function entityContextDump(){
   return DATA.entities.map(e=>{const a=entAgg(e.code);const exc=DATA.scrutiny.filter(s=>s.entity===e.code);
