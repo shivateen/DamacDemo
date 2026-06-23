@@ -13,20 +13,80 @@
     <link rel="stylesheet" href="styles.v02.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">DAMAC Properties</p>
-          <h1>CFO Finance Co-Pilot v02</h1>
-        </div>
-        <div class="status-cluster">
-          <button id="apiKeyBtn" class="status-pill api-key-btn" title="Set OpenAI API Key">API Key</button>
-          <span id="apiStatus" class="status-pill">Checking voice API</span>
-          <span class="status-pill muted">M&amp;A Valuation · v02</span>
-        </div>
-      </header>
+    <div class="app">
+      <nav class="nav" aria-label="Sections">
+        <div class="logo">V</div>
+        <button class="nav-btn tab active" data-tab="overview" title="Investment Overview">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="nav-btn tab" data-tab="scenarios" title="IRR / CAPEX Scenarios">
+          <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="20" cy="14" r="2"/></svg>
+          Scenarios
+        </button>
+        <button class="nav-btn tab" data-tab="risk" title="Risk Sensitivities">
+          <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+          Risk
+        </button>
+        <button class="nav-btn tab" data-tab="cashflow" title="Cash Flow Drilldown">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+          Cash Flow
+        </button>
+        <button class="nav-btn tab" data-tab="controls" title="Controls Risk">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+          Controls
+        </button>
+        <button class="nav-btn tab" data-tab="valuation" title="Valuation Methods">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+          Valuation
+        </button>
+        <button class="nav-btn tab" data-tab="wacc" title="WACC / Capital">
+          <svg viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          WACC
+        </button>
+        <button class="nav-btn tab" data-tab="buildvbuy" title="Build vs Buy">
+          <svg viewBox="0 0 24 24"><path d="M7 8 3 12l4 4M17 8l4 4-4 4"/><path d="M14 4 10 20"/></svg>
+          Build/Buy
+        </button>
+        <button class="nav-btn tab" data-tab="comps" title="Precedent Comps">
+          <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          Comps
+        </button>
+        <button class="nav-btn tab" data-tab="qoe" title="Quality of Earnings">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8.5 11.5 10.5 13.5 14 10"/></svg>
+          QoE
+        </button>
+        <button class="nav-btn tab" data-tab="synergies" title="Synergy Model">
+          <svg viewBox="0 0 24 24"><circle cx="7" cy="12" r="4"/><circle cx="17" cy="12" r="4"/></svg>
+          Synergy
+        </button>
+        <button class="nav-btn tab" data-tab="evidence" title="Evidence Chain">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+          Evidence
+        </button>
+        <button class="nav-btn tab" data-tab="approvalgate" title="Approval Gate">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Approval
+        </button>
+        <div class="nav-sp"></div>
+        <div class="ver-chip">v2.0</div>
+      </nav>
 
-      <main class="workspace">
+      <main class="main">
+        <div class="topbar">
+          <div class="brandmark"><span class="p">Valuation<b>IQ</b></span><span class="by">by Tiger Analytics</span></div>
+          <div class="tb-head">
+            <div class="tb-title">M&amp;A Valuation Co-Pilot</div>
+            <div class="tb-sub">DAMAC Properties · Data Center investment case</div>
+          </div>
+          <div class="tb-right status-cluster">
+            <button id="apiKeyBtn" class="status-pill api-key-btn" title="Set OpenAI API Key">API Key</button>
+            <span id="apiStatus" class="status-pill">Checking voice API</span>
+            <span class="status-pill muted">M&amp;A Valuation · v02</span>
+          </div>
+        </div>
+
+        <div class="content">
         <section class="decision-strip" aria-label="Executive investment metrics">
           <article>
             <span>IRR</span>
@@ -66,21 +126,6 @@
           </article>
         </section>
 
-        <nav class="tabs" aria-label="Dashboard tabs">
-          <button class="tab active" data-tab="overview">Investment Overview</button>
-          <button class="tab" data-tab="scenarios">IRR / CAPEX Scenarios</button>
-          <button class="tab" data-tab="risk">Risk Sensitivities</button>
-          <button class="tab" data-tab="cashflow">Cash Flow Drilldown</button>
-          <button class="tab" data-tab="controls">Controls Risk</button>
-          <button class="tab" data-tab="valuation">Valuation Methods</button>
-          <button class="tab" data-tab="wacc">WACC / Capital</button>
-          <button class="tab" data-tab="buildvbuy">Build vs Buy</button>
-          <button class="tab" data-tab="comps">Precedent Comps</button>
-          <button class="tab" data-tab="qoe">Quality of Earnings</button>
-          <button class="tab" data-tab="synergies">Synergy Model</button>
-          <button class="tab" data-tab="evidence">Evidence Chain</button>
-          <button class="tab" data-tab="approvalgate">Approval Gate</button>
-        </nav>
 
         <section class="tab-panel active" id="overview">
           <div class="panel-grid overview-grid">
@@ -437,9 +482,11 @@
     </div>
   </div>
 </section>
+        </div>
       </main>
+    </div>
 
-      <aside class="voice-console" aria-label="Voice and chat console">
+    <aside class="voice-console" aria-label="Voice and chat console">
         <div class="voice-main">
           <button id="micButton" class="mic-button" aria-label="Start voice">
             <svg class="mic-icon" aria-hidden="true" viewBox="0 0 24 24">
@@ -488,7 +535,7 @@
           </div>
         </div>
       </aside>
-    </div>
+
     <div id="apiKeyModal" class="api-key-modal" hidden>
       <div class="api-key-modal__box">
         <label for="apiKeyInput">OpenAI API Key <span class="api-key-session-note">(cleared on tab close)</span></label>

@@ -21,6 +21,11 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -28,7 +33,154 @@ body {
   color: var(--ink);
   font-family: "Poppins", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Nav-rail shell (matches the ForecastIQ / CloseIQ platform layout) ── */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.nav {
+  width: 66px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.nav .logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  width: 54px;
+  min-height: 48px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  padding: 6px 2px;
+  background: transparent;
+  border: 0;
+  flex-shrink: 0;
+  transition: 0.15s;
+}
+
+.nav-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-btn:hover {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.nav-btn.active {
+  color: var(--teal);
+  background: rgba(240, 140, 30, 0.12);
+}
+
+.nav-sp {
+  flex: 1 1 auto;
+  min-height: 8px;
+}
+
+.ver-chip {
+  font-size: 8.5px;
+  color: var(--muted);
+  font-family: var(--mono);
+  padding: 3px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  margin: 6px 0;
+  flex-shrink: 0;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 24px 132px;
+}
+
+.brandmark .p {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.brandmark .p b {
+  color: var(--orange);
+}
+
+.brandmark .by {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.tb-head {
+  margin-left: 4px;
+}
+
+.tb-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tb-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tb-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 button,
@@ -46,9 +198,7 @@ button {
   padding: 22px 24px 110px;
 }
 
-.topbar,
 .decision-strip,
-.tabs,
 .voice-console,
 .module {
   max-width: 1480px;
@@ -58,10 +208,10 @@ button {
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+  gap: 14px;
+  flex-shrink: 0;
+  padding: 10px 24px;
+  background: var(--panel);
   border-bottom: 3px solid var(--orange);
 }
 
@@ -188,29 +338,6 @@ h2 {
 
 .decision-strip small {
   color: var(--muted);
-}
-
-.tabs {
-  width: 100%;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--line);
-}
-
-.tab {
-  flex: 0 0 auto;
-  padding: 12px 14px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.tab.active {
-  border-color: var(--teal);
-  color: var(--ink);
 }
 
 .tab-panel {
@@ -519,7 +646,7 @@ th {
 
 .voice-console {
   position: fixed;
-  left: 24px;
+  left: 90px;
   right: 24px;
   bottom: 18px;
   display: grid;
