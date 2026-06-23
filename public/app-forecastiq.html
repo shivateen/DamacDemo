@@ -146,6 +146,8 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 .bar.outflow{background:linear-gradient(180deg,var(--risk),rgba(224,82,82,.5))}
 .bar.actual{background:linear-gradient(180deg,var(--ink-2),var(--ink-3))}
 .bar.forecast{background:linear-gradient(180deg,var(--orange),var(--orange-dim))}
+.bar.eb-bar{background:linear-gradient(180deg,var(--info),rgba(74,144,226,.45))}
+.bar.np-bar{background:linear-gradient(180deg,var(--ok),rgba(46,168,109,.45))}
 .bar-lbl{font-size:8.5px;color:var(--ink-3);font-family:var(--mono);white-space:nowrap}
 .bar-val{font-size:8.5px;color:var(--ink-2);font-family:var(--mono);font-weight:600}
 .legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
@@ -396,6 +398,10 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
     <svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M4 21h16M6 12h.01M6 16h.01M18 12h.01M18 16h.01"/></svg>
     Balance Sheet
   </button>
+  <button class="nav-btn" id="nb-lrp" onclick="go('lrp')">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/><path d="M18 6h-3M18 6v3"/></svg>
+    3-Year Plan
+  </button>
   <button class="nav-btn" id="nb-scn" onclick="go('scn')">
     <svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/><circle cx="18" cy="8" r="2"/><circle cx="15" cy="14" r="2"/></svg>
     Scenarios
@@ -510,22 +516,22 @@ var PROJECTS=[
    note:'Ultra-luxury Couture tower — 43% sold, longer sales runway. Highest margin (43%) but construction outflows precede the bulk of collections, so it is cash-negative in the near term as expected for an early-stage launch.'}
 ];
 
-/* ── P&L (AED M) — Actual FY25, Forecast FY26, FY27 ── */
+/* ── P&L (AED M) — Actual FY25, Forecast FY26 / FY27 / FY28 (3-year plan) ── */
 var PNL=[
-  {line:'Revenue — Development',a25:11240,f26:13050,f27:15600,grp:'rev'},
-  {line:'Revenue — Rental & Hospitality',a25:980,f26:1150,f27:1340,grp:'rev'},
-  {line:'Total Revenue',a25:12220,f26:14200,f27:16940,grp:'rev-total'},
-  {line:'Cost of Sales — Construction',a25:-5870,f26:-6780,f27:-8010,grp:'cos'},
-  {line:'Cost of Sales — Land amortisation',a25:-1340,f26:-1520,f27:-1790,grp:'cos'},
-  {line:'Gross Profit',a25:5010,f26:5900,f27:7140,grp:'gp'},
-  {line:'Selling & Marketing',a25:-980,f26:-1150,f27:-1330,grp:'opex'},
-  {line:'G&A / Overheads',a25:-720,f26:-810,f27:-910,grp:'opex'},
-  {line:'EBITDA',a25:3310,f26:3940,f27:4900,grp:'ebitda'},
-  {line:'Depreciation & Amortisation',a25:-210,f26:-240,f27:-280,grp:'below'},
-  {line:'Net Finance Cost',a25:-430,f26:-560,f27:-610,grp:'below'},
-  {line:'Profit Before Tax',a25:2670,f26:3140,f27:4010,grp:'pbt'},
-  {line:'Corporate Tax (9%)',a25:-240,f26:-283,f27:-361,grp:'below'},
-  {line:'Net Profit',a25:2430,f26:2857,f27:3649,grp:'np'}
+  {line:'Revenue — Development',a25:11240,f26:13050,f27:15600,f28:17900,grp:'rev'},
+  {line:'Revenue — Rental & Hospitality',a25:980,f26:1150,f27:1340,f28:1550,grp:'rev'},
+  {line:'Total Revenue',a25:12220,f26:14200,f27:16940,f28:19450,grp:'rev-total'},
+  {line:'Cost of Sales — Construction',a25:-5870,f26:-6780,f27:-8010,f28:-9180,grp:'cos'},
+  {line:'Cost of Sales — Land amortisation',a25:-1340,f26:-1520,f27:-1790,f28:-2010,grp:'cos'},
+  {line:'Gross Profit',a25:5010,f26:5900,f27:7140,f28:8260,grp:'gp'},
+  {line:'Selling & Marketing',a25:-980,f26:-1150,f27:-1330,f28:-1510,grp:'opex'},
+  {line:'G&A / Overheads',a25:-720,f26:-810,f27:-910,f28:-1010,grp:'opex'},
+  {line:'EBITDA',a25:3310,f26:3940,f27:4900,f28:5740,grp:'ebitda'},
+  {line:'Depreciation & Amortisation',a25:-210,f26:-240,f27:-280,f28:-320,grp:'below'},
+  {line:'Net Finance Cost',a25:-430,f26:-560,f27:-610,f28:-660,grp:'below'},
+  {line:'Profit Before Tax',a25:2670,f26:3140,f27:4010,f28:4760,grp:'pbt'},
+  {line:'Corporate Tax (9%)',a25:-240,f26:-283,f27:-361,f28:-428,grp:'below'},
+  {line:'Net Profit',a25:2430,f26:2857,f27:3649,f28:4332,grp:'np'}
 ];
 
 /* ── CASH FLOW — 18 months rolling (AED M), inflow vs outflow, net & cumulative ── */
@@ -546,6 +552,64 @@ var CASH=[
 ];
 var CASH_OPENING=4200; /* free cash opening balance AED M */
 
+/* ── CASH-FLOW SCENARIOS — stress the cash forecast on the 4 cash levers ──
+   Anchored to the base cash forecast: operating cash AED 3.10B (12m),
+   closing AED 7.45B, Q3 trough AED 2.98B, DSCR 2.7x. Each scenario
+   re-stresses the cash KPIs live and feeds the impact matrix below. */
+var CF_BASE={op:3100,close:7450,trough:2980,dscr:2.7};
+var CASHFLOW_SCENARIOS=[
+  {id:'collect',n:'Collection delays',ic:'⏳',op:2740,close:6980,trough:1990,dscr:2.4,
+   story:'A cluster of structure-milestone collections — Safa Two\'s GBP/INR buyers — slips 2–3 months. Inflows shift right while contractor drawdowns keep landing, so the Q3 trough deepens to AED 1.99B. This is timing, not value: most of the cash recovers by Q1-27 as the milestone completes.'},
+  {id:'revenue',n:'Revenue projection −8%',ic:'📊',op:2520,close:6720,trough:2410,dscr:2.4,
+   story:'Forecast revenue revised −8% on softer launch velocity and price on later releases. Collections scale down across all six projects; operating cash falls ~AED 0.58B. The trough holds above floor but DSCR thins to 2.4x.'},
+  {id:'cost',n:'Cost to deliver +8%',ic:'🏗️',op:2810,close:7030,trough:2640,dscr:2.6,
+   story:'Contractor / IPC rates rise +8% on materials and labour. Construction outflows climb ~AED 290M; revenue is unaffected, so the hit is pure cash and margin. The Q3 trough thins modestly to AED 2.64B.'},
+  {id:'rate',n:'Borrowing rate +200bps',ic:'%',op:2950,close:7180,trough:2870,dscr:2.5,
+   story:'EIBOR +200bps on the AED 10.4B borrowing book, including the Q3 USD construction-facility reprice. Finance cost rises ~AED 150M; operating margin is untouched — the bite is debt service and covenant headroom (DSCR 2.5x).'}
+];
+var activeCF=null;
+function applyCF(id){
+  activeCF=(activeCF===id?null:id);
+  if(activeCF){
+    var s=CASHFLOW_SCENARIOS.find(function(x){return x.id===id;});
+    emit('SCENARIO','Cash scenario — '+s.n+' · op cash '+bn(s.op)+' · Q3 trough '+bn(s.trough)+(s.trough<800?' · BELOW AED 800M floor':''),s.trough<2000?'warn':'orange');
+    setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
+    showToast(s.n+' applied — cash forecast re-stressed');
+  }
+  renderCash();
+}
+function resetCF(){activeCF=null;renderCash();}
+function renderCashScenarios(){
+  function bcol(v,base){
+    if(v===base)return '<td class="num">'+bn(v)+'</td>';
+    var d=v-base,up=d>=0;
+    return '<td class="num">'+bn(v)+' <span class="scn-delta" style="color:'+(up?'var(--ok)':'var(--risk)')+'">('+(up?'+':'−')+(Math.abs(d)/1000).toFixed(2)+'B)</span></td>';
+  }
+  var btns=CASHFLOW_SCENARIOS.map(function(s){return '<button class="shock-btn'+(activeCF===s.id?' on':'')+'" onclick="applyCF(\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';}).join('');
+  var h='<div class="sec-h fadein" style="margin-top:22px"><h2>Cash-flow scenarios · stress the cash forecast</h2><button class="btn-ghost" onclick="resetCF()">↺ Reset to baseline</button></div>';
+  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Toggle a cash lever to re-stress the headline live, or read the impact matrix below (each scenario vs base). The KPIs and Q3 trough above move with your selection.</div>';
+  h+='<div class="shock-grid">'+btns+'</div>';
+  if(activeCF){
+    var a=CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;});
+    h+='<div class="reforecast-banner"><div><div class="rf-k">Reforecast · '+a.n+'</div></div>'
+      +'<div><div class="rf-k">Net op cash (12m)</div><div class="rf-v">'+bn(a.op)+'</div></div>'
+      +'<div><div class="rf-k">Closing cash</div><div class="rf-v">'+bn(a.close)+'</div></div>'
+      +'<div><div class="rf-k">Min cash (trough)</div><div class="rf-v" style="color:'+(a.trough<800?'var(--risk)':a.trough<2500?'var(--warn)':'var(--ink)')+'">'+bn(a.trough)+'</div></div>'
+      +'<div><div class="rf-k">DSCR</div><div class="rf-v" style="color:'+(a.dscr<2.5?'var(--warn)':'var(--ink)')+'">'+a.dscr.toFixed(1)+'x</div></div></div>';
+    h+='<div class="acard fadein" style="margin:0 0 14px"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage on this scenario</h3><span class="badge">AI narrative</span></div><p style="font-size:12px">'+a.story+'</p></div>';
+  }
+  h+='<table class="shock-tbl"><thead><tr><th>Cash-flow scenario</th><th class="num">Net op cash (12m)</th><th class="num">Closing cash</th><th class="num">Min cash (trough)</th><th class="num">DSCR</th></tr></thead><tbody>';
+  h+='<tr class="shock-base'+(activeCF===null?' on':'')+'"><td style="font-weight:600">Base case</td><td class="num">'+bn(CF_BASE.op)+'</td><td class="num">'+bn(CF_BASE.close)+'</td><td class="num">'+bn(CF_BASE.trough)+'</td><td class="num">'+CF_BASE.dscr.toFixed(1)+'x</td></tr>';
+  CASHFLOW_SCENARIOS.forEach(function(s){
+    h+='<tr class="'+(activeCF===s.id?'shock-active':'')+'"><td>'+s.n+'</td>'+bcol(s.op,CF_BASE.op)+bcol(s.close,CF_BASE.close)+bcol(s.trough,CF_BASE.trough)
+      +'<td class="num" style="'+(s.dscr<2.5?'color:var(--warn)':'')+'">'+s.dscr.toFixed(1)+'x</td></tr>';
+  });
+  h+='</tbody></table>';
+  h+='<div class="shock-chips"><div class="shock-chip" onclick="askSugg(\'What if collections slip two months on Safa Two?\')">🎙 Slip collections 2 months</div><div class="shock-chip" onclick="askSugg(\'Stress the cash forecast for a 200bps rate rise\')">🎙 Rate +200bps</div><div class="shock-chip" onclick="askSugg(\'How deep does the Q3 trough get if cost to deliver rises 8%?\')">🎙 Cost to deliver +8%</div></div>';
+  h+='</div>';
+  return h;
+}
+
 /* ── ESCROW vs FREE CASH split (AED M) ── */
 var CASH_SPLIT=[
   {k:'RERA Escrow (restricted)',v:18200,tone:'info',note:'Restricted under RERA — can only fund the linked project construction. Not available for group liquidity.'},
@@ -553,20 +617,44 @@ var CASH_SPLIT=[
   {k:'Undrawn Facilities',v:3500,tone:'orange',note:'Committed but undrawn construction & corporate facilities — contingent liquidity.'}
 ];
 
-/* ── BALANCE SHEET (AED M) ── */
+/* ── BALANCE SHEET (AED M) — FY25 actual → FY26 / FY27 / FY28 forecast ── */
 var BS=[
-  {line:'Development Properties (WIP / Inventory)',a25:28400,f26:31200,grp:'asset'},
-  {line:'Contract Assets (revenue ahead of billing)',a25:3100,f26:3680,grp:'asset'},
-  {line:'Trade & Other Receivables',a25:5400,f26:6020,grp:'asset'},
-  {line:'Restricted Cash — Escrow',a25:16800,f26:18200,grp:'asset'},
-  {line:'Cash & Equivalents (free)',a25:3900,f26:4200,grp:'asset'},
-  {line:'Total Assets',a25:57600,f26:63300,grp:'asset-total'},
-  {line:'Contract Liabilities (advances from buyers)',a25:21300,f26:24100,grp:'liab'},
-  {line:'Borrowings',a25:9800,f26:10400,grp:'liab'},
-  {line:'Trade & Other Payables',a25:6200,f26:6740,grp:'liab'},
-  {line:'Total Liabilities',a25:37300,f26:41240,grp:'liab-total'},
-  {line:'Total Equity',a25:20300,f26:22060,grp:'equity'}
+  {line:'Development Properties (WIP / Inventory)',a25:28400,f26:31200,f27:33600,f28:35400,grp:'asset'},
+  {line:'Contract Assets (revenue ahead of billing)',a25:3100,f26:3680,f27:4100,f28:4450,grp:'asset'},
+  {line:'Trade & Other Receivables',a25:5400,f26:6020,f27:6500,f28:6950,grp:'asset'},
+  {line:'Restricted Cash — Escrow',a25:16800,f26:18200,f27:19400,f28:20100,grp:'asset'},
+  {line:'Cash & Equivalents (free)',a25:3900,f26:4200,f27:5100,f28:6450,grp:'asset'},
+  {line:'Total Assets',a25:57600,f26:63300,f27:68700,f28:73350,grp:'asset-total'},
+  {line:'Contract Liabilities (advances from buyers)',a25:21300,f26:24100,f27:26200,f28:27600,grp:'liab'},
+  {line:'Borrowings',a25:9800,f26:10400,f27:10100,f28:9600,grp:'liab'},
+  {line:'Trade & Other Payables',a25:6200,f26:6740,f27:7150,f28:7500,grp:'liab'},
+  {line:'Total Liabilities',a25:37300,f26:41240,f27:43450,f28:44700,grp:'liab-total'},
+  {line:'Total Equity',a25:20300,f26:22060,f27:25250,f28:28650,grp:'equity'}
 ];
+
+/* ── LONG-RANGE PLAN (3-year annual model) — drives the 3-Year Plan view ──
+   FY25 actual + FY26/27/28 forecast across the headline statements. Annual
+   operating-cash trajectory; CAGR measured across the FY26→FY28 forecast. */
+var LRP={
+  years:['FY25A','FY26F','FY27F','FY28F'],
+  isFc:[false,true,true,true],
+  revenue:[12220,14200,16940,19450],
+  ebitda:[3310,3940,4900,5740],
+  np:[2430,2857,3649,4332],
+  opcash:[2680,3100,3760,4480],
+  equity:[20300,22060,25250,28650],
+  netDebt:[5900,6200,5000,3150],  /* borrowings − free cash */
+  capex:[6900,7600,8100,8400]     /* construction / development spend */
+};
+function cagr(a,b,yrs){return Math.pow(b/a,1/yrs)-1;}
+function lrpDeltas(){
+  return {
+    rev:cagr(LRP.revenue[1],LRP.revenue[3],2),
+    ebitda:cagr(LRP.ebitda[1],LRP.ebitda[3],2),
+    np:cagr(LRP.np[1],LRP.np[3],2),
+    cash:cagr(LRP.opcash[1],LRP.opcash[3],2)
+  };
+}
 
 /* ── SCENARIOS ── */
 var SCENARIOS={
@@ -721,7 +809,8 @@ var VIEWS={
   revenue:['Revenue Forecast — Version Comparison','Budget vs Prior Forecast vs Locked-in vs Current · configurable column cuts'],
   pnl:['P&L Forecast','Actual FY25 → Forecast FY26 / FY27 · AI-driven · IFRS 15'],
   cash:['Cash Flow Forecast','18-month rolling · inflow vs outflow · escrow vs free cash · runway by project'],
-  bs:['Balance Sheet Forecast','FY25 actual → FY26 forecast · WIP, contract liabilities, escrow'],
+  bs:['Balance Sheet Forecast','FY25 actual → FY26 / FY27 / FY28 forecast · WIP, contract liabilities, escrow'],
+  lrp:['3-Year Plan — FY26 → FY28','Long-range model · revenue, EBITDA, profit & cash trajectory · CAGR & board view'],
   scn:['Scenario Planner','Base / Stress / Upside · self-serve driver sliders · instant P&L + cash impact'],
   agents:['ForecastIQ Agent Pipeline','6 agents · INGEST → DRIVERS → MODEL → SCENARIO → COMMENTARY → REPORT']
 };
@@ -731,6 +820,7 @@ var VIEW_SEQ={
   pnl:[['INGEST','Loading GL actuals FY25 + booked revenue pipeline','orange'],['MODEL','Recognising development revenue on % completion (IFRS 15)','orange'],['COMMENTARY','Gross margin holding 41.5% · EBITDA AED 3.94B','ok']],
   cash:[['INGEST','Mapping installment plans → collection schedule','orange'],['MODEL','Netting construction drawdowns vs collections by month','orange'],['COMMENTARY','Q3 cash dip flagged — Safa Two + USD facility reprice','warn']],
   bs:[['MODEL','Rolling WIP, contract assets/liabilities & escrow','orange'],['COMMENTARY','Contract liabilities AED 24.1B — strong forward cover','ok']],
+  lrp:[['INGEST','Loading FY25 actuals + 3-year project delivery schedule','orange'],['DRIVERS','Extending velocity, price & milestone curves to FY28','orange'],['MODEL','Projecting P&L, cash & equity across FY26 → FY28','orange'],['COMMENTARY','Revenue CAGR ~17% · EBITDA margin expanding to 29.5%','ok'],['REPORT','3-year board plan ready — net profit to AED 4.33B','ok']],
   scn:[['DRIVERS','Driver sensitivities calibrated from 5-year history','orange'],['SCENARIO','3 scenarios staged — adjust drivers to recompute live','ok']],
   agents:[['INGEST','Standing by — next auto-refresh 02:00, nightly','ok'],['MODEL','Last run model confidence: 91.4%','ok']]
 };
@@ -749,6 +839,7 @@ function go(view){
     else if(view==='pnl')renderPNL();
     else if(view==='cash')renderCash();
     else if(view==='bs')renderBS();
+    else if(view==='lrp')renderLRP();
     else if(view==='scn')renderScenarios();
     else if(view==='agents')renderAgents();
   },Math.max(seq.length*200+200,420));
@@ -816,6 +907,22 @@ function renderOverview(){
     + confRow('Balance Sheet — WIP roll',92)
     +'</div>'
     +'</div>';
+
+  // ── 3-year outlook strip ──
+  var d=lrpDeltas();
+  h+='<div class="sec-h"><h2>3-Year Outlook — FY26 → FY28</h2><span class="meta">long-range plan · open the 3-Year Plan view for the full model</span></div>';
+  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Group revenue compounds at ~'+(d.rev*100).toFixed(0)+'% with EBITDA margin expanding to '+(LRP.ebitda[3]/LRP.revenue[3]*100).toFixed(1)+'% by FY28.</div>';
+  var mxv=Math.max.apply(null,LRP.revenue)*1.08;
+  h+='<div class="chart" style="height:150px">'+LRP.years.map(function(y,i){
+    var fc=LRP.isFc[i];
+    function seg(v,cls){return '<div class="bar '+cls+'" style="height:'+(v/mxv*100)+'%;width:42%"></div>';}
+    return '<div class="bar-col" title="'+y+': rev '+(LRP.revenue[i]/1000).toFixed(2)+'B · EBITDA '+(LRP.ebitda[i]/1000).toFixed(2)+'B"><div class="bar-val">'+(LRP.revenue[i]/1000).toFixed(1)+'B</div>'
+      +'<div class="bar-stack" style="flex-direction:row;gap:3px;align-items:flex-end;width:80%">'+seg(LRP.revenue[i],fc?'forecast':'actual')+seg(LRP.ebitda[i],'eb-bar')+'</div>'
+      +'<div class="bar-lbl"'+(fc?' style="color:var(--orange-soft)"':'')+'>'+y+'</div></div>';
+  }).join('')+'</div>';
+  h+='<div class="legend"><span><i style="background:var(--orange)"></i>Revenue</span><span><i style="background:var(--info)"></i>EBITDA</span></div>';
+  h+='<button class="btn-ghost" style="width:100%;margin-top:10px" onclick="go(\'lrp\')">Open the 3-Year Plan →</button></div>';
+
   el('content').innerHTML=h;
 }
 function cmpRow(a,b){return '<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:1;font-size:11.5px;color:var(--ink-3);text-decoration:line-through;opacity:.7">'+a+'</span><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:var(--orange);fill:none;stroke-width:2;flex-shrink:0"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span style="flex:1;font-size:11.5px;color:var(--ink);font-weight:500">'+b+'</span></div>';}
@@ -1006,7 +1113,7 @@ function renderPNL(){
     +kpi('Gross Profit','AED '+(m.gp/1000).toFixed(2)+'B',(m.gp/m.rev*100).toFixed(1)+'% margin','ok')
     +kpi('EBITDA','AED '+(m.ebitda/1000).toFixed(2)+'B',(m.ebitda/m.rev*100).toFixed(1)+'% margin','ok')
     +kpi('Net Profit','AED '+(m.np/1000).toFixed(2)+'B',(m.np/m.rev*100).toFixed(1)+'% margin','ok')
-    +kpi('FY27 Revenue','AED 16.9B','+19.3% next year','info')
+    +kpi('FY28 Revenue','AED 19.5B','~17% rev CAGR (26–28)','info')
     +'</div>';
   // ── Revenue segment + Cost segment assumptions blocks ──
   h+='<div class="grid-2">'
@@ -1025,26 +1132,27 @@ function renderPNL(){
     +'</div>';
   h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>P&L Forecast — driver-based, IFRS 15</h3><span class="badge">FY26 column is live · click a line to trace</span></div>'
     +'<p>Development revenue is recognised on <strong>percentage-of-completion</strong> from contracted construction progress, not cash. The cost segment flows from the contractor milestone run-rate (COGS), selling & overhead (SG&A) and the floating-rate debt book (finance). Every figure below recomputes from the assumptions above — edit them in the Equalizer.</p></div>';
-  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>P&L line (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Forecast FY27</th><th class="num">YoY</th></tr></thead><tbody>';
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>P&L line (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
   PNL.forEach(function(r){
     var cls=(r.grp==='rev-total'||r.grp==='ebitda'||r.grp==='gp'||r.grp==='pbt')?'sub-total':(r.grp==='np'?'total':'');
     var f26v=live[r.line]!==undefined?Math.round(live[r.line]):r.f26;
-    var yoy=((f26v-r.a25)/Math.abs(r.a25)*100);
-    var yoyTxt=(yoy>=0?'+':'')+yoy.toFixed(1)+'%';
-    var yoyTone=(r.grp==='cos'||r.grp==='opex'||r.grp==='below')?(yoy>0?'var(--warn)':'var(--ok)'):(yoy>=0?'var(--ok)':'var(--risk)');
+    var cg=cagr(Math.abs(f26v),Math.abs(r.f28),2)*100;
+    var cgTxt=(cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%';
+    var cgTone=(r.grp==='cos'||r.grp==='opex'||r.grp==='below')?(cg>0?'var(--warn)':'var(--ok)'):(cg>=0?'var(--ok)':'var(--risk)');
     h+='<tr class="clickable '+cls+'" onclick="openPnlLine(\''+r.line.replace(/'/g,"")+'\')">'
       +'<td>'+r.line+'</td>'
       +'<td class="num">'+r.a25.toLocaleString()+'</td>'
       +'<td class="num fc-col">'+f26v.toLocaleString()+'</td>'
       +'<td class="num">'+r.f27.toLocaleString()+'</td>'
-      +'<td class="num" style="color:'+yoyTone+'">'+yoyTxt+'</td></tr>';
+      +'<td class="num">'+r.f28.toLocaleString()+'</td>'
+      +'<td class="num" style="color:'+cgTone+'">'+cgTxt+'</td></tr>';
   });
   h+='</tbody></table></div>';
 
   // Revenue bridge mini chart
-  h+='<div class="block fadein"><h3>Revenue — Actual vs Forecast</h3><div class="h-sub">FY25 actual → FY26 / FY27 forecast (AED B)</div>';
-  var bars=[{l:'FY25',v:12220,c:'actual'},{l:'FY26',v:Math.round(m.rev),c:'forecast'},{l:'FY27',v:16940,c:'forecast'}];
-  var mx=17000;
+  h+='<div class="block fadein"><h3>Revenue — Actual vs 3-Year Forecast</h3><div class="h-sub">FY25 actual → FY26 / FY27 / FY28 forecast (AED B)</div>';
+  var bars=[{l:'FY25',v:12220,c:'actual'},{l:'FY26',v:Math.round(m.rev),c:'forecast'},{l:'FY27',v:16940,c:'forecast'},{l:'FY28',v:19450,c:'forecast'}];
+  var mx=20000;
   h+='<div class="chart">'+bars.map(function(b){
     return '<div class="bar-col"><div class="bar-val">'+(b.v/1000).toFixed(1)+'B</div><div class="bar-stack"><div class="bar '+b.c+'" style="height:'+(b.v/mx*100)+'%"></div></div><div class="bar-lbl">'+b.l+'</div></div>';
   }).join('')+'</div>';
@@ -1058,12 +1166,15 @@ function renderCash(){
   var cum=CASH_OPENING, minCum=CASH_OPENING, minM='';
   var series=CASH.map(function(c){cum+=c.in+c.out;if(cum<minCum){minCum=cum;minM=c.m;}return {m:c.m,net:c.in+c.out,cum:cum,in:c.in,out:c.out,actual:c.actual};});
   var closing=cum;
-  var troughTone=m.minCash<800?'risk':'warn';
+  // active cash-flow scenario overrides the headline KPIs (else live model)
+  var cf=activeCF?CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;}):null;
+  var opCash=cf?cf.op:m.cash, closeCash=cf?cf.close:closing, troughCash=cf?cf.trough:m.minCash;
+  var troughTone=troughCash<800?'risk':troughCash<2500?'warn':'ok';
   var h='<div class="kpi-row fadein">'
     +kpi('Opening Cash','AED 4.20B','free / unrestricted','info')
-    +kpi('Net Op Cash (12m)','+AED '+(m.cash/1000).toFixed(2)+'B','live · sales-driven','ok')
-    +kpi('Closing Cash','AED '+(closing/1000).toFixed(2)+'B','May-27','ok')
-    +kpi('Min Cash (trough)','AED '+(m.minCash/1000).toFixed(2)+'B','Q3 · '+(m.minCash<800?'below AED 800M floor':'within floor'),troughTone)
+    +kpi('Net Op Cash (12m)','+AED '+(opCash/1000).toFixed(2)+'B',cf?'scenario · '+cf.n:'live · sales-driven',cf?'orange':'ok')
+    +kpi('Closing Cash','AED '+(closeCash/1000).toFixed(2)+'B','May-27',cf?'orange':'ok')
+    +kpi('Min Cash (trough)','AED '+(troughCash/1000).toFixed(2)+'B','Q3 · '+(troughCash<800?'below AED 800M floor':'within floor'),troughTone)
     +kpi('RERA Escrow','AED 18.2B','restricted','info')
     +'</div>';
 
@@ -1111,6 +1222,7 @@ function renderCash(){
   });
   h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5">Safa Two at 4 months is the binding constraint — the Q3 dip traces here. Click into the project from Overview for the resolution path.</div></div>';
   h+='</div>';
+  h+=renderCashScenarios();
   el('content').innerHTML=h;
 }
 
@@ -1134,15 +1246,18 @@ function renderBS(){
     +'</div>';
   h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M4 21h16"/></svg></div><h3>Balance Sheet Commentary</h3><span class="badge">lockstep</span></div>'
     +'<p>The balance sheet rolls forward from construction spend capitalised into <strong>development WIP</strong> and the unwinding of <strong>contract liabilities</strong> (buyer advances) as units hand over — giving <strong>~1.7x forward revenue cover</strong>. Cash, equity (via retained profit) and contract liabilities <strong>recompute live</strong> from the Equalizer, so the statement always balances when assumptions change. Gearing stays conservative at '+(netDebt/equity).toFixed(2)+'x net-debt-to-equity.</p></div>';
-  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Balance sheet (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Δ</th></tr></thead><tbody>';
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Balance sheet (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
   BS.forEach(function(r){
     var cls=(r.grp==='asset-total'||r.grp==='liab-total')?'sub-total':(r.grp==='equity'?'total':'');
-    var v=f26(r), d=v-r.a25;
+    var v=f26(r);
+    var cg=cagr(Math.abs(v),Math.abs(r.f28),2)*100;
     h+='<tr class="'+cls+'">'
       +'<td>'+r.line+'</td>'
       +'<td class="num">'+r.a25.toLocaleString()+'</td>'
       +'<td class="num fc-col">'+Math.round(v).toLocaleString()+'</td>'
-      +'<td class="num" style="color:'+(d>=0?'var(--ok)':'var(--risk)')+'">'+(d>=0?'+':'')+Math.round(d).toLocaleString()+'</td></tr>';
+      +'<td class="num">'+r.f27.toLocaleString()+'</td>'
+      +'<td class="num">'+r.f28.toLocaleString()+'</td>'
+      +'<td class="num" style="color:'+(cg>=0?'var(--ok)':'var(--risk)')+'">'+(cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%</td></tr>';
   });
   h+='</tbody></table></div>';
 
@@ -1156,6 +1271,87 @@ function renderBS(){
   var ft=fund.reduce(function(a,b){return a+b.v;},0);
   fund.forEach(function(a){h+='<div class="runway-row"><span class="rn">'+a.k+'</span><div class="runway-track"><div class="runway-fill" style="width:'+(a.v/ft*100)+'%;background:'+a.c+'"></div></div><span class="rv">'+bnShort(a.v)+'</span></div>';});
   h+='</div></div>';
+  el('content').innerHTML=h;
+}
+
+/* ── 3-YEAR PLAN (long-range model FY26 → FY28) ── */
+function renderLRP(){
+  var d=lrpDeltas();
+  var pct=function(x){return (x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';};
+  var ebMarg=LRP.years.map(function(_,i){return LRP.ebitda[i]/LRP.revenue[i]*100;});
+  var npMarg=LRP.years.map(function(_,i){return LRP.np[i]/LRP.revenue[i]*100;});
+  var cumCash=LRP.opcash[1]+LRP.opcash[2]+LRP.opcash[3];
+
+  var h='<div class="kpi-row fadein">'
+    +kpi('FY28 Revenue','AED '+(LRP.revenue[3]/1000).toFixed(2)+'B',pct(d.rev)+' CAGR (26–28)','ok','3-yr plan')
+    +kpi('FY28 EBITDA','AED '+(LRP.ebitda[3]/1000).toFixed(2)+'B',ebMarg[3].toFixed(1)+'% margin','ok',pct(d.ebitda)+' CAGR')
+    +kpi('FY28 Net Profit','AED '+(LRP.np[3]/1000).toFixed(2)+'B',npMarg[3].toFixed(1)+'% margin','ok',pct(d.np)+' CAGR')
+    +kpi('Cumulative Op Cash','AED '+(cumCash/1000).toFixed(1)+'B','FY26 → FY28','info')
+    +kpi('Net Debt / EBITDA',(LRP.netDebt[3]/LRP.ebitda[3]).toFixed(2)+'x','deleveraging to FY28','ok')
+    +'</div>';
+
+  h+=srcStrip();
+
+  h+='<div class="acard glow fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div><h3>Sage — 3-Year Plan Commentary</h3><span class="badge">AI-GENERATED</span></div>'
+    +'<p>The long-range model extends the FY26 base case across the contracted delivery pipeline through <strong>FY28</strong>. Group revenue compounds at <strong>'+pct(d.rev)+' CAGR</strong> to <strong>AED '+(LRP.revenue[3]/1000).toFixed(2)+'B</strong> as DAMAC Islands, Bay and Couture move through construction into handover, while EBITDA margin expands from <strong>'+ebMarg[1].toFixed(1)+'% to '+ebMarg[3].toFixed(1)+'%</strong> on price escalation and operating leverage.<br><br>'
+    +'Net profit grows <strong>'+pct(d.np)+' a year</strong> to <strong>AED '+(LRP.np[3]/1000).toFixed(2)+'B</strong>, and the plan throws off <strong>AED '+(cumCash/1000).toFixed(1)+'B of cumulative operating cash</strong> over the three years — enough to fund the AED '+((LRP.capex[1]+LRP.capex[2]+LRP.capex[3])/1000).toFixed(1)+'B development programme and still <strong>de-lever to '+(LRP.netDebt[3]/LRP.ebitda[3]).toFixed(2)+'x net-debt-to-EBITDA</strong> by FY28. The FY27–28 columns are forecast projections — stress them on the Equalizer and External shocks.</p></div>';
+
+  // ── Revenue / EBITDA / Net profit trajectory ──
+  h+='<div class="block fadein"><h3>Revenue · EBITDA · Net Profit — FY25 → FY28</h3><div class="h-sub">grey = actual · orange = forecast · AED B</div>';
+  var mxv=Math.max.apply(null,LRP.revenue)*1.08;
+  h+='<div class="chart" style="height:200px">'+LRP.years.map(function(y,i){
+    var fc=LRP.isFc[i];
+    function seg(v,cls,lbl){return '<div class="bar '+cls+'" style="height:'+(v/mxv*100)+'%;width:30%" title="'+lbl+': '+(v/1000).toFixed(2)+'B"></div>';}
+    return '<div class="bar-col" title="'+y+'"><div class="bar-val">'+(LRP.revenue[i]/1000).toFixed(1)+'B</div>'
+      +'<div class="bar-stack" style="flex-direction:row;gap:3px;align-items:flex-end;width:88%">'
+      +seg(LRP.revenue[i],fc?'forecast':'actual','Revenue')
+      +seg(LRP.ebitda[i],'eb-bar','EBITDA')
+      +seg(LRP.np[i],'np-bar','Net profit')
+      +'</div><div class="bar-lbl"'+(fc?' style="color:var(--orange-soft)"':'')+'>'+y+'</div></div>';
+  }).join('')+'</div>';
+  h+='<div class="legend"><span><i style="background:var(--orange)"></i>Revenue</span><span><i style="background:var(--info)"></i>EBITDA</span><span><i style="background:var(--ok)"></i>Net profit</span></div></div>';
+
+  // ── Annual 3-year P&L + cash summary ──
+  h+='<div class="sec-h"><h2>Long-Range Plan — annual summary</h2><span class="meta">FY25 actual → FY26 / FY27 / FY28 forecast · AED M</span></div>';
+  function lrpRow(lbl,arr,fmt,cls){
+    var cg=cagr(Math.abs(arr[1]),Math.abs(arr[3]),2)*100;
+    var cells=arr.map(function(v,i){return '<td class="num'+(i===1?' fc-col':'')+'">'+fmt(v)+'</td>';}).join('');
+    return '<tr class="'+(cls||'')+'"><td>'+lbl+'</td>'+cells+'<td class="num" style="color:var(--ok)">+'+cg.toFixed(1)+'%</td></tr>';
+  }
+  function lrpRowPlain(lbl,arr,fmt){
+    var cells=arr.map(function(v){return '<td class="num">'+fmt(v)+'</td>';}).join('');
+    return '<tr><td>'+lbl+'</td>'+cells+'<td class="num">—</td></tr>';
+  }
+  var fM=function(v){return Math.round(v).toLocaleString();};
+  var fP=function(v){return v.toFixed(1)+'%';};
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>AED M</th>'
+    +LRP.years.map(function(y){return '<th class="num">'+y+'</th>';}).join('')+'<th class="num">26–28 CAGR</th></tr></thead><tbody>';
+  h+=lrpRow('Total Revenue',LRP.revenue,fM,'sub-total');
+  h+=lrpRow('EBITDA',LRP.ebitda,fM,'sub-total');
+  h+=lrpRowPlain('EBITDA margin',ebMarg,fP);
+  h+=lrpRow('Net Profit',LRP.np,fM,'total');
+  h+=lrpRowPlain('Net margin',npMarg,fP);
+  h+=lrpRow('Operating Cash',LRP.opcash,fM,'sub-total');
+  h+=lrpRow('Development capex',LRP.capex,fM);
+  h+='</tbody></table></div>';
+
+  // ── Margin progression + balance-sheet strength ──
+  h+='<div class="grid-2"><div class="block fadein"><h3>Margin progression</h3><div class="h-sub">operating leverage as the book matures</div>';
+  LRP.years.forEach(function(y,i){
+    var w=ebMarg[i]/35*100;
+    h+='<div class="runway-row"><span class="rn">'+y+'</span><div class="runway-track"><div class="runway-fill" style="width:'+w+'%;background:'+(LRP.isFc[i]?'var(--orange)':'var(--ink-3)')+'"></div></div><span class="rv">'+ebMarg[i].toFixed(1)+'% EBITDA</span></div>';
+  });
+  h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5">EBITDA margin expands ~'+((ebMarg[3]-ebMarg[1])).toFixed(1)+'pts over the plan as later-vintage releases carry higher realised prices and fixed overhead is spread over a larger book.</div></div>';
+
+  h+='<div class="block fadein"><h3>Balance-sheet strength — equity & net debt</h3><div class="h-sub">retained profit builds equity; net debt falls</div>';
+  var mxe=Math.max.apply(null,LRP.equity)*1.05;
+  LRP.years.forEach(function(y,i){
+    h+='<div class="runway-row"><span class="rn">'+y+' equity</span><div class="runway-track"><div class="runway-fill" style="width:'+(LRP.equity[i]/mxe*100)+'%;background:var(--orange)"></div></div><span class="rv">'+bnShort(LRP.equity[i])+'</span></div>';
+    h+='<div class="runway-row"><span class="rn">'+y+' net debt</span><div class="runway-track"><div class="runway-fill" style="width:'+(LRP.netDebt[i]/mxe*100)+'%;background:var(--risk)"></div></div><span class="rv">'+bnShort(LRP.netDebt[i])+'</span></div>';
+  });
+  h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5">Net-debt-to-EBITDA falls from '+(LRP.netDebt[1]/LRP.ebitda[1]).toFixed(2)+'x in FY26 to '+(LRP.netDebt[3]/LRP.ebitda[3]).toFixed(2)+'x by FY28 — the plan self-funds the development programme.</div></div></div>';
+
+  h+='<div class="shock-chips" style="margin-top:4px"><div class="shock-chip" onclick="askSugg(\'What drives the FY28 revenue growth?\')">🎙 What drives FY28 growth?</div><div class="shock-chip" onclick="askSugg(\'Stress the 3-year plan for a demand slowdown\')">🎙 Stress the 3-year plan</div><div class="shock-chip" onclick="askSugg(\'How much cumulative cash does the plan generate?\')">🎙 Cumulative cash to FY28</div></div>';
   el('content').innerHTML=h;
 }
 
