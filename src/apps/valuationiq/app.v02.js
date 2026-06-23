@@ -702,7 +702,7 @@ function renderFootballField() {
 
   // Consensus band
   const cx1 = scaleX(ff.enterpriseValue.low), cx2 = scaleX(ff.enterpriseValue.high);
-  const consensusBand = `<rect x="${cx1}" y="${margin.top}" width="${cx2 - cx1}" height="${chartHeight}" rx="4" fill="rgba(15,118,110,0.07)" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="5 3"></rect>
+  const consensusBand = `<rect x="${cx1}" y="${margin.top}" width="${cx2 - cx1}" height="${chartHeight}" rx="4" fill="rgba(240, 140, 30,0.07)" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="5 3"></rect>
     <text x="${scaleX(ff.enterpriseValue.mid)}" y="${margin.top - 8}" text-anchor="middle" class="ff-value-label" fill="var(--teal)">Consensus ${ff.enterpriseValue.mid.toLocaleString()} AEDm</text>`;
 
   elements.footballFieldChart.innerHTML = `<svg class="football-field-svg" viewBox="0 0 ${svgWidth} ${svgHeight}" role="img" aria-label="Football field enterprise value">

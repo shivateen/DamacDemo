@@ -44,7 +44,7 @@
 }
 
 .ff-range-fill {
-  fill: rgba(15, 118, 110, 0.18);
+  fill: rgba(240, 140, 30, 0.18);
   rx: 4;
 }
 
@@ -53,7 +53,7 @@
 }
 
 .ff-consensus-band {
-  fill: rgba(15, 118, 110, 0.09);
+  fill: rgba(240, 140, 30, 0.09);
   stroke: var(--teal);
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
@@ -138,7 +138,7 @@
 
 .dc-ramp-cell {
   padding: 8px 4px;
-  background: rgba(15, 118, 110, 0.08);
+  background: rgba(240, 140, 30, 0.08);
   border-radius: 4px;
   text-align: center;
   font-size: 0.75rem;
@@ -213,7 +213,7 @@
 }
 
 .wacc-grid-table tr.base-row {
-  background: rgba(15, 118, 110, 0.06);
+  background: rgba(240, 140, 30, 0.06);
 }
 
 .wacc-grid-table tr.base-row td {
@@ -273,7 +273,7 @@
 
 .bvb-card.recommended {
   border-color: var(--teal);
-  background: rgba(15, 118, 110, 0.04);
+  background: rgba(240, 140, 30, 0.04);
 }
 
 .bvb-card h3 {
@@ -346,7 +346,7 @@
   margin-top: 16px;
   padding: 12px 16px;
   border-left: 4px solid var(--teal);
-  background: rgba(15, 118, 110, 0.06);
+  background: rgba(240, 140, 30, 0.06);
   border-radius: 0 6px 6px 0;
   font-size: 0.9rem;
   font-weight: 800;
@@ -421,7 +421,7 @@
 }
 
 .comps-table tr.damac-row td {
-  background: rgba(15, 118, 110, 0.07);
+  background: rgba(240, 140, 30, 0.07);
   font-weight: 800;
   color: var(--teal);
 }
@@ -440,7 +440,7 @@
   position: absolute;
   top: 0;
   height: 100%;
-  background: rgba(31, 59, 87, 0.12);
+  background: rgba(28, 28, 28, 0.12);
   border-radius: 6px;
 }
 
@@ -571,7 +571,7 @@
   padding: 10px 16px;
   border-radius: 8px;
   background: #f0f7f6;
-  border: 1px solid rgba(15, 118, 110, 0.2);
+  border: 1px solid rgba(240, 140, 30, 0.2);
   margin-top: 14px;
 }
 
@@ -635,7 +635,7 @@
   align-self: start;
 }
 
-.dd-risk-badge.low { background: rgba(15, 118, 110, 0.12); color: var(--teal); }
+.dd-risk-badge.low { background: rgba(240, 140, 30, 0.12); color: var(--teal); }
 .dd-risk-badge.medium { background: rgba(217, 119, 6, 0.12); color: #b45309; }
 .dd-risk-badge.high { background: rgba(190, 18, 60, 0.12); color: var(--rose); }
 
@@ -718,9 +718,9 @@
   font-weight: 800;
 }
 
-.synergy-type-badge.revenue { background: rgba(15, 118, 110, 0.12); color: var(--teal); }
-.synergy-type-badge.cost { background: rgba(15, 118, 110, 0.12); color: var(--teal); }
-.synergy-type-badge.capex { background: rgba(31, 59, 87, 0.1); color: var(--navy); }
+.synergy-type-badge.revenue { background: rgba(240, 140, 30, 0.12); color: var(--teal); }
+.synergy-type-badge.cost { background: rgba(240, 140, 30, 0.12); color: var(--teal); }
+.synergy-type-badge.capex { background: rgba(28, 28, 28, 0.1); color: var(--navy); }
 .synergy-type-badge.cost_out { background: rgba(190, 18, 60, 0.1); color: var(--rose); }
 
 /* ── Phase 4: Evidence Chain ── */
@@ -735,8 +735,8 @@
   gap: 16px;
   padding: 14px 18px;
   border-radius: 8px;
-  background: rgba(15, 118, 110, 0.07);
-  border: 1px solid rgba(15, 118, 110, 0.2);
+  background: rgba(240, 140, 30, 0.07);
+  border: 1px solid rgba(240, 140, 30, 0.2);
   margin-bottom: 16px;
 }
 
@@ -762,7 +762,7 @@
 }
 
 .evidence-id {
-  font-family: monospace;
+  font-family: var(--mono);
   font-size: 0.75rem;
   font-weight: 800;
   color: var(--muted);
@@ -780,7 +780,7 @@
 .evidence-tool {
   font-size: 0.72rem;
   color: var(--muted);
-  font-family: monospace;
+  font-family: var(--mono);
 }
 
 .evidence-traceable-badge {
@@ -791,7 +791,7 @@
 }
 
 .evidence-traceable-badge.yes {
-  background: rgba(15, 118, 110, 0.12);
+  background: rgba(240, 140, 30, 0.12);
   color: var(--teal);
 }
 
@@ -832,7 +832,7 @@
   gap: 12px;
   padding: 14px 18px;
   border-radius: 8px;
-  background: rgba(15, 118, 110, 0.07);
+  background: rgba(240, 140, 30, 0.07);
   border: 2px solid var(--teal);
   margin-bottom: 16px;
 }
@@ -849,7 +849,7 @@
 }
 
 .gate-hash {
-  font-family: monospace;
+  font-family: var(--mono);
   font-size: 0.78rem;
   color: var(--muted);
   word-break: break-all;
@@ -900,7 +900,7 @@
   font-size: 0.75rem;
   font-weight: 900;
   color: var(--muted);
-  font-family: monospace;
+  font-family: var(--mono);
   padding: 2px 6px;
   background: #e8edf1;
   border-radius: 4px;
