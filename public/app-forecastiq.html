@@ -1517,7 +1517,7 @@ function renderMd(t){
 }
 
 /* ── Live Claude connectivity (same pattern as CloseIQ Sage) ── */
-var _FIQ_KEY=['sk-ant-api03-6z1Hqw-gsUpk23VWBY3TB31jaG3','xmlPB47kSUQA6n54YQMAXky2TyN_hs2Tfg-EReIP','jNXjiXcHPFZnXEdp-Rg-om0CNAAA'].join('');
+var _FIQ_KEY='';  /* no hardcoded key — paste one via the Sage "connect" prompt (stored in localStorage only) */
 var FIQ_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_FIQ_KEY;}catch(e){return _FIQ_KEY;}})();
 var _sageProbed=false;
 function setMode(live){var m=el('sageMode');if(!m)return;if(live){m.classList.add('live');m.textContent='● Sonnet 4.6 · live';}else{m.classList.remove('live');m.textContent='● offline';}}
