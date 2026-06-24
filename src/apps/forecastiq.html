@@ -68,6 +68,28 @@ input,textarea{font-family:var(--font);background:none;border:none;outline:none;
 .shock-tbl th.num,.shock-tbl td.num{text-align:right;font-family:var(--mono)}
 .shock-tbl tbody tr.shock-active{background:var(--orange-tint)}
 .shock-tbl tbody tr.shock-base.on{background:rgba(255,255,255,.04)}
+.shock-tbl tbody tr.row-click{cursor:pointer}
+.shock-tbl tbody tr.row-click:hover{background:var(--orange-tint)}
+.eq-preset-grp{margin-top:10px}
+.eq-preset-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-family:var(--mono);margin-bottom:6px}
+.shock-btn.chip-shock.on{border-color:var(--risk);background:rgba(229,72,77,.10);color:var(--risk);box-shadow:0 0 0 1px rgba(229,72,77,.45) inset}
+/* scenario selector bar (statement tabs) + workspace (scenarios tab) */
+.scn-selbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--panel-2);border:1px solid var(--line);border-radius:11px;padding:9px 13px;margin-bottom:14px}
+.scn-selbar .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-family:var(--mono)}
+.scn-select{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12.5px;font-weight:600;padding:7px 11px;font-family:inherit;cursor:pointer;min-width:190px}
+.scn-select:hover{border-color:var(--orange-dim)}
+.scn-toggle{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--ink-2);user-select:none}
+.scn-sw{width:34px;height:18px;border-radius:10px;background:var(--line);position:relative;transition:.18s;flex:none}
+.scn-sw::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.18s}
+.scn-toggle.on .scn-sw{background:var(--orange)}
+.scn-toggle.on .scn-sw::after{left:18px}
+.scn-saved-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.scn-saved-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12px;cursor:pointer}
+.scn-saved-chip.on{border-color:var(--orange);color:var(--orange-soft);background:var(--orange-tint)}
+.scn-saved-chip .x{color:var(--ink-3);font-size:13px;cursor:pointer}
+.scn-saved-chip .x:hover{color:var(--risk)}
+.scn-save-inp{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12.5px;padding:7px 11px;font-family:inherit;min-width:180px}
+.scn-save-inp:focus{outline:none;border-color:var(--orange-dim)}
 .reforecast-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:10px;padding:11px 14px;margin-bottom:12px}
 .reforecast-banner .rf-k{font-size:10px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
 .reforecast-banner .rf-v{font-size:14px;font-weight:600;color:var(--ink)}
@@ -378,6 +400,10 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 <!-- LEFT NAV -->
 <nav class="nav">
   <div class="logo">T</div>
+  <button class="nav-btn" id="nb-scn" onclick="go('scn')">
+    <svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/><circle cx="18" cy="8" r="2"/><circle cx="15" cy="14" r="2"/></svg>
+    Scenarios
+  </button>
   <button class="nav-btn active" id="nb-overview" onclick="go('overview')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Overview
@@ -401,10 +427,6 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
   <button class="nav-btn" id="nb-lrp" onclick="go('lrp')">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/><path d="M18 6h-3M18 6v3"/></svg>
     3-Year Plan
-  </button>
-  <button class="nav-btn" id="nb-scn" onclick="go('scn')">
-    <svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/><circle cx="18" cy="8" r="2"/><circle cx="15" cy="14" r="2"/></svg>
-    Scenarios
   </button>
   <div class="nav-sp"></div>
   <div class="ver-chip">v1.0</div>
@@ -556,65 +578,18 @@ var CASH_OPENING=4200; /* free cash opening balance AED M */
    Anchored to the base cash forecast: operating cash AED 3.10B (12m),
    closing AED 7.45B, Q3 trough AED 2.98B, DSCR 2.7x. Each scenario
    re-stresses the cash KPIs live and feeds the impact matrix below. */
-var CF_BASE={op:3100,close:7450,trough:2980,dscr:2.7};
 var CASHFLOW_SCENARIOS=[
-  {id:'collect',n:'Collection delays',ic:'⏳',op:2740,close:6980,trough:1990,dscr:2.4,
+  {id:'collect',n:'Collection delays',ic:'⏳',dv:{collect:2},
    story:'A cluster of structure-milestone collections — Safa Two\'s GBP/INR buyers — slips 2–3 months. Inflows shift right while contractor drawdowns keep landing, so the Q3 trough deepens to AED 1.99B. This is timing, not value: most of the cash recovers by Q1-27 as the milestone completes.'},
-  {id:'revenue',n:'Revenue projection −8%',ic:'📊',op:2520,close:6720,trough:2410,dscr:2.4,
+  {id:'revenue',n:'Revenue projection −8%',ic:'📊',dv:{velocity:-10,price:-3},
    story:'Forecast revenue revised −8% on softer launch velocity and price on later releases. Collections scale down across all six projects; operating cash falls ~AED 0.58B. The trough holds above floor but DSCR thins to 2.4x.'},
-  {id:'cost',n:'Cost to deliver +8%',ic:'🏗️',op:2810,close:7030,trough:2640,dscr:2.6,
+  {id:'cost',n:'Cost to deliver +8%',ic:'🏗️',dv:{constcost:8},
    story:'Contractor / IPC rates rise +8% on materials and labour. Construction outflows climb ~AED 290M; revenue is unaffected, so the hit is pure cash and margin. The Q3 trough thins modestly to AED 2.64B.'},
-  {id:'rate',n:'Borrowing rate +200bps',ic:'%',op:2950,close:7180,trough:2870,dscr:2.5,
+  {id:'rate',n:'Borrowing rate +200bps',ic:'%',dv:{eibor:200},
    story:'EIBOR +200bps on the AED 10.4B borrowing book, including the Q3 USD construction-facility reprice. Finance cost rises ~AED 150M; operating margin is untouched — the bite is debt service and covenant headroom (DSCR 2.5x).'}
 ];
-var activeCF=null;
-function applyCF(id){
-  activeCF=(activeCF===id?null:id);
-  if(activeCF){
-    var s=CASHFLOW_SCENARIOS.find(function(x){return x.id===id;});
-    emit('SCENARIO','Cash scenario — '+s.n+' · op cash '+bn(s.op)+' · Q3 trough '+bn(s.trough)+(s.trough<800?' · BELOW AED 800M floor':''),s.trough<2000?'warn':'orange');
-    setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
-    showToast(s.n+' applied — cash forecast re-stressed');
-  }
-  rerenderStress();
-}
-function resetCF(){activeCF=null;rerenderStress();}
-/* re-render whichever surface the stress controls live on (Scenarios tab,
-   else fall back to the Cash Flow view if invoked from there) */
-function rerenderStress(){
-  if(typeof scnMode!=='undefined' && scnMode==='stress' && el('scnInner'))renderStress();
-  else if(el('content'))renderCash();
-}
-function renderCashScenarios(){
-  function bcol(v,base){
-    if(v===base)return '<td class="num">'+bn(v)+'</td>';
-    var d=v-base,up=d>=0;
-    return '<td class="num">'+bn(v)+' <span class="scn-delta" style="color:'+(up?'var(--ok)':'var(--risk)')+'">('+(up?'+':'−')+(Math.abs(d)/1000).toFixed(2)+'B)</span></td>';
-  }
-  var btns=CASHFLOW_SCENARIOS.map(function(s){return '<button class="shock-btn'+(activeCF===s.id?' on':'')+'" onclick="applyCF(\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';}).join('');
-  var h='<div class="sec-h fadein" style="margin-top:22px"><h2>Cash-flow scenarios · stress the cash forecast</h2><button class="btn-ghost" onclick="resetCF()">↺ Reset to baseline</button></div>';
-  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Toggle a cash lever to re-stress the forecast, or read the impact matrix below (each scenario vs base). The Cash Flow tab\'s headline KPIs and Q3 trough move with your selection.</div>';
-  h+='<div class="shock-grid">'+btns+'</div>';
-  if(activeCF){
-    var a=CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;});
-    h+='<div class="reforecast-banner"><div><div class="rf-k">Reforecast · '+a.n+'</div></div>'
-      +'<div><div class="rf-k">Net op cash (12m)</div><div class="rf-v">'+bn(a.op)+'</div></div>'
-      +'<div><div class="rf-k">Closing cash</div><div class="rf-v">'+bn(a.close)+'</div></div>'
-      +'<div><div class="rf-k">Min cash (trough)</div><div class="rf-v" style="color:'+(a.trough<800?'var(--risk)':a.trough<2500?'var(--warn)':'var(--ink)')+'">'+bn(a.trough)+'</div></div>'
-      +'<div><div class="rf-k">DSCR</div><div class="rf-v" style="color:'+(a.dscr<2.5?'var(--warn)':'var(--ink)')+'">'+a.dscr.toFixed(1)+'x</div></div></div>';
-    h+='<div class="acard fadein" style="margin:0 0 14px"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage on this scenario</h3><span class="badge">AI narrative</span></div><p style="font-size:12px">'+a.story+'</p></div>';
-  }
-  h+='<table class="shock-tbl"><thead><tr><th>Cash-flow scenario</th><th class="num">Net op cash (12m)</th><th class="num">Closing cash</th><th class="num">Min cash (trough)</th><th class="num">DSCR</th></tr></thead><tbody>';
-  h+='<tr class="shock-base'+(activeCF===null?' on':'')+'"><td style="font-weight:600">Base case</td><td class="num">'+bn(CF_BASE.op)+'</td><td class="num">'+bn(CF_BASE.close)+'</td><td class="num">'+bn(CF_BASE.trough)+'</td><td class="num">'+CF_BASE.dscr.toFixed(1)+'x</td></tr>';
-  CASHFLOW_SCENARIOS.forEach(function(s){
-    h+='<tr class="'+(activeCF===s.id?'shock-active':'')+'"><td>'+s.n+'</td>'+bcol(s.op,CF_BASE.op)+bcol(s.close,CF_BASE.close)+bcol(s.trough,CF_BASE.trough)
-      +'<td class="num" style="'+(s.dscr<2.5?'color:var(--warn)':'')+'">'+s.dscr.toFixed(1)+'x</td></tr>';
-  });
-  h+='</tbody></table>';
-  h+='<div class="shock-chips"><div class="shock-chip" onclick="askSugg(\'What if collections slip two months on Safa Two?\')">🎙 Slip collections 2 months</div><div class="shock-chip" onclick="askSugg(\'Stress the cash forecast for a 200bps rate rise\')">🎙 Rate +200bps</div><div class="shock-chip" onclick="askSugg(\'How deep does the Q3 trough get if cost to deliver rises 8%?\')">🎙 Cost to deliver +8%</div></div>';
-  h+='</div>';
-  return h;
-}
+/* legacy cash-flow stress UI removed — superseded by the unified scenario engine
+   (stress presets + live-derived impact matrices on the Equalizer) */
 
 /* ── ESCROW vs FREE CASH split (AED M) ── */
 var CASH_SPLIT=[
@@ -713,8 +688,7 @@ var VERT_PARAMS=[
   {id:'velocity',n:'Sales velocity',unit:'%',hint:'units/mo vs CRM run-rate'},
   {id:'price',n:'Realised price',unit:'%',hint:'achieved price vs current list'},
   {id:'prob',n:'Pipeline conversion',unit:'pts',hint:'probability unsold pipeline contracts'},
-  {id:'cancel',n:'Cancellation rate',unit:'%',hint:'buyer cancellations vs 2.1% base'},
-  {id:'collect',n:'Collection speed',unit:'mo',hint:'months faster (−) / slower (+) on collections'}
+  {id:'cancel',n:'Cancellation rate',unit:'%',hint:'buyer cancellations vs 2.1% base'}
 ];
 /* Cost-side levers — global */
 var COSTLV=[
@@ -723,6 +697,14 @@ var COSTLV=[
   {id:'landcost',n:'Land & infra amortisation',unit:'%',min:-5,max:12,val:0,hint:'land cost recognised in COGS'},
   {id:'eibor',n:'Interest / EIBOR',unit:'bps',min:-100,max:200,val:0,hint:'benchmark rate on floating debt'}
 ];
+/* Cash-flow levers — global · pure cash timing & liquidity (no P&L impact) */
+var CASHLV=[
+  {id:'collect',n:'Collection speed',unit:'mo',min:-3,max:3,val:0,hint:'months faster (−) / slower (+) on buyer collections'},
+  {id:'drawpace',n:'Construction drawdown pace',unit:'mo',min:-3,max:3,val:0,hint:'shift contractor outflows earlier (−) / later (+)'},
+  {id:'advance',n:'Buyer advance / deposit',unit:'%',min:-10,max:15,val:0,hint:'upfront cash from buyers vs standard schedule'},
+  {id:'standby',n:'Standby facility draw',unit:'%',min:0,max:100,val:0,hint:'% of the AED 3.5B committed standby facility drawn'}
+];
+function lvc(id){var c=CASHLV.find(function(x){return x.id===id;});return c?c.val:0;}
 /* Monthly base build (neutral assumptions) — Jan-Jun actual, Jul-Dec forward */
 var REV_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var REV_ACT_M =[800,860,920,960,980,998,0,0,0,0,0,0];
@@ -748,9 +730,10 @@ function modelCompute(){
   var sgaTot=1960*(1+sga/100);
   var ebitda=gp-sgaTot, da=240, finance=560+eb*0.27;
   var pbt=ebitda-da-finance, np=pbt*0.91;
-  var collectAdj=VERTICALS.reduce(function(s,v){return s+(-v.a.collect)*9;},0);
-  var cash=3100+(rev-14200)*0.58-(cogsC-6780)*0.7-(finance-560)-(sgaTot-1960)*0.6+collectAdj;
-  var minCash=2980+(cash-3100)*1.1;
+  // cash-flow levers — timing & liquidity, no P&L impact
+  var cashLeverAdj=-lvc('collect')*150+lvc('drawpace')*90+lvc('advance')*40;
+  var cash=3100+(rev-14200)*0.58-(cogsC-6780)*0.7-(finance-560)-(sgaTot-1960)*0.6+cashLeverAdj;
+  var minCash=2980+(cash-3100)*1.1-lvc('collect')*150+lvc('standby')/100*3500;
   return {rev:rev,act:act,contract:contract,pipe:pipe,locked:act+contract,
     cogsC:cogsC,cogsL:cogsL,gp:gp,sga:sgaTot,ebitda:ebitda,da:da,finance:finance,pbt:pbt,np:np,cash:cash,minCash:minCash};
 }
@@ -817,7 +800,7 @@ var VIEWS={
   cash:['Cash Flow Forecast','18-month rolling · inflow vs outflow · escrow vs free cash · runway by project'],
   bs:['Balance Sheet Forecast','FY25 actual → FY26 / FY27 / FY28 forecast · WIP, contract liabilities, escrow'],
   lrp:['3-Year Plan — FY26 → FY28','Long-range model · revenue, EBITDA, profit & cash trajectory · CAGR & board view'],
-  scn:['Scenario Planner','Equalizer levers · side-by-side compare · stress tests (cash-flow scenarios + external shocks)'],
+  scn:['Scenario Planner','Save named scenarios · forecast them across Revenue, P&amp;L, Cash &amp; Balance Sheet · stress presets'],
   agents:['ForecastIQ Agent Pipeline','6 agents · INGEST → DRIVERS → MODEL → SCENARIO → COMMENTARY → REPORT']
 };
 var VIEW_SEQ={
@@ -832,6 +815,7 @@ var VIEW_SEQ={
 };
 
 function go(view){
+  curView=view;
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
   var nb=el('nb-'+view);if(nb)nb.classList.add('active');
   var t=VIEWS[view];if(t){el('barT').textContent=t[0];el('barS').textContent=t[1];}
@@ -1017,7 +1001,7 @@ function renderRevenue(){
   var varCB=cur-vt.budget, pctCB=varCB/vt.budget*100;
   var varCP=cur-vt.prior;
   var pipeUpside=Math.round(m.pipe);
-  var h='<div class="kpi-row fadein">'
+  var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Current Forecast','AED '+(cur/1000).toFixed(2)+'B','Actuals + Contracted + Pipeline','ok')
     +kpi('Locked-in Coverage',Math.round(cov*100)+'%','AED '+(m.locked/1000).toFixed(2)+'B secured','info')
     +kpi('Weighted Pipeline','AED '+(pipeUpside/1000).toFixed(2)+'B','prob-weighted, still to sell','orange')
@@ -1114,7 +1098,7 @@ function renderPNL(){
     'Depreciation & Amortisation':-m.da,'Net Finance Cost':-m.finance,'Profit Before Tax':m.pbt,
     'Corporate Tax (9%)':-(m.pbt*0.09),'Net Profit':m.np
   };
-  var h='<div class="kpi-row fadein">'
+  var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Total Revenue','AED '+(m.rev/1000).toFixed(2)+'B','live · lockstep','ok')
     +kpi('Gross Profit','AED '+(m.gp/1000).toFixed(2)+'B',(m.gp/m.rev*100).toFixed(1)+'% margin','ok')
     +kpi('EBITDA','AED '+(m.ebitda/1000).toFixed(2)+'B',(m.ebitda/m.rev*100).toFixed(1)+'% margin','ok')
@@ -1172,14 +1156,13 @@ function renderCash(){
   var cum=CASH_OPENING, minCum=CASH_OPENING, minM='';
   var series=CASH.map(function(c){cum+=c.in+c.out;if(cum<minCum){minCum=cum;minM=c.m;}return {m:c.m,net:c.in+c.out,cum:cum,in:c.in,out:c.out,actual:c.actual};});
   var closing=cum;
-  // active cash-flow scenario overrides the headline KPIs (else live model)
-  var cf=activeCF?CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;}):null;
-  var opCash=cf?cf.op:m.cash, closeCash=cf?cf.close:closing, troughCash=cf?cf.trough:m.minCash;
+  // headline cash KPIs run live off modelCompute (which reflects any active scenario)
+  var opCash=m.cash, closeCash=closing, troughCash=m.minCash;
   var troughTone=troughCash<800?'risk':troughCash<2500?'warn':'ok';
-  var h='<div class="kpi-row fadein">'
+  var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Opening Cash','AED 4.20B','free / unrestricted','info')
-    +kpi('Net Op Cash (12m)','+AED '+(opCash/1000).toFixed(2)+'B',cf?'scenario · '+cf.n:'live · sales-driven',cf?'orange':'ok')
-    +kpi('Closing Cash','AED '+(closeCash/1000).toFixed(2)+'B','May-27',cf?'orange':'ok')
+    +kpi('Net Op Cash (12m)','+AED '+(opCash/1000).toFixed(2)+'B','live · sales-driven','ok')
+    +kpi('Closing Cash','AED '+(closeCash/1000).toFixed(2)+'B','May-27','ok')
     +kpi('Min Cash (trough)','AED '+(troughCash/1000).toFixed(2)+'B','Q3 · '+(troughCash<800?'below AED 800M floor':'within floor'),troughTone)
     +kpi('RERA Escrow','AED 18.2B','restricted','info')
     +'</div>';
@@ -1228,8 +1211,7 @@ function renderCash(){
   });
   h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5">Safa Two at 4 months is the binding constraint — the Q3 dip traces here. Click into the project from Overview for the resolution path.</div></div>';
   h+='</div>';
-  if(activeCF){var cfa=CASHFLOW_SCENARIOS.find(function(x){return x.id===activeCF;});h+='<div class="reforecast-banner fadein"><div><div class="rf-k">Active stress · '+cfa.n+'</div></div><div><div class="rf-k">these KPIs reflect the scenario set in Scenarios → Stress Tests</div></div></div>';}
-  h+='<button class="btn-act fadein" style="width:100%;margin-top:4px" onclick="goStress()">Run cash-flow scenarios &amp; external shocks in Scenarios →</button>';
+  h+='<button class="btn-act fadein" style="width:100%;margin-top:4px" onclick="goStress()">Open the Equalizer — load a stress preset or drag the levers →</button>';
   el('content').innerHTML=h;
 }
 
@@ -1244,7 +1226,7 @@ function renderBS(){
   ov['Total Assets']=assetSum;ov['Total Liabilities']=liabSum;
   function f26(r){return ov[r.line]!==undefined?ov[r.line]:r.f26;}
   var equity=ov['Total Equity'], netDebt=10400-(4200+dCash);
-  var h='<div class="kpi-row fadein">'
+  var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Total Assets','AED '+(assetSum/1000).toFixed(1)+'B',((assetSum-57600)/57600*100).toFixed(1)+'% vs FY25','ok')
     +kpi('Development WIP','AED 31.2B','inventory build','info')
     +kpi('Contract Liabilities','AED '+(ov['Contract Liabilities (advances from buyers)']/1000).toFixed(1)+'B','buyer advances','ok')
@@ -1370,95 +1352,180 @@ var SCN_PRESETS={
   upside:{velocity:15,price:8,constcost:-2,delay:0,eibor:-25,cancel:0}
 };
 function setScnMode(m){scnMode=m;renderScenarios();}
-function goStress(){scnMode='stress';go('scn');}
+function goStress(){scnMode='plan';go('scn');}
 
 /* ── EXTERNAL SHOCKS — stress the forecast against macro events ──
    Anchored to ForecastIQ's own base case (operating cash AED 3.10B,
    EBITDA margin 27.7%). Each shock re-stresses the headline live. */
-var SHOCK_BASE={cash:3100,margin:27.7,liq:9.5,cov:2.7};
 var SHOCKS=[
-  {id:'conflict',n:'Regional conflict / war',ic:'⚠️',cash:2360,margin:24.4,liq:9.6,cov:2.3,
+  {id:'conflict',n:'Regional conflict / war',ic:'⚠️',dv:{velocity:-18,eibor:120,constcost:6},
    story:'Foreign-buyer velocity −18%, EIBOR +120bps, construction +6% on logistics & insurance. Sharpest margin compression of the set.'},
-  {id:'recession',n:'Global recession',ic:'📉',cash:2270,margin:26.8,liq:10.5,cov:2.3,
+  {id:'recession',n:'Global recession',ic:'📉',dv:{velocity:-22,price:-5},
    story:'Demand −22%, realised prices −5%, but opex discipline and slower draws extend the cash runway even as the balance thins.'},
-  {id:'rate',n:'Rate shock +200bps',ic:'%',cash:2800,margin:27.7,liq:9.6,cov:2.6,
+  {id:'rate',n:'Rate shock +200bps',ic:'%',dv:{eibor:200},
    story:'EIBOR +200bps on floating debt. Operating margin is untouched; the hit is finance cost and covenant headroom.'},
-  {id:'energy',n:'Energy price spike',ic:'🔥',cash:3125,margin:24.9,liq:8.6,cov:2.7,
+  {id:'energy',n:'Energy price spike',ic:'🔥',dv:{constcost:9},
    story:'Construction and facilities-management costs +9%. Revenue holds, so cash is broadly flat but EBITDA margin compresses.'},
-  {id:'supply',n:'Supply-chain disruption',ic:'📦',cash:3150,margin:25.6,liq:9.4,cov:2.7,
+  {id:'supply',n:'Supply-chain disruption',ic:'📦',dv:{constcost:5,collect:2},
    story:'Handover delays +2 months and material costs +5%; revenue recognition slips right, modestly lifting period-end cash.'},
-  {id:'capital',n:'Capital flight / peg stress',ic:'⇄',cash:2510,margin:26.3,liq:8.9,cov:2.6,
+  {id:'capital',n:'Capital flight / peg stress',ic:'⇄',dv:{cancel:6,eibor:90,velocity:-10},
    story:'Cancellations +6%, EIBOR +90bps, foreign-buyer velocity −10%. Liquidity is the tightest at ~8.9 months.'}
 ];
-var activeShock=null;
-function applyShock(id){
-  activeShock=(activeShock===id?null:id);
-  if(activeShock){
-    var s=SHOCKS.find(function(x){return x.id===id;});
-    el('scnPill').innerHTML='<span class="live-dot" style="background:var(--risk)"></span>Shock · '+s.n;
-    emit('SCENARIO','Stress applied — '+s.n+' · operating cash '+bn(s.cash)+(s.cov<2.5?' · covenant thins to '+s.cov.toFixed(1)+'x':''),s.cov<2.5?'warn':'orange');
-    setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
-    showToast(s.n+' applied — forecast re-stressed');
-  }else{
-    el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';
-  }
-  renderStress();
-}
-function resetShock(){activeShock=null;el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderStress();}
-function renderExternalShocks(){
-  function mo(m){return '~'+m.toFixed(1)+' mo';}
-  function cashCell(v){
-    if(v===SHOCK_BASE.cash)return '<td class="num">'+bn(v)+'</td>';
-    var d=v-SHOCK_BASE.cash,up=d>=0;
-    return '<td class="num">'+bn(v)+' <span class="scn-delta" style="color:'+(up?'var(--ok)':'var(--risk)')+'">('+(up?'+':'−')+(Math.abs(d)/1000).toFixed(1)+'B)</span></td>';
-  }
-  var btns=SHOCKS.map(function(s){return '<button class="shock-btn'+(activeShock===s.id?' on':'')+'" onclick="applyShock(\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';}).join('');
-  var h='<div class="sec-h fadein" style="margin-top:22px"><h2>External shocks · stress the forecast</h2><button class="btn-ghost" onclick="resetShock()">↺ Reset to baseline</button></div>';
-  h+='<div class="block fadein"><div class="h-sub" style="margin-bottom:10px">Apply a shock to re-stress the headline live, or read the impact matrix below (each shock vs base).</div>';
-  h+='<div class="shock-grid">'+btns+'</div>';
-  // live reforecast banner when a shock is active
-  if(activeShock){
-    var a=SHOCKS.find(function(x){return x.id===activeShock;});
-    h+='<div class="reforecast-banner"><div><div class="rf-k">Reforecast · '+a.n+'</div></div>'
-      +'<div><div class="rf-k">Operating cash</div><div class="rf-v">'+bn(a.cash)+'</div></div>'
-      +'<div><div class="rf-k">EBITDA margin</div><div class="rf-v">'+a.margin.toFixed(1)+'%</div></div>'
-      +'<div><div class="rf-k">Liquidity</div><div class="rf-v">'+mo(a.liq)+'</div></div>'
-      +'<div><div class="rf-k">Covenant</div><div class="rf-v" style="color:'+(a.cov<2.5?'var(--warn)':'var(--ink)')+'">'+a.cov.toFixed(1)+'x</div></div></div>';
-  }
-  // impact matrix
-  h+='<table class="shock-tbl"><thead><tr><th>External shock</th><th class="num">Operating cash</th><th class="num">EBITDA margin</th><th class="num">Liquidity</th><th class="num">Covenant</th></tr></thead><tbody>';
-  h+='<tr class="shock-base'+(activeShock===null?' on':'')+'"><td style="font-weight:600">Base</td><td class="num">'+bn(SHOCK_BASE.cash)+'</td><td class="num">'+SHOCK_BASE.margin.toFixed(1)+'%</td><td class="num">'+mo(SHOCK_BASE.liq)+'</td><td class="num">'+SHOCK_BASE.cov.toFixed(1)+'x</td></tr>';
-  SHOCKS.forEach(function(s){
-    h+='<tr class="'+(activeShock===s.id?'shock-active':'')+'"><td>'+s.n+'</td>'+cashCell(s.cash)
-      +'<td class="num">'+s.margin.toFixed(1)+'%</td><td class="num">'+mo(s.liq)+'</td>'
-      +'<td class="num" style="'+(s.cov<2.5?'color:var(--warn)':'')+'">'+s.cov.toFixed(1)+'x</td></tr>';
-  });
-  h+='</tbody></table>';
-  // Sage narrative + voice prompts
-  h+='<div class="acard fadein" style="margin:14px 0 0"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage reads the shock matrix</h3><span class="badge">AI narrative</span></div>'
-    +'<p style="font-size:12px">Global recession and regional conflict hit operating cash hardest (−AED 0.8B and −AED 0.7B); conflict carries the sharpest margin compression (to ~24%). Covenant headroom stays positive across every modelled shock but thins to <strong>2.3x</strong> under recession and conflict — still inside the 2.0x threshold, with the AED 3.5B standby facility as the backstop.</p>'
-    +'<div class="shock-chips"><div class="shock-chip" onclick="askSugg(\'Run the downside scenario\')">🎙 Run the downside scenario</div><div class="shock-chip" onclick="askSugg(\'Model a regional conflict shock\')">🎙 Model a regional conflict shock</div><div class="shock-chip" onclick="askSugg(\'How much idle cash can we mobilise?\')">🎙 How much idle cash can we mobilise?</div></div></div>';
-  h+='</div>';
-  return h;
-}
+/* legacy external-shocks stress UI removed — superseded by the unified scenario
+   engine (stress presets + live-derived impact matrices on the Equalizer) */
 
 function renderScenarios(){
-  var h='<div class="seg fadein"><button class="'+(scnMode==='plan'?'on':'')+'" onclick="setScnMode(\'plan\')">Equalizer · Levers</button>'
-    +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button>'
-    +'<button class="'+(scnMode==='stress'?'on':'')+'" onclick="setScnMode(\'stress\')">Stress Tests · Cash &amp; Shocks</button></div><div id="scnInner"></div>';
+  var h=scnWorkspaceBar()
+    +'<div class="seg fadein"><button class="'+(scnMode==='plan'?'on':'')+'" onclick="setScnMode(\'plan\')">Equalizer · Levers &amp; Presets</button>'
+    +'<button class="'+(scnMode==='compare'?'on':'')+'" onclick="setScnMode(\'compare\')">Side-by-Side Compare</button></div><div id="scnInner"></div>';
   el('content').innerHTML=h;
-  if(scnMode==='plan')renderEqualizer();
-  else if(scnMode==='stress')renderStress();
-  else renderScnCompare();
+  if(scnMode==='compare')renderScnCompare();
+  else renderEqualizer();
 }
-/* ── STRESS TESTS — all "what could go wrong" scenarios in one place:
-   cash-flow scenarios + external macro shocks ── */
-function renderStress(){
-  var h='<div class="sec-h fadein"><h2>Stress Tests — cash-flow scenarios &amp; external shocks</h2><span class="meta">toggle any cash lever or macro shock to re-stress the forecast · impact matrices below</span></div>';
-  h+=renderCashScenarios();
-  h+=renderExternalShocks();
-  el('scnInner').innerHTML=h;
+/* ════════════════════════════════════════════════════════════════════
+   SCENARIO ENGINE — saved, named scenarios applied to the GLOBAL driver
+   state. Every statement tab (Revenue, P&L, Cash, Balance Sheet) reads
+   modelCompute(), so selecting a scenario forecasts all four in lockstep.
+   ════════════════════════════════════════════════════════════════════ */
+/* full snapshot / restore of the live driver state (per-vertical + cost levers) */
+function snapState(){
+  return {verts:VERTICALS.map(function(v){return Object.assign({},v.a);}),
+          cost:COSTLV.reduce(function(o,c){o[c.id]=c.val;return o;},{}),
+          cash:CASHLV.reduce(function(o,c){o[c.id]=c.val;return o;},{})};
 }
+function restoreState(s){
+  VERTICALS.forEach(function(v,i){VERT_PARAMS.forEach(function(p){
+    v.a[p.id]=(s&&s.verts[i]&&s.verts[i][p.id]!=null)?s.verts[i][p.id]:0;});});
+  COSTLV.forEach(function(c){c.val=(s&&s.cost[c.id]!=null)?s.cost[c.id]:0;});
+  CASHLV.forEach(function(c){c.val=(s&&s.cash&&s.cash[c.id]!=null)?s.cash[c.id]:0;});
+}
+/* flat preset bundle → expand uniformly across verticals (band-clamped) */
+function applyBundle(dv){
+  VERTICALS.forEach(function(v){VERT_PARAMS.forEach(function(p){
+    var raw=(dv[p.id]!=null?dv[p.id]:0),b=band(v,p.id);
+    v.a[p.id]=Math.max(b[0],Math.min(b[1],raw));});});
+  COSTLV.forEach(function(c){var raw=(dv[c.id]!=null?dv[c.id]:0);
+    c.val=Math.max(c.min,Math.min(c.max,raw));});
+  CASHLV.forEach(function(c){var raw=(dv[c.id]!=null?dv[c.id]:0);
+    c.val=Math.max(c.min,Math.min(c.max,raw));});
+}
+function simBundle(dv){var snap=snapState();applyBundle(dv);var m=modelCompute();restoreState(snap);return m;}
+
+/* ── saved scenarios + global active selection ── */
+var SCN_SAVED=[];        /* [{id,name,state}] user-saved templates */
+var activeSavedId=null;  /* selected saved scenario id, null = Base case */
+var scnEnabled=true;     /* master Active / Inactive toggle */
+var _scnSeq=1;
+var curView='overview';
+function renderCurrent(){
+  ({overview:renderOverview,revenue:renderRevenue,pnl:renderPNL,cash:renderCash,
+    bs:renderBS,lrp:renderLRP,scn:renderScenarios,agents:renderAgents}[curView]||function(){})();
+}
+function activeScn(){return SCN_SAVED.find(function(x){return x.id===activeSavedId;})||null;}
+function updateScnPill(){
+  var on=scnEnabled&&activeSavedId!==null,s=activeScn();
+  el('scnPill').innerHTML='<span class="live-dot" style="background:'+(on?'var(--orange)':'var(--ink-3)')+'"></span>'+(on&&s?s.name:'Base Case');
+}
+function applyActiveScenario(){
+  if(scnEnabled&&activeSavedId!==null){var s=activeScn();restoreState(s?s.state:null);activeScenario='custom';}
+  else{restoreState(null);activeScenario='base';}
+  updateScnPill();
+}
+function selectScenario(id){activeSavedId=(id==='__base'?null:id);applyActiveScenario();renderCurrent();}
+function toggleScnEnabled(){scnEnabled=!scnEnabled;applyActiveScenario();renderCurrent();}
+function saveCurrentScenario(){
+  var inp=el('scnSaveName'),name=inp&&inp.value?inp.value.trim():'';
+  if(!name)name='Scenario '+_scnSeq;
+  var id='sv'+(_scnSeq++);
+  SCN_SAVED.push({id:id,name:name,state:snapState()});
+  activeSavedId=id;scnEnabled=true;activeEqPreset=null;updateScnPill();
+  showToast('Saved "'+name+'" — selectable across Revenue, P&L, Cash & Balance Sheet');
+  emit('REPORT','Scenario "'+name+'" saved — available portfolio-wide','ok');
+  setActive(['SCENARIO','REPORT']);setTimeout(function(){setActive([]);},800);
+  renderCurrent();
+}
+function deleteScenario(id,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  SCN_SAVED=SCN_SAVED.filter(function(x){return x.id!==id;});
+  if(activeSavedId===id){activeSavedId=null;applyActiveScenario();}
+  renderCurrent();
+}
+/* dropdown + Active toggle shown atop each statement tab */
+function scnSelectorBar(){
+  var opts='<option value="__base"'+(activeSavedId===null?' selected':'')+'>Base case</option>';
+  opts+=SCN_SAVED.map(function(s){return '<option value="'+s.id+'"'+(activeSavedId===s.id?' selected':'')+'>'+s.name+'</option>';}).join('');
+  var note=(scnEnabled&&activeSavedId!==null)?'forecasting "'+activeScn().name+'" across all statements':'showing base case'+(SCN_SAVED.length?'':' — none saved yet; build one in Scenarios');
+  return '<div class="scn-selbar fadein"><span class="lbl">Scenario</span>'
+    +'<select class="scn-select" onchange="selectScenario(this.value)"'+(scnEnabled?'':' disabled')+'>'+opts+'</select>'
+    +'<span class="scn-toggle'+(scnEnabled?' on':'')+'" onclick="toggleScnEnabled()" title="Apply the selected scenario to the forecast"><span class="scn-sw"></span>'+(scnEnabled?'Active':'Inactive')+'</span>'
+    +'<span style="font-size:11px;color:var(--ink-3)">'+note+'</span></div>';
+}
+/* scenario workspace controls atop the Scenarios tab */
+function scnWorkspaceBar(){
+  var chips=SCN_SAVED.length?SCN_SAVED.map(function(s){
+    return '<span class="scn-saved-chip'+(activeSavedId===s.id?' on':'')+'" onclick="selectScenario(\''+s.id+'\')">'+s.name+'<span class="x" onclick="deleteScenario(\''+s.id+'\',event)">×</span></span>';
+  }).join(''):'<span style="font-size:11.5px;color:var(--ink-3)">No saved scenarios yet — set the levers below, name it, and save.</span>';
+  return '<div class="scn-selbar fadein" style="margin-bottom:14px"><span class="lbl">Scenario workspace</span>'
+    +'<input id="scnSaveName" class="scn-save-inp" placeholder="Name this scenario…" onkeydown="if(event.key===\'Enter\')saveCurrentScenario()">'
+    +'<button class="btn-act" onclick="saveCurrentScenario()">💾 Save as template</button>'
+    +'<span class="scn-toggle'+(scnEnabled?' on':'')+'" onclick="toggleScnEnabled()" title="Active applies the selected scenario across all tabs"><span class="scn-sw"></span>'+(scnEnabled?'Active':'Inactive')+'</span>'
+    +'<div class="scn-saved-row" style="flex-basis:100%">'+chips+'</div></div>';
+}
+
+/* ── stress presets — quick-start driver bundles that load onto the levers ── */
+var activeEqPreset=null;
+function presetById(kind,id){return (kind==='cf'?CASHFLOW_SCENARIOS:SHOCKS).find(function(x){return x.id===id;});}
+function applyEqPreset(kind,id){
+  var p=presetById(kind,id);if(!p)return;
+  var key=kind+':'+id;
+  if(activeEqPreset===key){eqReset();return;}
+  activeEqPreset=key;activeSavedId=null;activeScenario='custom';
+  applyBundle(p.dv);
+  var m=modelCompute(),tone=(kind==='cf'?'var(--orange)':'var(--risk)');
+  el('scnPill').innerHTML='<span class="live-dot" style="background:'+tone+'"></span>'+(kind==='cf'?'Cash · ':'Shock · ')+p.n;
+  emit('SCENARIO',(kind==='cf'?'Cash scenario':'Shock')+' loaded — '+p.n+' · op cash '+bn(Math.round(m.cash))+' · Q3 trough '+bn(Math.round(m.minCash))+(m.minCash<800?' · BELOW AED 800M floor':''),m.minCash<800?'warn':'orange');
+  setActive(['SCENARIO','MODEL']);setTimeout(function(){setActive([]);},700);
+  showToast(p.n+' loaded onto the levers — fine-tune, then save as a template');
+  renderEqualizer();
+}
+function clearPresetHint(){
+  activeSavedId=null;
+  if(activeEqPreset===null)return;
+  activeEqPreset=null;
+  Array.prototype.forEach.call(document.querySelectorAll('.eq-preset-chip.on,.shock-tbl tr.shock-active'),function(e){e.classList.remove('on');e.classList.remove('shock-active');});
+}
+function presetChips(){
+  function grp(kind,list,label,extra){
+    var chips=list.map(function(s){
+      return '<button class="shock-btn eq-preset-chip'+extra+(activeEqPreset===kind+':'+s.id?' on':'')+'" onclick="applyEqPreset(\''+kind+'\',\''+s.id+'\')"><span class="shock-ic">'+s.ic+'</span>'+s.n+'</button>';
+    }).join('');
+    return '<div class="eq-preset-grp"><div class="eq-preset-lbl">'+label+'</div><div class="shock-grid" style="margin:0">'+chips+'</div></div>';
+  }
+  return '<div class="block fadein" style="margin-bottom:14px"><h3>Stress presets — load a scenario onto the levers</h3>'
+    +'<div class="h-sub">one click positions every lever for a downside; sliders stay editable, so you can fine-tune and then save it as a template. Click an active preset again to clear it.</div>'
+    +grp('cf',CASHFLOW_SCENARIOS,'Cash-flow scenarios','')
+    +grp('shock',SHOCKS,'External shocks',' chip-shock')+'</div>';
+}
+function stressMatrix(kind,list,title,rowlabel){
+  var base=simBundle({});
+  function dcell(v,b){var d=v-b,up=d>=0;
+    if(Math.abs(d)<1)return '<td class="num">'+bn(Math.round(v))+'</td>';
+    return '<td class="num">'+bn(Math.round(v))+' <span class="scn-delta" style="color:'+(up?'var(--ok)':'var(--risk)')+'">('+(up?'+':'−')+(Math.abs(d)/1000).toFixed(2)+'B)</span></td>';}
+  function tcell(v){var t=v<800?'var(--risk)':v<1800?'var(--warn)':'var(--ink)';return '<td class="num" style="color:'+t+'">'+bn(Math.round(v))+'</td>';}
+  var h='<div class="block fadein"><h3>'+title+' · impact vs base</h3><div class="h-sub">live-derived from the shared model · click a row to load it onto the levers</div>';
+  h+='<table class="shock-tbl"><thead><tr><th>'+rowlabel+'</th><th class="num">Revenue</th><th class="num">EBITDA margin</th><th class="num">Op cash</th><th class="num">Q3 trough</th></tr></thead><tbody>';
+  h+='<tr class="shock-base'+(activeEqPreset===null?' on':'')+'"><td style="font-weight:600">Base case</td><td class="num">'+bn(Math.round(base.rev))+'</td><td class="num">'+(base.ebitda/base.rev*100).toFixed(1)+'%</td><td class="num">'+bn(Math.round(base.cash))+'</td><td class="num">'+bn(Math.round(base.minCash))+'</td></tr>';
+  list.forEach(function(s){var m=simBundle(s.dv);
+    h+='<tr class="row-click'+(activeEqPreset===kind+':'+s.id?' shock-active':'')+'" onclick="applyEqPreset(\''+kind+'\',\''+s.id+'\')"><td>'+s.ic+' '+s.n+'</td>'
+      +dcell(m.rev,base.rev)+'<td class="num">'+(m.ebitda/m.rev*100).toFixed(1)+'%</td>'+dcell(m.cash,base.cash)+tcell(m.minCash)+'</tr>';});
+  h+='</tbody></table></div>';return h;
+}
+function renderStressMatrices(){
+  return '<div class="grid-2" style="margin-top:14px">'
+    +stressMatrix('cf',CASHFLOW_SCENARIOS,'Cash-flow scenarios','Cash-flow scenario')
+    +stressMatrix('shock',SHOCKS,'External shocks','External shock')+'</div>';
+}
+
 /* ── EQUALIZER — per-vertical revenue levers + cost levers, lockstep recompute ── */
 var eqSelVert='lagoons';
 function lever(key,name,val,min,max,unit,handler,confTxt){
@@ -1474,9 +1541,10 @@ function lever(key,name,val,min,max,unit,handler,confTxt){
 function renderEqualizer(){
   var v=VERTICALS.find(function(x){return x.id===eqSelVert;});
   var h='<div class="grid-2" style="grid-template-columns:1.12fr 1fr">';
-  // LEFT — levers
+  // LEFT — stress presets + levers
   h+='<div>';
-  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">each vertical carries its own assumptions & confidence limits · drag to model</div>';
+  h+=presetChips();
+  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">each vertical carries its own assumptions & confidence limits · drag to model, or load a preset above</div>';
   h+='<div class="eq-vert">'+VERTICALS.map(function(x){return '<div class="eq-vchip'+(x.id===eqSelVert?' on':'')+'" onclick="selectVert(\''+x.id+'\')">'+x.name+'<span class="vs">'+x.stage+' · '+x.unc+' conf</span></div>';}).join('')+'</div>';
   h+='<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px">';
   VERT_PARAMS.forEach(function(p){
@@ -1486,12 +1554,16 @@ function renderEqualizer(){
   h+='</div></div>';
   h+='<div class="block fadein"><h3>Cost & finance levers</h3><div class="h-sub">portfolio-wide — flow to COGS, SG&A and below-EBITDA finance</div>';
   COSTLV.forEach(function(c){h+=lever('c-'+c.id,c.n,c.val,c.min,c.max,c.unit,"onCost('"+c.id+"',this.value)");});
-  h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn-ghost" onclick="eqReset()">Reset all</button><button class="btn-act" onclick="commitScenario()">Save as scenario</button></div></div>';
+  h+='</div>';
+  h+='<div class="block fadein"><h3>Cash-flow levers</h3><div class="h-sub">portfolio-wide — cash timing & liquidity · move the trough without touching the P&L</div>';
+  CASHLV.forEach(function(c){h+=lever('ca-'+c.id,c.n,c.val,c.min,c.max,c.unit,"onCash('"+c.id+"',this.value)");});
+  h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn-ghost" onclick="eqReset()">Reset all</button><button class="btn-act" onclick="saveCurrentScenario()">💾 Save as template</button></div></div>';
   h+='</div>';
   // RIGHT — live build + impact
   h+='<div><div id="eqBuild"></div><div id="impactWrap"></div>'
     +'<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Lockstep</h3></div><p style="font-size:11.5px">Every lever recomputes <strong>all four statements together</strong> — revenue layers, P&L (COGS / SG&A / finance), cash flow and the balance sheet move in one pass. No version overlay, no manual download.</p></div></div>';
   h+='</div>';
+  h+=renderStressMatrices();
   el('scnInner').innerHTML=h;
   renderEqBuild();
   renderImpact();
@@ -1509,7 +1581,7 @@ function renderEqBuild(){
 }
 function selectVert(id){eqSelVert=id;renderEqualizer();}
 function eqLiveTouch(){
-  var touched=VERTICALS.some(function(v){return Object.keys(v.a).some(function(k){return v.a[k]!==0;});})||COSTLV.some(function(c){return c.val!==0;});
+  var touched=VERTICALS.some(function(v){return Object.keys(v.a).some(function(k){return v.a[k]!==0;});})||COSTLV.some(function(c){return c.val!==0;})||CASHLV.some(function(c){return c.val!==0;});
   el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>'+(touched?'Custom':'Base Case');
 }
 var _leverEmitT=0;
@@ -1518,11 +1590,14 @@ function leverEmit(src){var now=Date.now();if(now-_leverEmitT<1100)return;_lever
   setActive(['MODEL','SCENARIO']);setTimeout(function(){setActive([]);},650);}
 function onVert(id,val){var v=VERTICALS.find(function(x){return x.id===eqSelVert;});v.a[id]=parseFloat(val);
   var sign=(v.a[id]>0&&id!=='collect'?'+':'');el('lvv-v-'+id).textContent=sign+v.a[id]+(VERT_PARAMS.find(function(p){return p.id===id;}).unit);
-  renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
+  clearPresetHint();renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
 function onCost(id,val){var c=COSTLV.find(function(x){return x.id===id;});c.val=parseFloat(val);
   var sign=(c.val>0?'+':'');el('lvv-c-'+id).textContent=sign+c.val+c.unit;
-  renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
-function eqReset(){VERTICALS.forEach(function(v){VERT_PARAMS.forEach(function(p){v.a[p.id]=0;});});COSTLV.forEach(function(c){c.val=0;});activeScenario='base';el('scnPill').innerHTML='<span class="live-dot" style="background:var(--orange)"></span>Base Case';renderEqualizer();}
+  clearPresetHint();renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
+function onCash(id,val){var c=CASHLV.find(function(x){return x.id===id;});c.val=parseFloat(val);
+  var sign=(c.val>0&&c.unit!=='mo'?'+':'');el('lvv-ca-'+id).textContent=sign+c.val+c.unit;
+  clearPresetHint();renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
+function eqReset(){VERTICALS.forEach(function(v){VERT_PARAMS.forEach(function(p){v.a[p.id]=0;});});COSTLV.forEach(function(c){c.val=0;});CASHLV.forEach(function(c){c.val=0;});activeScenario='base';activeEqPreset=null;activeSavedId=null;updateScnPill();renderEqualizer();}
 /* Build the metric set for all four scenario columns (custom = live drivers) */
 function scnMetrics(){
   function m(o){return {rev:o.rev,ebitda:o.ebitda,np:o.np,cash:o.cash,minCash:o.minCash,margin:o.ebitda/o.rev*100};}
@@ -1582,8 +1657,8 @@ function renderScnCompare(){
     h+='<div class="block fadein"><h3>'+sc.n+'</h3><div class="h-sub">'+sc.d+'</div><p style="font-size:11.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">'+sc.narrative+'</p></div>';
   });
   h+='</div>';
-  // External shocks + cash-flow scenarios now live in the "Stress Tests" segment
-  h+='<button class="btn-ghost fadein" style="width:100%;margin-top:14px" onclick="setScnMode(\'stress\')">↳ Go to Stress Tests — cash-flow scenarios &amp; external shocks</button>';
+  // Stress presets now live on the Equalizer alongside the revenue & cost levers
+  h+='<button class="btn-ghost fadein" style="width:100%;margin-top:14px" onclick="setScnMode(\'plan\')">↳ Back to the Equalizer — levers, presets &amp; save as template</button>';
   el('scnInner').innerHTML=h;
 }
 function renderDrivers(){
@@ -1645,7 +1720,6 @@ function scenarioNarrative(r,trough){
   var cashWarn=trough<800?' <strong>Cash trough breaches the AED 800M comfort floor</strong> — draw the standby facility or defer a launch.':trough<1800?' Cash trough tightens but stays within comfort.':' Liquidity remains comfortable throughout.';
   return 'This custom mix '+dir+' FY26 revenue to <strong>'+bn(Math.round(r.rev))+'</strong> and operating cash to <strong>'+bn(Math.round(r.cash))+'</strong>.'+cashWarn+' Adjust drivers further or save this as a named scenario for the board pack.';
 }
-function commitScenario(){showToast('Scenario saved to board pack · Sage will narrate it');emit('REPORT','Custom scenario committed to FY26 board pack','ok');setActive(['REPORT']);setTimeout(function(){setActive([]);},800);}
 
 /* ── AGENTS VIEW ── */
 function renderAgents(){
