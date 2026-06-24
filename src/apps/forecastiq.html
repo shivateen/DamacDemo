@@ -107,6 +107,15 @@ input,textarea{font-family:var(--font);background:none;border:none;outline:none;
 .assume-row:last-child{border-bottom:none}
 .assume-row .k{font-size:11.5px;color:var(--ink-2)}
 .assume-row .v{font-size:12px;font-weight:600;white-space:nowrap}
+.assume-head{display:flex;align-items:center;gap:10px}
+.assume-head h2{margin:0 auto 0 0}
+.assume-bhead{display:flex;align-items:center;gap:8px}
+.assume-bhead h3{margin:0 auto 0 0}
+.assume-edit{padding:4px 11px;font-size:11px;flex:none}
+.ae-inp{background:var(--panel);border:1px solid var(--orange-dim);border-radius:6px;color:#2f7bf6;font-weight:600;font-size:12px;padding:4px 7px;font-family:inherit;width:100%;max-width:130px}
+.ae-inp.num{text-align:right;max-width:84px}
+.ae-inp.wide{max-width:none}
+.ae-inp:focus{outline:none;border-color:var(--orange)}
 .reforecast-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:10px;padding:11px 14px;margin-bottom:12px}
 .reforecast-banner .rf-k{font-size:10px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
 .reforecast-banner .rf-v{font-size:14px;font-weight:600;color:var(--ink)}
@@ -1797,82 +1806,123 @@ function scenarioNarrative(r,trough){
   return 'This custom mix '+dir+' FY26 revenue to <strong>'+bn(Math.round(r.rev))+'</strong> and operating cash to <strong>'+bn(Math.round(r.cash))+'</strong>.'+cashWarn+' Adjust drivers further or save this as a named scenario for the board pack.';
 }
 
-/* ── ASSUMPTIONS & CONTROL PANEL ── single source of truth; inputs in blue ── */
+/* ── ASSUMPTIONS & CONTROL PANEL ── single source of truth; inputs in blue,
+   each table editable in place (Edit → Save), persisted to localStorage ── */
+var ASSUME_DEFAULT={
+  controls:{currency:'AED',fx:'3.6725',fy:'2026',period:'Jun',scenario:'Budget'},
+  verticals:[
+    {n:'Real Estate Development',a25:8800,b26:11500,gm:42,em:34,note:'Core driver; AED 8.8bn FY24 base'},
+    {n:'Hospitality & Leisure',a25:650,b26:820,gm:38,em:22,note:'DAMAC Maison + JV hotels + Maldives ramp-up'},
+    {n:'Data Centres (Edgnex)',a25:380,b26:720,gm:55,em:40,note:'Highest growth vertical; capacity coming online'},
+    {n:'Luxury Brands & Fashion',a25:140,b26:175,gm:45,em:15,note:'Cavalli / de GRISOGONO licensing + retail'},
+    {n:'Capital & Investments',a25:210,b26:260,gm:60,em:50,note:'Yield income, fund management fees'},
+    {n:'Facilities & Recurring Services',a25:320,b26:410,gm:30,em:18,note:'Annuity revenue off delivered unit base'}
+  ],
+  seas:[9.5,8.2,8.8,7.8,7.2,6.2,5.8,7.5,8.5,9.5,10.5,10.5],
+  geo:[['UAE',62],['KSA & GCC',14],['Europe',10],['Americas',8],['Asia Pacific',4],["Other Int'l",2]],
+  revType:[['Development Sales',58],['Recurring / Recoverable',16],['Hospitality Revenue',12],['Service & Management Fees',9],['Investment Income',5]],
+  reDrivers:[
+    ['Units Sold — FY2026 Budget','9,200'],
+    ["Average Selling Price (AED '000/unit)",'1,450'],
+    ['Sales Bookings — FY2026 Budget (AED mm)','$13,340'],
+    ['% Revenue Recognised on POC (vs Bookings)','86.0%'],
+    ['Collection Rate — Cash vs Billings','91.0%'],
+    ['Units in Backlog (Sold, Not Handed Over)','24,600']
+  ],
+  dcDrivers:[
+    ['Contracted Capacity — FY2026 (MW)','480'],
+    ['Live / Billing Capacity — FY2026 (MW)','165'],
+    ['Avg. Revenue per MW per Annum (AED mm)','$4.4'],
+    ['Utilization Rate — Live Capacity','88.0%'],
+    ['Pipeline Capacity Under Construction (MW)','1,850']
+  ]
+};
+function loadAssume(){try{var s=localStorage.getItem('fiq-assume');if(s)return JSON.parse(s);}catch(e){}return JSON.parse(JSON.stringify(ASSUME_DEFAULT));}
+var ASSUME=loadAssume();
+var assumeEdit={};
+function persistAssume(){try{localStorage.setItem('fiq-assume',JSON.stringify(ASSUME));}catch(e){}}
+function aNum(v){var n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;}
+function inb(v){return '<span class="in-blue">'+v+'</span>';}
+function aEsc(v){return String(v==null?'':v).replace(/"/g,'&quot;');}
+function editBtn(key){return '<button class="btn-ghost assume-edit" onclick="assumeToggle(\''+key+'\')">'+(assumeEdit[key]?'💾 Save':'✎ Edit')+'</button>';}
+function eIn(key,id,val,cls){return assumeEdit[key]?'<input class="ae-inp'+(cls?' '+cls:'')+'" id="'+id+'" value="'+aEsc(val)+'">':inb(val);}
+function eNum(key,id,raw,disp){return assumeEdit[key]?'<input class="ae-inp num" id="'+id+'" value="'+raw+'">':inb(disp);}
+function assumeToggle(key){
+  if(assumeEdit[key]){saveAssume(key);assumeEdit[key]=false;persistAssume();showToast('Assumptions saved — '+key);emit('INGEST','Assumptions updated ('+key+') — downstream tabs will reference the new inputs','ok');}
+  else{assumeEdit[key]=true;}
+  renderAssumptions();
+}
+function saveAssume(key){
+  if(key==='controls'){var c=ASSUME.controls;c.currency=el('ai_ctl_currency').value;c.fx=el('ai_ctl_fx').value;c.fy=el('ai_ctl_fy').value;c.period=el('ai_ctl_period').value;c.scenario=el('ai_ctl_scenario').value;}
+  else if(key==='verticals'){ASSUME.verticals.forEach(function(r,i){r.a25=aNum(el('ai_vert_'+i+'_a25').value);r.b26=aNum(el('ai_vert_'+i+'_b26').value);r.gm=aNum(el('ai_vert_'+i+'_gm').value);r.em=aNum(el('ai_vert_'+i+'_em').value);r.note=el('ai_vert_'+i+'_note').value;});}
+  else if(key==='seas'){ASSUME.seas=ASSUME.seas.map(function(_,i){return aNum(el('ai_seas_'+i).value);});}
+  else if(key==='geo'){ASSUME.geo.forEach(function(r,i){r[1]=aNum(el('ai_geo_'+i).value);});}
+  else if(key==='revType'){ASSUME.revType.forEach(function(r,i){r[1]=aNum(el('ai_rt_'+i).value);});}
+  else if(key==='reDrivers'){ASSUME.reDrivers.forEach(function(r,i){r[1]=el('ai_red_'+i).value;});}
+  else if(key==='dcDrivers'){ASSUME.dcDrivers.forEach(function(r,i){r[1]=el('ai_dcd_'+i).value;});}
+}
 function renderAssumptions(){
-  function inb(v){return '<span class="in-blue">'+v+'</span>';}
-  function aRow(k,v){return '<div class="assume-row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';}
-  function aBar(lbl,pct){return '<div class="runway-row"><span class="rn">'+lbl+'</span><div class="runway-track"><div class="runway-fill" style="width:'+pct+'%;background:var(--orange)"></div></div><span class="rv">'+inb(pct.toFixed(1)+'%')+'</span></div>';}
+  function secHead(title,meta,key){return '<div class="sec-h fadein assume-head"><h2>'+title+'</h2>'+(meta?'<span class="meta">'+meta+'</span>':'')+editBtn(key)+'</div>';}
+  function blockHead(title,sub,key){return '<div class="assume-bhead"><h3>'+title+'</h3>'+editBtn(key)+'</div><div class="h-sub">'+sub+'</div>';}
+  function aBarE(key,id,lbl,pct){
+    if(assumeEdit[key])return '<div class="assume-row"><span class="k">'+lbl+'</span><span class="v"><input class="ae-inp num" id="'+id+'" value="'+pct+'"> %</span></div>';
+    return '<div class="runway-row"><span class="rn">'+lbl+'</span><div class="runway-track"><div class="runway-fill" style="width:'+pct+'%;background:var(--orange)"></div></div><span class="rv">'+inb(pct.toFixed(1)+'%')+'</span></div>';
+  }
+  function aRowE(key,id,k,v){return '<div class="assume-row"><span class="k">'+k+'</span><span class="v">'+eIn(key,id,v)+'</span></div>';}
+  var c=ASSUME.controls;
 
   var h='<div class="acard fadein" style="border-left:3px solid #2f7bf6"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></div><h3>Assumptions & Control Panel</h3><span class="badge">single source of truth</span></div>'
-    +'<p style="font-size:12px">All hardcoded inputs live here — shown in <span class="in-blue">blue</span>. Every other tab references this sheet.</p></div>';
+    +'<p style="font-size:12px">All hardcoded inputs live here — shown in <span class="in-blue">blue</span>. Use <strong>✎ Edit</strong> on any table to change values, then <strong>💾 Save</strong>. Every other tab references this sheet.</p></div>';
 
   // Reporting controls
-  h+='<div class="sec-h fadein"><h2>Reporting Controls</h2></div>';
+  h+=secHead('Reporting Controls','','controls');
   h+='<div class="kpi-row fadein">'
-    +kpi('Reporting Currency',inb('AED'),'base currency','info')
-    +kpi('AED : USD FX Rate',inb('3.6725'),'pegged','info')
-    +kpi('Current Fiscal Year',inb('2026'),'FY','info')
-    +kpi('Reporting Period',inb('Jun'),'month','info')
-    +kpi('Scenario',inb('Budget'),'active basis','info')
+    +kpi('Reporting Currency',eIn('controls','ai_ctl_currency',c.currency),'base currency','info')
+    +kpi('AED : USD FX Rate',eIn('controls','ai_ctl_fx',c.fx),'pegged','info')
+    +kpi('Current Fiscal Year',eIn('controls','ai_ctl_fy',c.fy),'FY','info')
+    +kpi('Reporting Period',eIn('controls','ai_ctl_period',c.period),'month','info')
+    +kpi('Scenario',eIn('controls','ai_ctl_scenario',c.scenario),'active basis','info')
     +'</div>';
 
   // Vertical revenue budget
-  var VB=[
-    ['Real Estate Development',8800,11500,42.0,34.0,'Core driver; AED 8.8bn FY24 base'],
-    ['Hospitality & Leisure',650,820,38.0,22.0,'DAMAC Maison + JV hotels + Maldives ramp-up'],
-    ['Data Centres (Edgnex)',380,720,55.0,40.0,'Highest growth vertical; capacity coming online'],
-    ['Luxury Brands & Fashion',140,175,45.0,15.0,'Cavalli / de GRISOGONO licensing + retail'],
-    ['Capital & Investments',210,260,60.0,50.0,'Yield income, fund management fees'],
-    ['Facilities & Recurring Services',320,410,30.0,18.0,'Annuity revenue off delivered unit base']
-  ];
-  var t25=VB.reduce(function(s,r){return s+r[1];},0),t26=VB.reduce(function(s,r){return s+r[2];},0);
-  h+='<div class="sec-h fadein"><h2>Vertical — FY2026 Annual Revenue Budget</h2><span class="meta">AED mm · input</span></div>';
+  var t25=ASSUME.verticals.reduce(function(s,r){return s+r.a25;},0),t26=ASSUME.verticals.reduce(function(s,r){return s+r.b26;},0);
+  h+=secHead('Vertical — FY2026 Annual Revenue Budget','AED mm · input','verticals');
   h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Vertical</th><th class="num">FY2025 Actual</th><th class="num">FY2026 Budget</th><th class="num">Gross Margin %</th><th class="num">EBITDA Margin %</th><th>Revenue Mix Note</th></tr></thead><tbody>';
-  VB.forEach(function(r){
-    h+='<tr><td style="font-weight:600">'+r[0]+'</td>'
-      +'<td class="num">'+inb('$'+r[1].toLocaleString())+'</td>'
-      +'<td class="num">'+inb('$'+r[2].toLocaleString())+'</td>'
-      +'<td class="num">'+inb(r[3].toFixed(1)+'%')+'</td>'
-      +'<td class="num">'+inb(r[4].toFixed(1)+'%')+'</td>'
-      +'<td style="font-size:11px;color:var(--ink-3)">'+r[5]+'</td></tr>';
+  ASSUME.verticals.forEach(function(r,i){
+    h+='<tr><td style="font-weight:600">'+r.n+'</td>'
+      +'<td class="num">'+eNum('verticals','ai_vert_'+i+'_a25',r.a25,'$'+r.a25.toLocaleString())+'</td>'
+      +'<td class="num">'+eNum('verticals','ai_vert_'+i+'_b26',r.b26,'$'+r.b26.toLocaleString())+'</td>'
+      +'<td class="num">'+eNum('verticals','ai_vert_'+i+'_gm',r.gm,r.gm.toFixed(1)+'%')+'</td>'
+      +'<td class="num">'+eNum('verticals','ai_vert_'+i+'_em',r.em,r.em.toFixed(1)+'%')+'</td>'
+      +'<td style="font-size:11px;color:var(--ink-3)">'+eIn('verticals','ai_vert_'+i+'_note',r.note,'wide')+'</td></tr>';
   });
   h+='<tr style="border-top:2px solid var(--orange-dim)"><td style="font-weight:700">TOTAL GROUP</td><td class="num" style="font-weight:700">$'+t25.toLocaleString()+'</td><td class="num" style="font-weight:700">$'+t26.toLocaleString()+'</td><td class="num"></td><td class="num"></td><td></td></tr>';
   h+='</tbody></table></div>';
 
   // Seasonality
   var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var SEAS=[9.5,8.2,8.8,7.8,7.2,6.2,5.8,7.5,8.5,9.5,10.5,10.5];
-  var seasSum=SEAS.reduce(function(a,b){return a+b;},0);
-  h+='<div class="sec-h fadein"><h2>Seasonality Profile</h2><span class="meta">monthly phasing of annual budget · must sum to 100%</span></div>';
+  var seasSum=ASSUME.seas.reduce(function(a,b){return a+b;},0);
+  h+=secHead('Seasonality Profile','monthly phasing of annual budget · must sum to 100%','seas');
   h+='<div class="tbl-wrap fadein"><table><thead><tr>'+MONTHS.map(function(m){return '<th class="num">'+m+'</th>';}).join('')+'<th class="num">Check</th></tr></thead><tbody><tr>'
-    +SEAS.map(function(v){return '<td class="num">'+inb(v.toFixed(1)+'%')+'</td>';}).join('')
+    +ASSUME.seas.map(function(v,i){return '<td class="num">'+eNum('seas','ai_seas_'+i,v,v.toFixed(1)+'%')+'</td>';}).join('')
     +'<td class="num" style="font-weight:700;color:'+(Math.abs(seasSum-100)<0.05?'var(--ok)':'var(--warn)')+'">'+seasSum.toFixed(1)+'%</td></tr></tbody></table></div>';
 
   // Geographic + revenue-type mix
   h+='<div class="grid-2">';
-  h+='<div class="block fadein"><h3>Geographic Mix</h3><div class="h-sub">% of group revenue by region · input</div>';
-  [['UAE',62.0],['KSA & GCC',14.0],['Europe',10.0],['Americas',8.0],['Asia Pacific',4.0],["Other Int'l",2.0]].forEach(function(r){h+=aBar(r[0],r[1]);});
+  h+='<div class="block fadein">'+blockHead('Geographic Mix','% of group revenue by region · input','geo');
+  ASSUME.geo.forEach(function(r,i){h+=aBarE('geo','ai_geo_'+i,r[0],r[1]);});
   h+='</div>';
-  h+='<div class="block fadein"><h3>Revenue Type Mix</h3><div class="h-sub">% of group revenue by type · input</div>';
-  [['Development Sales',58.0],['Recurring / Recoverable',16.0],['Hospitality Revenue',12.0],['Service & Management Fees',9.0],['Investment Income',5.0]].forEach(function(r){h+=aBar(r[0],r[1]);});
+  h+='<div class="block fadein">'+blockHead('Revenue Type Mix','% of group revenue by type · input','revType');
+  ASSUME.revType.forEach(function(r,i){h+=aBarE('revType','ai_rt_'+i,r[0],r[1]);});
   h+='</div></div>';
 
   // Operating drivers
   h+='<div class="grid-2">';
-  h+='<div class="block fadein"><h3>Real Estate — Operating Drivers</h3><div class="h-sub">input</div>';
-  h+=aRow('Units Sold — FY2026 Budget',inb((9200).toLocaleString()));
-  h+=aRow("Average Selling Price (AED '000/unit)",inb((1450).toLocaleString()));
-  h+=aRow('Sales Bookings — FY2026 Budget (AED mm)',inb('$13,340'));
-  h+=aRow('% Revenue Recognised on POC (vs Bookings)',inb('86.0%'));
-  h+=aRow('Collection Rate — Cash vs Billings',inb('91.0%'));
-  h+=aRow('Units in Backlog (Sold, Not Handed Over)',inb((24600).toLocaleString()));
+  h+='<div class="block fadein">'+blockHead('Real Estate — Operating Drivers','input','reDrivers');
+  ASSUME.reDrivers.forEach(function(r,i){h+=aRowE('reDrivers','ai_red_'+i,r[0],r[1]);});
   h+='</div>';
-  h+='<div class="block fadein"><h3>Data Centres (Edgnex) — Operating Drivers</h3><div class="h-sub">input</div>';
-  h+=aRow('Contracted Capacity — FY2026 (MW)',inb('480'));
-  h+=aRow('Live / Billing Capacity — FY2026 (MW)',inb('165'));
-  h+=aRow('Avg. Revenue per MW per Annum (AED mm)',inb('$4.4'));
-  h+=aRow('Utilization Rate — Live Capacity',inb('88.0%'));
-  h+=aRow('Pipeline Capacity Under Construction (MW)',inb((1850).toLocaleString()));
+  h+='<div class="block fadein">'+blockHead('Data Centres (Edgnex) — Operating Drivers','input','dcDrivers');
+  ASSUME.dcDrivers.forEach(function(r,i){h+=aRowE('dcDrivers','ai_dcd_'+i,r[0],r[1]);});
   h+='</div></div>';
 
   el('content').innerHTML=h;
