@@ -1366,7 +1366,7 @@ function renderBS(){
     var cls=(r.grp==='asset-total'||r.grp==='liab-total')?'sub-total':(r.grp==='equity'?'total':'');
     var v=f26(r);
     var cg=cagr(Math.abs(v),Math.abs(r.f28),2)*100;
-    h+='<tr class="'+cls+'">'
+    h+='<tr class="clickable '+cls+'" onclick="openBsLine(\''+r.line.replace(/'/g,"")+'\')">'
       +'<td>'+r.line+'</td>'
       +'<td class="num">'+r.a25.toLocaleString()+'</td>'
       +'<td class="num fc-col">'+Math.round(v).toLocaleString()+'</td>'
@@ -2037,6 +2037,31 @@ function openPnlLine(line){
   var h='<div class="drw-head"><div><div class="drw-title">'+line+'</div><div class="drw-sub">FY26 forecast trace</div></div><div class="drw-x" onclick="closeDrawer()">×</div></div><div class="drw-body">';
   h+='<div class="drw-sect"><h3>Figures</h3>'+drwRow('Actual FY25','AED '+r.a25.toLocaleString()+'M')+drwRow('Forecast FY26','AED '+r.f26.toLocaleString()+'M')+drwRow('Forecast FY27','AED '+r.f27.toLocaleString()+'M')+'</div>';
   h+='<div class="drw-sect"><h3>What drives this line</h3><div class="res-box info"><div class="rtitle">Driver logic</div><div class="rbody">'+txt+'</div></div></div>';
+  h+='<button class="btn-act" style="width:100%" onclick="go(\'scn\');closeDrawer()">Open in Scenario Planner →</button>';
+  h+='</div>';
+  openDrawer(h);
+}
+function openBsLine(line){
+  var r=BS.find(function(x){return x.line===line;});if(!r)return;
+  var drivers={
+    'Development Properties (WIP / Inventory)':'Capitalised construction-in-progress across the 6 active projects. Builds as contractor IPCs (PaymentsIQ-validated) are certified, and unwinds to cost-of-sales as units hand over. The largest asset on the book — ~1.7x forward revenue cover.',
+    'Contract Assets (revenue ahead of billing)':'Revenue recognised on percentage-of-completion (IFRS 15) that is ahead of the billing / installment schedule. Converts to receivables, then cash, as milestones bill.',
+    'Trade & Other Receivables':'Billed installments due from buyers plus other operating receivables. Collection rate runs ~91% of billings; ageing is watched closely on the Safa Two GBP/INR cohort behind the Q3 dip.',
+    'Restricted Cash — Escrow':'RERA escrow, ring-fenced per project — can only fund the linked project\'s construction. Not available for group liquidity or dividends, so ForecastIQ models it separately from free cash.',
+    'Cash & Equivalents (free)':'Unrestricted group cash for corporate obligations, dividends and standby cover. Moves live with the operating-cash forecast — drag the Equalizer levers and this reflows.',
+    'Total Assets':'Development WIP + escrow + receivables + contract assets + free cash. Asset base grows with the construction build-out while staying ~1.7x covered by the forward order book.',
+    'Contract Liabilities (advances from buyers)':'Buyer advances received ahead of revenue recognition — the forward order book sitting on the balance sheet. Unwinds to revenue as construction completes; a powerful negative-working-capital funding source.',
+    'Borrowings':'Construction & corporate debt, largely floating-rate. Net-debt-to-equity stays conservative; finance cost is sensitive to EIBOR — the Q3 USD facility reprice is the main watch-item (stress it in Scenarios).',
+    'Trade & Other Payables':'Owed to contractors and suppliers on certified work; tracks the construction drawdown run-rate.',
+    'Total Liabilities':'Contract liabilities + borrowings + payables — dominated by buyer advances (contract liabilities), not debt, which is what keeps gearing low.',
+    'Total Equity':'Share capital + retained earnings. Grows via retained net profit, so it recomputes live as profit changes on the Equalizer.'
+  };
+  var txt=drivers[line]||'Projected from the linked driver model. Adjust assumptions in the Scenario Planner to see the impact.';
+  var grpLabel=r.grp.indexOf('asset')>=0?'Asset':r.grp.indexOf('liab')>=0?'Liability':'Equity';
+  var cg=cagr(Math.abs(r.f26),Math.abs(r.f28),2)*100;
+  var h='<div class="drw-head"><div><div class="drw-title">'+line+'</div><div class="drw-sub">'+grpLabel+' · FY25 → FY28 balance-sheet trace</div></div><div class="drw-x" onclick="closeDrawer()">×</div></div><div class="drw-body">';
+  h+='<div class="drw-sect"><h3>Figures (AED M)</h3>'+drwRow('Actual FY25',r.a25.toLocaleString())+drwRow('Forecast FY26',r.f26.toLocaleString())+drwRow('Forecast FY27',r.f27.toLocaleString())+drwRow('Forecast FY28',r.f28.toLocaleString())+drwRow('26–28 CAGR',(cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%')+'</div>';
+  h+='<div class="drw-sect"><h3>What this line is</h3><div class="res-box info"><div class="rtitle">Driver logic</div><div class="rbody">'+txt+'</div></div></div>';
   h+='<button class="btn-act" style="width:100%" onclick="go(\'scn\');closeDrawer()">Open in Scenario Planner →</button>';
   h+='</div>';
   openDrawer(h);
