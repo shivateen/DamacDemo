@@ -1300,8 +1300,9 @@ async function checkApiStatus() {
     }
     updateApiKeyBtn();
   } catch {
-    elements.apiStatus.textContent = "Voice server unavailable";
+    elements.apiStatus.textContent = "Voice server offline — use API Key button";
     elements.apiStatus.classList.add("warning");
+    updateApiKeyBtn();
   }
 }
 
@@ -1309,7 +1310,7 @@ function extractClientSecret(payload) {
   return payload?.value || payload?.client_secret?.value || payload?.client_secret || payload?.secret;
 }
 
-function readableError(payload, fallback = "Could not create Realtime session.") {
+function readableError(payload, fallback = "Voice server is unavailable or starting up — please try again in 30 seconds.") {
   if (!payload) return fallback;
   if (typeof payload === "string") return payload;
   if (typeof payload.error === "string") return payload.error;
