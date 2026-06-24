@@ -1076,10 +1076,13 @@ var REVCOLS=[
 ];
 function setRevDim(d){REV_DIM=d;renderRevenue();}
 function toggleCol(id){var c=REVCOLS.find(function(x){return x.id===id;});if(c.lock)return;c.on=!c.on;renderRevenue();}
+/* Revenue Budget (AOP) baseline scales with the FY2026 budget set on the
+   Assumptions tab (ratio vs the default budget) — single source of truth */
+function budgetK(){try{var d=ASSUME_DEFAULT.verticals.reduce(function(s,v){return s+v.b26;},0),a=ASSUME.verticals.reduce(function(s,v){return s+v.b26;},0);return d?a/d:1;}catch(e){return 1;}}
 function aggRev(dim){
-  var m={};
+  var bk=budgetK(),m={};
   REV_DATA.forEach(function(r){var k=r[dim];if(!m[k])m[k]={budget:0,prior:0,locked:0,current:0,actual:0};
-    ['budget','prior','locked','current','actual'].forEach(function(f){m[k][f]+=r[f];});});
+    ['prior','locked','current','actual'].forEach(function(f){m[k][f]+=r[f];});m[k].budget+=r.budget*bk;});
   return Object.keys(m).map(function(k){var o=m[k];o.name=k;
     o.varCB=o.current-o.budget;o.varCP=o.current-o.prior;
     o.cov=o.current?o.locked/o.current:0;o.attain=o.current?o.actual/o.current:0;return o;})
@@ -1093,8 +1096,8 @@ function revCell(o,col){
   return '<td class="num'+(col.id==='current'?' fc-col':'')+'">'+o[col.id].toLocaleString()+'</td>';
 }
 function revVersionTotals(){
-  var t={budget:0,prior:0,current:0};
-  REV_DATA.forEach(function(r){t.budget+=r.budget;t.prior+=r.prior;t.current+=r.current;});
+  var bk=budgetK(),t={budget:0,prior:0,current:0};
+  REV_DATA.forEach(function(r){t.budget+=r.budget*bk;t.prior+=r.prior;t.current+=r.current;});
   return t;
 }
 function renderRevenue(){
