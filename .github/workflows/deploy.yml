@@ -49,8 +49,8 @@ jobs:
           test -f public/app-forecastiq.html
           test -d public/valuationiq
           grep -q "Finance AI Platform" public/index.html
-          grep -q "Stress Tests" public/app-forecastiq.html
-          echo "✓ Platform build verified (incl. ForecastIQ Stress Tests)"
+          grep -q "Cash-flow levers" public/app-forecastiq.html
+          echo "✓ Platform build verified (incl. ForecastIQ scenario engine)"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
