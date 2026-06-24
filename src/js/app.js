@@ -2842,7 +2842,7 @@ function toggleTheme(){
   try{localStorage.setItem('closeiq-theme',document.documentElement.classList.contains('theme-light')?'light':'dark');}catch(e){}
 }
 /* ============ INIT ============ */
-(function(){try{if(localStorage.getItem('closeiq-theme')==='light')document.documentElement.classList.add('theme-light');}catch(e){}})();
+(function(){try{if(localStorage.getItem('closeiq-theme')==='dark')document.documentElement.classList.remove('theme-light');}catch(e){}updateThemeIcon();})();
 renderRoster();
 go('sources');
 updateFreshness();

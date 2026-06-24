@@ -33,7 +33,7 @@ def build_closeiq():
                "font-family='Poppins,Arial' font-size='17' font-weight='700' fill='white' "
                "text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E")
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
