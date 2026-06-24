@@ -1082,15 +1082,15 @@ function revVersionTotals(){
   return t;
 }
 function renderRevenue(){
-  var m=modelCompute();                 // live layers (lockstep with Equalizer)
-  var vt=revVersionTotals();
+  var mFY=modelCompute();var f=fcFactor();var m=fcScale(mFY);  // FY26 layers, scaled to the selected period
+  var vt=revVersionTotals();if(f<1)vt={budget:vt.budget*f,prior:vt.prior*f};
   var cur=Math.round(m.rev);
   var cov=m.locked/m.rev, attain=m.act/m.rev;
   var varCB=cur-vt.budget, pctCB=varCB/vt.budget*100;
   var varCP=cur-vt.prior;
   var pipeUpside=Math.round(m.pipe);
   var h=scnSelectorBar()+'<div class="kpi-row fadein">'
-    +kpi('Current Forecast','AED '+(cur/1000).toFixed(2)+'B','Actuals + Contracted + Pipeline','ok')
+    +kpi('Current Forecast','AED '+(cur/1000).toFixed(2)+'B',(fcPeriod==='FY'?'Actuals + Contracted + Pipeline':fcLong()),'ok')
     +kpi('Locked-in Coverage',Math.round(cov*100)+'%','AED '+(m.locked/1000).toFixed(2)+'B secured','info')
     +kpi('Weighted Pipeline','AED '+(pipeUpside/1000).toFixed(2)+'B','prob-weighted, still to sell','orange')
     +kpi('vs Budget (AOP)',(varCB>=0?'+':'−')+(Math.abs(varCB)).toLocaleString()+'M',(pctCB>=0?'+':'')+pctCB.toFixed(1)+'% vs plan',pctCB>=0?'ok':'risk')
@@ -1109,12 +1109,13 @@ function renderRevenue(){
     +'</div>';
 
   // ── Monthly build chart (3 stacked layers) ──
-  var conScale=m.contract/BASE_CON, pipeScale=m.pipe/BASE_PIPE;
-  var maxM=0;
+  var conScale=mFY.contract/BASE_CON, pipeScale=mFY.pipe/BASE_PIPE;
+  var maxM=0,pmth=fcMonths();
   var monthly=REV_MONTHS.map(function(mm,i){
     var a=REV_ACT_M[i], c=Math.round(REV_CON_M[i]*conScale), p=Math.round(REV_PIPE_M[i]*pipeScale);
-    var tt=a+c+p; if(tt>maxM)maxM=tt; return {m:mm,a:a,c:c,p:p,t:tt,fwd:i>=6};
-  });
+    return {m:mm,a:a,c:c,p:p,t:a+c+p,fwd:i>=6,idx:i};
+  }).filter(function(s){return pmth.indexOf(s.idx)>=0;});
+  monthly.forEach(function(s){if(s.t>maxM)maxM=s.t;});
   h+='<div class="block fadein"><h3>Revenue Build by Month — FY26</h3><div class="h-sub">Jan–Jun actuals (banked) · Jul–Dec = contracted + probability-weighted pipeline</div>';
   h+='<div class="chart" style="height:170px">'+monthly.map(function(s){
     function seg(cls,v){return v>0?'<div class="bar '+cls+'" style="height:'+(v/maxM*100)+'%;width:100%;border-radius:0" title="'+cls+': '+v+'M"></div>':'';}
@@ -1144,6 +1145,7 @@ function renderRevenue(){
     +REVCOLS.map(function(c){return '<span class="colchip'+(c.on?' on':'')+(c.lock?' locked-on':'')+'" onclick="toggleCol(\''+c.id+'\')"><span class="dotc"></span>'+c.label+(c.lock?' 🔒':'')+'</span>';}).join('')
     +'</div></div></div>';
   var rows=aggRev(REV_DIM);
+  if(f<1)rows=rows.map(function(o){var n=Object.assign({},o);['budget','prior','locked','current','actual'].forEach(function(k){if(typeof n[k]==='number')n[k]=n[k]*f;});return n;});
   var tot={budget:0,prior:0,locked:0,current:0,actual:0};
   rows.forEach(function(o){['budget','prior','locked','current','actual'].forEach(function(f){tot[f]+=o[f];});});
   tot.name='Total — AED M';tot.varCB=tot.current-tot.budget;tot.varCP=tot.current-tot.prior;tot.cov=tot.locked/tot.current;tot.attain=tot.actual/tot.current;
@@ -1177,7 +1179,7 @@ function openRevRow(name){
 function aRow(k,v,tone){return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span style="font-size:11.5px;color:var(--ink-2)">'+k+'</span><span style="font-family:var(--mono);font-size:12px;font-weight:600;color:'+(tone||'var(--ink)')+'">'+v+'</span></div>';}
 function sgn(v,u){return (v>0?'+':'')+v+(u||'');}
 function renderPNL(){
-  var m=modelCompute();
+  var mFY=modelCompute();var m=fcScale(mFY);
   var sgaF=m.sga/1960;
   var live={
     'Revenue — Development':m.rev*(13050/14200),'Revenue — Rental & Hospitality':m.rev*(1150/14200),'Total Revenue':m.rev,
@@ -1187,7 +1189,7 @@ function renderPNL(){
     'Corporate Tax (9%)':-(m.pbt*0.09),'Net Profit':m.np
   };
   var h=scnSelectorBar()+'<div class="kpi-row fadein">'
-    +kpi('Total Revenue','AED '+(m.rev/1000).toFixed(2)+'B','live · lockstep','ok')
+    +kpi('Total Revenue','AED '+(m.rev/1000).toFixed(2)+'B',(fcPeriod==='FY'?'live · lockstep':fcLong()),'ok')
     +kpi('Gross Profit','AED '+(m.gp/1000).toFixed(2)+'B',(m.gp/m.rev*100).toFixed(1)+'% margin','ok')
     +kpi('EBITDA','AED '+(m.ebitda/1000).toFixed(2)+'B',(m.ebitda/m.rev*100).toFixed(1)+'% margin','ok')
     +kpi('Net Profit','AED '+(m.np/1000).toFixed(2)+'B',(m.np/m.rev*100).toFixed(1)+'% margin','ok')
@@ -1210,12 +1212,12 @@ function renderPNL(){
     +'</div>';
   h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>P&L Forecast — driver-based, IFRS 15</h3><span class="badge">FY26 column is live · click a line to trace</span></div>'
     +'<p>Development revenue is recognised on <strong>percentage-of-completion</strong> from contracted construction progress, not cash. The cost segment flows from the contractor milestone run-rate (COGS), selling & overhead (SG&A) and the floating-rate debt book (finance). Every figure below recomputes from the assumptions above — edit them in the Equalizer.</p></div>';
-  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>P&L line (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>P&L line (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26'+(fcPeriod!=='FY'?' · '+fcPeriod:'')+'</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
   PNL.forEach(function(r){
     var cls=(r.grp==='rev-total'||r.grp==='ebitda'||r.grp==='gp'||r.grp==='pbt')?'sub-total':(r.grp==='np'?'total':'');
     var f26v=live[r.line]!==undefined?Math.round(live[r.line]):r.f26;
     var cg=cagr(Math.abs(f26v),Math.abs(r.f28),2)*100;
-    var cgTxt=(cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%';
+    var cgTxt=fcPeriod==='FY'?((cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%'):'—';
     var cgTone=(r.grp==='cos'||r.grp==='opex'||r.grp==='below')?(cg>0?'var(--warn)':'var(--ok)'):(cg>=0?'var(--ok)':'var(--risk)');
     h+='<tr class="clickable '+cls+'" onclick="openPnlLine(\''+r.line.replace(/'/g,"")+'\')">'
       +'<td>'+r.line+'</td>'
@@ -1229,7 +1231,7 @@ function renderPNL(){
 
   // Revenue bridge mini chart
   h+='<div class="block fadein"><h3>Revenue — Actual vs 3-Year Forecast</h3><div class="h-sub">FY25 actual → FY26 / FY27 / FY28 forecast (AED B)</div>';
-  var bars=[{l:'FY25',v:12220,c:'actual'},{l:'FY26',v:Math.round(m.rev),c:'forecast'},{l:'FY27',v:16940,c:'forecast'},{l:'FY28',v:19450,c:'forecast'}];
+  var bars=[{l:'FY25',v:12220,c:'actual'},{l:'FY26',v:Math.round(mFY.rev),c:'forecast'},{l:'FY27',v:16940,c:'forecast'},{l:'FY28',v:19450,c:'forecast'}];
   var mx=20000;
   h+='<div class="chart">'+bars.map(function(b){
     return '<div class="bar-col"><div class="bar-val">'+(b.v/1000).toFixed(1)+'B</div><div class="bar-stack"><div class="bar '+b.c+'" style="height:'+(b.v/mx*100)+'%"></div></div><div class="bar-lbl">'+b.l+'</div></div>';
@@ -1240,16 +1242,16 @@ function renderPNL(){
 
 /* ── CASH FLOW ── */
 function renderCash(){
-  var m=modelCompute();
+  var m=modelCompute();var f=fcFactor();
   var cum=CASH_OPENING, minCum=CASH_OPENING, minM='';
   var series=CASH.map(function(c){cum+=c.in+c.out;if(cum<minCum){minCum=cum;minM=c.m;}return {m:c.m,net:c.in+c.out,cum:cum,in:c.in,out:c.out,actual:c.actual};});
   var closing=cum;
   // headline cash KPIs run live off modelCompute (which reflects any active scenario)
-  var opCash=m.cash, closeCash=closing, troughCash=m.minCash;
+  var opCash=m.cash*f, closeCash=closing, troughCash=m.minCash;
   var troughTone=troughCash<800?'risk':troughCash<2500?'warn':'ok';
   var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Opening Cash','AED 4.20B','free / unrestricted','info')
-    +kpi('Net Op Cash (12m)','+AED '+(opCash/1000).toFixed(2)+'B','live · sales-driven','ok')
+    +kpi(fcPeriod==='FY'?'Net Op Cash (12m)':'Net Op Cash ('+fcPeriod+')','+AED '+(opCash/1000).toFixed(2)+'B',(fcPeriod==='FY'?'live · sales-driven':fcLong()),'ok')
     +kpi('Closing Cash','AED '+(closeCash/1000).toFixed(2)+'B','May-27','ok')
     +kpi('Min Cash (trough)','AED '+(troughCash/1000).toFixed(2)+'B','Q3 · '+(troughCash<800?'below AED 800M floor':'within floor'),troughTone)
     +kpi('RERA Escrow','AED 18.2B','restricted','info')
@@ -1306,24 +1308,28 @@ function renderCash(){
 /* ── BALANCE SHEET ── */
 function renderBS(){
   var m=modelCompute();
+  var cum=fcCum();
+  function ip(a25,v){return a25+(v-a25)*cum;}  // point-in-time interpolation to period end
   var dCash=Math.round(m.cash-3100), dNP=Math.round(m.np-2857);
   var dContract=Math.round((m.pipe-3048)*0.5+(m.contract-5634)*0.3);
   var ov={'Cash & Equivalents (free)':4200+dCash,'Total Equity':22060+dNP,'Contract Liabilities (advances from buyers)':24100+dContract};
+  var f26map={};
+  BS.forEach(function(r){if(r.grp==='asset-total'||r.grp==='liab-total')return;var v=ov[r.line]!==undefined?ov[r.line]:r.f26;f26map[r.line]=ip(r.a25,v);});
   var assetSum=0,liabSum=0;
-  BS.forEach(function(r){var v=ov[r.line]!==undefined?ov[r.line]:r.f26;if(r.grp==='asset')assetSum+=v;if(r.grp==='liab')liabSum+=v;});
-  ov['Total Assets']=assetSum;ov['Total Liabilities']=liabSum;
-  function f26(r){return ov[r.line]!==undefined?ov[r.line]:r.f26;}
-  var equity=ov['Total Equity'], netDebt=10400-(4200+dCash);
+  BS.forEach(function(r){if(r.grp==='asset')assetSum+=f26map[r.line];if(r.grp==='liab')liabSum+=f26map[r.line];});
+  f26map['Total Assets']=assetSum;f26map['Total Liabilities']=liabSum;
+  function f26(r){return f26map[r.line]!==undefined?f26map[r.line]:r.f26;}
+  var equity=f26map['Total Equity'], netDebt=f26map['Borrowings']-f26map['Cash & Equivalents (free)'];
   var h=scnSelectorBar()+'<div class="kpi-row fadein">'
     +kpi('Total Assets','AED '+(assetSum/1000).toFixed(1)+'B',((assetSum-57600)/57600*100).toFixed(1)+'% vs FY25','ok')
     +kpi('Development WIP','AED 31.2B','inventory build','info')
-    +kpi('Contract Liabilities','AED '+(ov['Contract Liabilities (advances from buyers)']/1000).toFixed(1)+'B','buyer advances','ok')
+    +kpi('Contract Liabilities','AED '+(f26map['Contract Liabilities (advances from buyers)']/1000).toFixed(1)+'B','buyer advances','ok')
     +kpi('Net Debt','AED '+(netDebt/1000).toFixed(1)+'B',(netDebt/equity).toFixed(2)+'x equity','ok')
     +kpi('Total Equity','AED '+(equity/1000).toFixed(1)+'B',((equity-20300)/20300*100).toFixed(1)+'% vs FY25','ok')
     +'</div>';
   h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M4 21h16"/></svg></div><h3>Balance Sheet Commentary</h3><span class="badge">lockstep</span></div>'
     +'<p>The balance sheet rolls forward from construction spend capitalised into <strong>development WIP</strong> and the unwinding of <strong>contract liabilities</strong> (buyer advances) as units hand over — giving <strong>~1.7x forward revenue cover</strong>. Cash, equity (via retained profit) and contract liabilities <strong>recompute live</strong> from the Equalizer, so the statement always balances when assumptions change. Gearing stays conservative at '+(netDebt/equity).toFixed(2)+'x net-debt-to-equity.</p></div>';
-  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Balance sheet (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Balance sheet (AED M)</th><th class="num">Actual FY25</th><th class="num">Forecast FY26'+(fcPeriod!=='FY'?' · '+fcPeriod+' end':'')+'</th><th class="num">Forecast FY27</th><th class="num">Forecast FY28</th><th class="num">26–28 CAGR</th></tr></thead><tbody>';
   BS.forEach(function(r){
     var cls=(r.grp==='asset-total'||r.grp==='liab-total')?'sub-total':(r.grp==='equity'?'total':'');
     var v=f26(r);
@@ -1334,7 +1340,7 @@ function renderBS(){
       +'<td class="num fc-col">'+Math.round(v).toLocaleString()+'</td>'
       +'<td class="num">'+r.f27.toLocaleString()+'</td>'
       +'<td class="num">'+r.f28.toLocaleString()+'</td>'
-      +'<td class="num" style="color:'+(cg>=0?'var(--ok)':'var(--risk)')+'">'+(cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%</td></tr>';
+      +'<td class="num" style="color:'+(cg>=0?'var(--ok)':'var(--risk)')+'">'+(fcPeriod==='FY'?((cg>=0?'+':'−')+Math.abs(cg).toFixed(1)+'%'):'—')+'</td></tr>';
   });
   h+='</tbody></table></div>';
 
@@ -1539,6 +1545,20 @@ function deleteScenario(id,ev){
   renderCurrent();
 }
 /* dropdown + Active toggle shown atop each statement tab */
+/* ── REPORTING PERIOD (Q3 / Q4 / H2 / FY) ── scales FY2026 flow figures via the
+   seasonality profile; the balance sheet is shown at period-end (point-in-time) ── */
+var fcPeriod='FY';
+function fcMonths(){return fcPeriod==='Q3'?[6,7,8]:fcPeriod==='Q4'?[9,10,11]:fcPeriod==='H2'?[6,7,8,9,10,11]:[0,1,2,3,4,5,6,7,8,9,10,11];}
+function fcFactor(){if(fcPeriod==='FY')return 1;var s=ASSUME.seas,tot=s.reduce(function(a,b){return a+b;},0)||100;return fcMonths().reduce(function(a,i){return a+(s[i]||0);},0)/tot;}
+function fcCum(){if(fcPeriod==='FY'||fcPeriod==='Q4'||fcPeriod==='H2')return 1;var s=ASSUME.seas,tot=s.reduce(function(a,b){return a+b;},0)||100,sum=0;for(var i=0;i<9;i++)sum+=s[i]||0;return sum/tot;}
+function fcLong(){var pc=Math.round(fcFactor()*100);return fcPeriod==='FY'?'FY2026 · full year':fcPeriod==='H2'?'H2 (Jul–Dec) · '+pc+'% of FY':fcPeriod==='Q3'?'Q3 (Jul–Sep) · '+pc+'% of FY':'Q4 (Oct–Dec) · '+pc+'% of FY';}
+function setFcPeriod(p){fcPeriod=p;renderCurrent();}
+function fcScale(m){var f=fcFactor();if(f>=0.9999)return m;var o={};for(var k in m){o[k]=typeof m[k]==='number'?m[k]*f:m[k];}return o;}
+function fcPeriodSel(){
+  var P=[['FY','Full Year (FY26)'],['H2','H2 (Jul–Dec)'],['Q3','Q3 (Jul–Sep)'],['Q4','Q4 (Oct–Dec)']];
+  return '<span style="margin-left:auto"></span><span class="lbl">Period</span><select class="scn-select" style="min-width:150px" onchange="setFcPeriod(this.value)">'
+    +P.map(function(p){return '<option value="'+p[0]+'"'+(fcPeriod===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
+}
 function scnSelectorBar(){
   var opts='<option value="__base"'+(activeSavedId===null?' selected':'')+'>Base case</option>';
   opts+=SCN_SAVED.map(function(s){return '<option value="'+s.id+'"'+(activeSavedId===s.id?' selected':'')+'>'+s.name+'</option>';}).join('');
@@ -1546,7 +1566,8 @@ function scnSelectorBar(){
   return '<div class="scn-selbar fadein"><span class="lbl">Scenario</span>'
     +'<select class="scn-select" onchange="selectScenario(this.value)"'+(scnEnabled?'':' disabled')+'>'+opts+'</select>'
     +'<span class="scn-toggle'+(scnEnabled?' on':'')+'" onclick="toggleScnEnabled()" title="Apply the selected scenario to the forecast"><span class="scn-sw"></span>'+(scnEnabled?'Active':'Inactive')+'</span>'
-    +'<span style="font-size:11px;color:var(--ink-3)">'+note+'</span></div>';
+    +'<span style="font-size:11px;color:var(--ink-3)">'+note+'</span>'
+    +fcPeriodSel()+'</div>';
 }
 /* scenario workspace controls atop the Scenarios tab */
 function scnWorkspaceBar(){
