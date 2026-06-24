@@ -674,6 +674,25 @@ var LRP={
   capex:[6900,7600,8100,8400]     /* construction / development spend */
 };
 function cagr(a,b,yrs){return Math.pow(b/a,1/yrs)-1;}
+/* recompute the 3-Year Plan from the Assumptions sheet: FY26 = live base case,
+   FY27/FY28 from the multi-year growth, margin, capex & net-debt assumptions */
+function syncLRP(){
+  try{
+    var f=modelCompute(),p=ASSUME.plan;
+    var r26=f.rev,e26=f.ebitda,n26=f.np,o26=f.cash;
+    var r27=r26*(1+p.revG27/100),r28=r27*(1+p.revG28/100);
+    var e27=r27*p.ebitdaM27/100,e28=r28*p.ebitdaM28/100;
+    var npR=e26?n26/e26:0.75,ocR=e26?o26/e26:0.68,ret=0.62;
+    var n27=e27*npR,n28=e28*npR,o27=e27*ocR,o28=e28*ocR;
+    LRP.revenue=[12220,r26,r27,r28];
+    LRP.ebitda=[3310,e26,e27,e28];
+    LRP.np=[2430,n26,n27,n28];
+    LRP.opcash=[2680,o26,o27,o28];
+    LRP.equity=[20300,20300+n26*ret,20300+(n26+n27)*ret,20300+(n26+n27+n28)*ret];
+    LRP.capex=[6900,7600,p.capex27,p.capex28];
+    LRP.netDebt=[5900,6200,p.netDebt27,p.netDebt28];
+  }catch(e){}
+}
 function lrpDeltas(){
   return {
     rev:cagr(LRP.revenue[1],LRP.revenue[3],2),
@@ -930,7 +949,7 @@ function srcStrip(){
 
 /* ── OVERVIEW ── */
 function renderOverview(){
-  var m=modelCompute();
+  var m=modelCompute();syncLRP();
   var h='<div class="kpi-row fadein">'
     +kpi('FY26 Revenue','AED '+(m.rev/1000).toFixed(2)+'B','+'+((m.rev/12220-1)*100).toFixed(1)+'% vs FY25','ok','conf 91%')
     +kpi('FY26 EBITDA','AED '+(m.ebitda/1000).toFixed(2)+'B',(m.ebitda/m.rev*100).toFixed(1)+'% margin','ok','conf 89%')
@@ -1428,6 +1447,7 @@ function renderBS(){
 
 /* ── 3-YEAR PLAN (long-range model FY26 → FY28) ── */
 function renderLRP(){
+  syncLRP();
   var d=lrpDeltas();
   var pct=function(x){return (x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';};
   var ebMarg=LRP.years.map(function(_,i){return LRP.ebitda[i]/LRP.revenue[i]*100;});
@@ -1925,9 +1945,11 @@ var ASSUME_DEFAULT={
     ['Avg. Revenue per MW per Annum (AED mm)','$4.4'],
     ['Utilization Rate — Live Capacity','88.0%'],
     ['Pipeline Capacity Under Construction (MW)','1,850']
-  ]
+  ],
+  plan:{revG27:19.3,revG28:14.8,ebitdaM27:33.5,ebitdaM28:34.0,capex27:8100,capex28:8400,netDebt27:5000,netDebt28:3150}
 };
-function loadAssume(){try{var s=localStorage.getItem('fiq-assume');if(s)return JSON.parse(s);}catch(e){}return JSON.parse(JSON.stringify(ASSUME_DEFAULT));}
+/* start from defaults and overlay any saved keys — keeps new keys forward-compatible */
+function loadAssume(){var d=JSON.parse(JSON.stringify(ASSUME_DEFAULT));try{var s=localStorage.getItem('fiq-assume');if(s){var o=JSON.parse(s);for(var k in d){if(o[k]!==undefined)d[k]=o[k];}}}catch(e){}return d;}
 var ASSUME=loadAssume();
 var assumeEdit={};
 function persistAssume(){try{localStorage.setItem('fiq-assume',JSON.stringify(ASSUME));}catch(e){}}
@@ -1950,6 +1972,7 @@ function saveAssume(key){
   else if(key==='revType'){ASSUME.revType.forEach(function(r,i){r[1]=aNum(el('ai_rt_'+i).value);});}
   else if(key==='reDrivers'){ASSUME.reDrivers.forEach(function(r,i){r[1]=el('ai_red_'+i).value;});}
   else if(key==='dcDrivers'){ASSUME.dcDrivers.forEach(function(r,i){r[1]=el('ai_dcd_'+i).value;});}
+  else if(key==='plan'){var p=ASSUME.plan;p.revG27=aNum(el('ai_plan_revG27').value);p.revG28=aNum(el('ai_plan_revG28').value);p.ebitdaM27=aNum(el('ai_plan_ebitdaM27').value);p.ebitdaM28=aNum(el('ai_plan_ebitdaM28').value);p.capex27=aNum(el('ai_plan_capex27').value);p.capex28=aNum(el('ai_plan_capex28').value);p.netDebt27=aNum(el('ai_plan_netDebt27').value);p.netDebt28=aNum(el('ai_plan_netDebt28').value);}
 }
 function renderAssumptions(){
   function secHead(title,meta,key){return '<div class="sec-h fadein assume-head"><h2>'+title+'</h2>'+(meta?'<span class="meta">'+meta+'</span>':'')+editBtn(key)+'</div>';}
@@ -2014,6 +2037,16 @@ function renderAssumptions(){
   h+='<div class="block fadein">'+blockHead('Data Centres (Edgnex) — Operating Drivers','input','dcDrivers');
   ASSUME.dcDrivers.forEach(function(r,i){h+=aRowE('dcDrivers','ai_dcd_'+i,r[0],r[1]);});
   h+='</div></div>';
+
+  // 3-Year Plan — multi-year assumptions (drive the 3-Year Plan tab)
+  var P=ASSUME.plan;
+  h+=secHead('3-Year Plan — Multi-Year Assumptions','FY2027 & FY2028 · drives the 3-Year Plan tab','plan');
+  h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Driver</th><th class="num">FY2027</th><th class="num">FY2028</th></tr></thead><tbody>';
+  h+='<tr><td style="font-weight:600">Revenue growth (YoY %)</td><td class="num">'+eNum('plan','ai_plan_revG27',P.revG27,P.revG27.toFixed(1)+'%')+'</td><td class="num">'+eNum('plan','ai_plan_revG28',P.revG28,P.revG28.toFixed(1)+'%')+'</td></tr>';
+  h+='<tr><td style="font-weight:600">EBITDA margin (%)</td><td class="num">'+eNum('plan','ai_plan_ebitdaM27',P.ebitdaM27,P.ebitdaM27.toFixed(1)+'%')+'</td><td class="num">'+eNum('plan','ai_plan_ebitdaM28',P.ebitdaM28,P.ebitdaM28.toFixed(1)+'%')+'</td></tr>';
+  h+='<tr><td style="font-weight:600">CAPEX / development spend (AED mm)</td><td class="num">'+eNum('plan','ai_plan_capex27',P.capex27,'$'+P.capex27.toLocaleString())+'</td><td class="num">'+eNum('plan','ai_plan_capex28',P.capex28,'$'+P.capex28.toLocaleString())+'</td></tr>';
+  h+='<tr><td style="font-weight:600">Net debt (AED mm)</td><td class="num">'+eNum('plan','ai_plan_netDebt27',P.netDebt27,'$'+P.netDebt27.toLocaleString())+'</td><td class="num">'+eNum('plan','ai_plan_netDebt28',P.netDebt28,'$'+P.netDebt28.toLocaleString())+'</td></tr>';
+  h+='</tbody></table><div class="h-sub" style="margin-top:8px">FY2026 is the live base case (from the vertical budget above); FY2027–28 compound from these growth & margin inputs.</div></div>';
 
   el('content').innerHTML=h;
 }
