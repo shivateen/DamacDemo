@@ -1520,11 +1520,6 @@ function stressMatrix(kind,list,title,rowlabel){
       +dcell(m.rev,base.rev)+'<td class="num">'+(m.ebitda/m.rev*100).toFixed(1)+'%</td>'+dcell(m.cash,base.cash)+tcell(m.minCash)+'</tr>';});
   h+='</tbody></table></div>';return h;
 }
-function renderStressMatrices(){
-  return '<div class="grid-2" style="margin-top:14px">'
-    +stressMatrix('cf',CASHFLOW_SCENARIOS,'Cash-flow scenarios','Cash-flow scenario')
-    +stressMatrix('shock',SHOCKS,'External shocks','External shock')+'</div>';
-}
 
 /* ── EQUALIZER — per-vertical revenue levers + cost levers, lockstep recompute ── */
 var eqSelVert='lagoons';
@@ -1558,12 +1553,14 @@ function renderEqualizer(){
   h+='<div class="block fadein"><h3>Cash-flow levers</h3><div class="h-sub">portfolio-wide — cash timing & liquidity · move the trough without touching the P&L</div>';
   CASHLV.forEach(function(c){h+=lever('ca-'+c.id,c.n,c.val,c.min,c.max,c.unit,"onCash('"+c.id+"',this.value)");});
   h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn-ghost" onclick="eqReset()">Reset all</button><button class="btn-act" onclick="saveCurrentScenario()">💾 Save as template</button></div></div>';
+  // cash-flow impact matrix sits directly under its sliders
+  h+=stressMatrix('cf',CASHFLOW_SCENARIOS,'Cash-flow scenarios','Cash-flow scenario');
   h+='</div>';
-  // RIGHT — live build + impact
+  // RIGHT — live build + impact + external-shocks matrix
   h+='<div><div id="eqBuild"></div><div id="impactWrap"></div>'
-    +'<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Lockstep</h3></div><p style="font-size:11.5px">Every lever recomputes <strong>all four statements together</strong> — revenue layers, P&L (COGS / SG&A / finance), cash flow and the balance sheet move in one pass. No version overlay, no manual download.</p></div></div>';
+    +'<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Lockstep</h3></div><p style="font-size:11.5px">Every lever recomputes <strong>all four statements together</strong> — revenue layers, P&L (COGS / SG&A / finance), cash flow and the balance sheet move in one pass. No version overlay, no manual download.</p></div>'
+    +stressMatrix('shock',SHOCKS,'External shocks','External shock')+'</div>';
   h+='</div>';
-  h+=renderStressMatrices();
   el('scnInner').innerHTML=h;
   renderEqBuild();
   renderImpact();
