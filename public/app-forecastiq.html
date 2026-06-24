@@ -1734,10 +1734,9 @@ function lever(key,name,val,min,max,unit,handler,confTxt){
 function renderEqualizer(){
   var v=VERTICALS.find(function(x){return x.id===eqSelVert;});
   var h='<div class="grid-2" style="grid-template-columns:1.12fr 1fr">';
-  // LEFT — stress presets + levers
+  // LEFT — lever groups (Revenue · Cost & finance · Cash-flow)
   h+='<div>';
-  h+=presetChips();
-  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">each vertical carries its own assumptions & confidence limits · drag to model, or load a preset above</div>';
+  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">each vertical carries its own assumptions & confidence limits · drag to model</div>';
   h+='<div class="eq-vert">'+VERTICALS.map(function(x){return '<div class="eq-vchip'+(x.id===eqSelVert?' on':'')+'" onclick="selectVert(\''+x.id+'\')">'+x.name+'<span class="vs">'+x.stage+' · '+x.unc+' conf</span></div>';}).join('')+'</div>';
   h+='<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px">';
   VERT_PARAMS.forEach(function(p){
@@ -1750,20 +1749,17 @@ function renderEqualizer(){
   h+='</div>';
   h+='<div class="block fadein"><h3>Cash-flow levers</h3><div class="h-sub">portfolio-wide — cash timing & liquidity · move the trough without touching the P&L</div>';
   CASHLV.forEach(function(c){h+=lever('ca-'+c.id,c.n,c.val,c.min,c.max,c.unit,"onCash('"+c.id+"',this.value)");});
-  h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn-ghost" onclick="eqReset()">Reset all</button><button class="btn-act" onclick="saveCurrentScenario()">💾 Save as template</button></div></div>';
-  // cash-flow impact matrix sits directly under its sliders
-  h+=stressMatrix('cf',CASHFLOW_SCENARIOS,'Cash-flow scenarios','Cash-flow scenario');
+  h+='<div style="margin-top:8px"><button class="btn-ghost" onclick="eqReset()">Reset all</button></div></div>';
   h+='</div>';
-  // RIGHT — live build + impact + external-shocks matrix
-  h+='<div><div id="eqBuild"></div><div id="impactWrap"></div>'
-    +'<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Lockstep</h3></div><p style="font-size:11.5px">Every lever recomputes <strong>all four statements together</strong> — revenue layers, P&L (COGS / SG&A / finance), cash flow and the balance sheet move in one pass. No version overlay, no manual download.</p></div>'
-    +stressMatrix('shock',SHOCKS,'External shocks','External shock')+'</div>';
+  // RIGHT — live impact + lockstep
+  h+='<div><div id="impactWrap"></div>'
+    +'<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div><h3>Lockstep</h3></div><p style="font-size:11.5px">Every lever recomputes <strong>all four statements together</strong> — revenue layers, P&L (COGS / SG&A / finance), cash flow and the balance sheet move in one pass. No version overlay, no manual download.</p></div></div>';
   h+='</div>';
   el('scnInner').innerHTML=h;
-  renderEqBuild();
   renderImpact();
 }
 function renderEqBuild(){
+  if(!el('eqBuild'))return;  // Revenue build card removed from the Equalizer
   var m=modelCompute();
   var pa=m.act/m.rev*100, pc=m.contract/m.rev*100, pp=m.pipe/m.rev*100;
   var h='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue build (live)</h3><div class="h-sub">Actuals + Contracted + Weighted pipeline = AED '+(m.rev/1000).toFixed(2)+'B</div>';
