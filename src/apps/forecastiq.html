@@ -760,6 +760,18 @@ var BASE_ACT=5518, BASE_CON=5634, BASE_PIPE=3048; /* layer totals */
 
 function band(v,p){return CONF_BANDS[v.unc][p];}
 function lv(id){var c=COSTLV.find(function(x){return x.id===id;});return c?c.val:0;}
+/* ── Assumptions sheet → group base case (single source of truth) ──
+   Revenue = Σ FY2026 budget · Gross Profit = Σ budget×GM% · EBITDA = Σ budget×EBITDA% */
+function assumeBase(){
+  try{
+    var v=ASSUME.verticals;
+    var rev=v.reduce(function(s,x){return s+x.b26;},0);
+    var gp=v.reduce(function(s,x){return s+x.b26*x.gm/100;},0);
+    var eb=v.reduce(function(s,x){return s+x.b26*x.em/100;},0);
+    var dev=0;v.forEach(function(x){if(/real estate/i.test(x.n))dev+=x.b26;});
+    return {rev:rev,gp:gp,eb:eb,dev:dev};
+  }catch(e){return {rev:13885,gp:5895,eb:4608,dev:11500};}
+}
 function modelCompute(){
   var pipe=0,contract=0,act=0;
   VERTICALS.forEach(function(v){
@@ -768,20 +780,38 @@ function modelCompute(){
     var cm=1-0.010*a.cancel+0.002*a.price;
     pipe+=v.pipe*Math.max(pm,0); contract+=v.contract*Math.max(cm,0); act+=v.actual;
   });
-  var rev=act+contract+pipe;
+  var projRev=act+contract+pipe;                  // project build = 14200 at neutral
+  var revMult=projRev?projRev/14200:1;            // Equalizer revenue sensitivity
+  var B=assumeBase();                             // base anchored to the Assumptions sheet
   var cc=lv('constcost'),sga=lv('sga'),lc=lv('landcost'),eb=lv('eibor');
-  var scale=rev/14200;
-  var cogsC=6780*scale*(1+cc/100), cogsL=1520*scale*(1+lc/100);
+  var rev=B.rev*revMult;
+  var ls=projRev?rev/projRev:1;                   // scale revenue layers to the assumptions base
+  act*=ls; contract*=ls; pipe*=ls;
+  var baseCogs=B.rev-B.gp;
+  var cogsC=baseCogs*0.8169*revMult*(1+cc/100), cogsL=baseCogs*0.1831*revMult*(1+lc/100);
   var gp=rev-cogsC-cogsL;
-  var sgaTot=1960*(1+sga/100);
+  var sgaTot=(B.gp-B.eb)*(1+sga/100);             // base SG&A = Gross Profit − EBITDA (from assumptions)
   var ebitda=gp-sgaTot, da=240, finance=560+eb*0.27;
   var pbt=ebitda-da-finance, np=pbt*0.91;
-  // cash-flow levers — timing & liquidity, no P&L impact
+  // cash-flow levers — timing & liquidity, no P&L impact; op cash converts off EBITDA
   var cashLeverAdj=-lvc('collect')*150+lvc('drawpace')*90+lvc('advance')*40;
-  var cash=3100+(rev-14200)*0.58-(cogsC-6780)*0.7-(finance-560)-(sgaTot-1960)*0.6+cashLeverAdj;
+  var cash=ebitda*0.68-(finance-560)+cashLeverAdj;
   var minCash=2980+(cash-3100)*1.1-lvc('collect')*150+lvc('standby')/100*3500;
   return {rev:rev,act:act,contract:contract,pipe:pipe,locked:act+contract,
     cogsC:cogsC,cogsL:cogsL,gp:gp,sga:sgaTot,ebitda:ebitda,da:da,finance:finance,pbt:pbt,np:np,cash:cash,minCash:minCash};
+}
+/* fixed reference: default assumptions + neutral levers — so deltas are 0 at
+   default and flow through when assumptions or levers change */
+var _refM=null;
+function refModel(){
+  if(_refM)return _refM;
+  try{
+    var sv=ASSUME.verticals, snap=snapState();
+    ASSUME.verticals=ASSUME_DEFAULT.verticals; restoreState(null);
+    _refM=modelCompute();
+    ASSUME.verticals=sv; restoreState(snap);
+  }catch(e){_refM={rev:13885,ebitda:4608,np:3465,cash:3133,pipe:2981,contract:5510,minCash:3016};}
+  return _refM;
 }
 
 /* ── AGENTS ── */
@@ -900,18 +930,19 @@ function srcStrip(){
 
 /* ── OVERVIEW ── */
 function renderOverview(){
+  var m=modelCompute();
   var h='<div class="kpi-row fadein">'
-    +kpi('FY26 Revenue','AED 14.2B','+16.2% vs FY25','ok','conf 91%')
-    +kpi('FY26 EBITDA','AED 3.94B','27.7% margin','ok','conf 89%')
-    +kpi('Net Profit','AED 2.86B','+17.6% vs FY25','ok','conf 88%')
-    +kpi('Operating Cash','AED 3.1B','Q3 dip to AED 2.98B','warn','conf 85%')
+    +kpi('FY26 Revenue','AED '+(m.rev/1000).toFixed(2)+'B','+'+((m.rev/12220-1)*100).toFixed(1)+'% vs FY25','ok','conf 91%')
+    +kpi('FY26 EBITDA','AED '+(m.ebitda/1000).toFixed(2)+'B',(m.ebitda/m.rev*100).toFixed(1)+'% margin','ok','conf 89%')
+    +kpi('Net Profit','AED '+(m.np/1000).toFixed(2)+'B','+'+((m.np/2430-1)*100).toFixed(1)+'% vs FY25','ok','conf 88%')
+    +kpi('Operating Cash','AED '+(m.cash/1000).toFixed(2)+'B','Q3 dip to AED '+(m.minCash/1000).toFixed(2)+'B',m.minCash<800?'risk':'warn','conf 85%')
     +kpi('Forecast Refresh','Weekly','last: 03:15 today','info','auto')
     +'</div>';
 
   h+=srcStrip();
 
   h+='<div class="acard glow fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></div><h3>Sage — CFO Forecast Commentary</h3><span class="badge">AI-GENERATED</span></div>'
-    +'<p>The FY2026 forecast consolidates <strong>6 active projects</strong> off last night\'s CRM, ERP, contracts and escrow feeds — no manual model rebuild. Group revenue projects to <strong>AED 14.2B (+16.2%)</strong>, EBITDA to <strong>AED 3.94B</strong> at a 27.7% margin, and net profit to <strong>AED 2.86B</strong>.<br><br>'
+    +'<p>The FY2026 forecast consolidates <strong>6 active projects</strong> off last night\'s CRM, ERP, contracts and escrow feeds — no manual model rebuild. Group revenue projects to <strong>AED '+(m.rev/1000).toFixed(2)+'B (+'+((m.rev/12220-1)*100).toFixed(1)+'%)</strong>, EBITDA to <strong>AED '+(m.ebitda/1000).toFixed(2)+'B</strong> at a '+(m.ebitda/m.rev*100).toFixed(1)+'% margin, and net profit to <strong>AED '+(m.np/1000).toFixed(2)+'B</strong>.<br><br>'
     +'<strong>Two items need CFO attention.</strong> First, <strong>Safa Two collections are tracking 12% behind</strong> the installment plan — a cluster of international (GBP/INR) buyers are late on the structure milestone, driving a Q3 cash dip to AED 2.98B. Second, the <strong>USD construction facility reprices in Q3</strong>, adding ~AED 40M finance cost if EIBOR holds.<br><br>'
     +'Forward cover is strong: contract liabilities (buyer advances) stand at <strong>AED 24.1B</strong>, and DAMAC Islands has absorbed the launch faster than planned. The base case carries an 89% model confidence; run the Stress scenario to size the downside.</p></div>';
 
@@ -1076,9 +1107,10 @@ var REVCOLS=[
 ];
 function setRevDim(d){REV_DIM=d;renderRevenue();}
 function toggleCol(id){var c=REVCOLS.find(function(x){return x.id===id;});if(c.lock)return;c.on=!c.on;renderRevenue();}
-/* Revenue Budget (AOP) baseline scales with the FY2026 budget set on the
-   Assumptions tab (ratio vs the default budget) — single source of truth */
-function budgetK(){try{var d=ASSUME_DEFAULT.verticals.reduce(function(s,v){return s+v.b26;},0),a=ASSUME.verticals.reduce(function(s,v){return s+v.b26;},0);return d?a/d:1;}catch(e){return 1;}}
+/* Revenue Budget (AOP) = the FY2026 budget set on the Assumptions tab; per-row
+   REV_DATA budgets are scaled so they sum to that total (single source of truth) */
+var ORIG_BUDGET=REV_DATA.reduce(function(s,r){return s+r.budget;},0);
+function budgetK(){try{return ORIG_BUDGET?assumeBase().rev/ORIG_BUDGET:1;}catch(e){return 1;}}
 function aggRev(dim){
   var bk=budgetK(),m={};
   REV_DATA.forEach(function(r){var k=r[dim];if(!m[k])m[k]={budget:0,prior:0,locked:0,current:0,actual:0};
@@ -1199,9 +1231,10 @@ function aRow(k,v,tone){return '<div style="display:flex;justify-content:space-b
 function sgn(v,u){return (v>0?'+':'')+v+(u||'');}
 function renderPNL(){
   var mFY=modelCompute();var m=fcScale(mFY);
+  var aB=assumeBase(),devSh=aB.rev?aB.dev/aB.rev:0.83;
   var sgaF=m.sga/1960;
   var live={
-    'Revenue — Development':m.rev*(13050/14200),'Revenue — Rental & Hospitality':m.rev*(1150/14200),'Total Revenue':m.rev,
+    'Revenue — Development':m.rev*devSh,'Revenue — Rental & Hospitality':m.rev*(1-devSh),'Total Revenue':m.rev,
     'Cost of Sales — Construction':-m.cogsC,'Cost of Sales — Land amortisation':-m.cogsL,'Gross Profit':m.gp,
     'Selling & Marketing':-1150*sgaF,'G&A / Overheads':-810*sgaF,'EBITDA':m.ebitda,
     'Depreciation & Amortisation':-m.da,'Net Finance Cost':-m.finance,'Profit Before Tax':m.pbt,
@@ -1345,8 +1378,9 @@ function renderBS(){
   var m=modelCompute();
   var cum=fcCum();
   function ip(a25,v){return a25+(v-a25)*cum;}  // point-in-time interpolation to period end
-  var dCash=Math.round(m.cash-3100), dNP=Math.round(m.np-2857);
-  var dContract=Math.round((m.pipe-3048)*0.5+(m.contract-5634)*0.3);
+  var B0=refModel();
+  var dCash=Math.round(m.cash-B0.cash), dNP=Math.round(m.np-B0.np);
+  var dContract=Math.round((m.pipe-B0.pipe)*0.5+(m.contract-B0.contract)*0.3);
   var ov={'Cash & Equivalents (free)':4200+dCash,'Total Equity':22060+dNP,'Contract Liabilities (advances from buyers)':24100+dContract};
   var f26map={};
   BS.forEach(function(r){if(r.grp==='asset-total'||r.grp==='liab-total')return;var v=ov[r.line]!==undefined?ov[r.line]:r.f26;f26map[r.line]=ip(r.a25,v);});
@@ -1745,7 +1779,7 @@ function scnMetrics(){
   var ci=computeImpact();
   var c={rev:Math.round(ci.rev),ebitda:Math.round(ci.ebitda),np:Math.round(ci.np),cash:Math.round(ci.cash),minCash:Math.round(ci.minCash)};
   c.margin=c.ebitda/c.rev*100;
-  return {base:m(SCENARIOS.base),stress:m(SCENARIOS.stress),upside:m(SCENARIOS.upside),custom:c};
+  return {base:m(refModel()),stress:m(SCENARIOS.stress),upside:m(SCENARIOS.upside),custom:c};
 }
 var baselineSnap=null;
 function saveBaseline(){var M=scnMetrics();baselineSnap=Object.assign({},M.custom);baselineSnap.label='Baseline';showToast('Baseline saved — Live now compares against it');emit('REPORT','Baseline snapshot saved for version comparison','ok');renderScnCompare();}
@@ -1820,7 +1854,7 @@ function onDriver(id,v){
 function resetDrivers(){DRIVERS.forEach(function(d){d.val=0;});activeScenario='base';renderScenarios();}
 function computeImpact(){
   var m=modelCompute();
-  m.revDelta=m.rev-14200; m.cashDelta=m.cash-3100;
+  var B0=refModel();m.revDelta=m.rev-B0.rev; m.cashDelta=m.cash-B0.cash;
   return m;
 }
 /* portfolio-weighted live value of a conceptual driver (for the compare table) */
@@ -1833,7 +1867,7 @@ function liveDriver(id){
   return den?Math.round(num/den):0;
 }
 function renderImpact(){
-  var r=computeImpact();
+  var r=computeImpact(),B0=refModel();
   function row(lbl,val,base,unit){
     var d=val-base; var up=d>=0;
     return '<div class="impact-row"><span class="il">'+lbl+'</span><span><span class="iv">'+bn(Math.round(val))+'</span>'
@@ -1842,10 +1876,10 @@ function renderImpact(){
   var trough=r.minCash;
   var troughTone=trough<800?'risk':trough<1800?'warn':'ok';
   var h='<div class="impact-card fadein"><div class="acard-head" style="margin-bottom:4px"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/></svg></div><h3>Live Impact vs Base Case</h3></div>'
-    +row('FY26 Revenue',r.rev,14200)
-    +row('EBITDA',r.ebitda,3940)
-    +row('Net Profit',r.np,2857)
-    +row('Operating Cash',r.cash,3100)
+    +row('FY26 Revenue',r.rev,B0.rev)
+    +row('EBITDA',r.ebitda,B0.ebitda)
+    +row('Net Profit',r.np,B0.np)
+    +row('Operating Cash',r.cash,B0.cash)
     +'<div class="impact-row"><span class="il">Q3 cash trough</span><span><span class="iv" style="color:var(--'+troughTone+')">'+bn(Math.round(Math.max(trough,-500)))+'</span></span></div>'
     +'</div>';
   h+='<div class="acard fadein" style="margin-bottom:0"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage reads this scenario</h3></div>'
