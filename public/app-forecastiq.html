@@ -696,7 +696,7 @@ var activeScenario='base';
 
 /* ══════════════════════════════════════════════════════════════════
    SHARED FORECAST ENGINE — one assumption model drives all 4 statements
-   Revenue = Actuals-to-date + Logged-in (contracted) + Weighted pipeline
+   Revenue = Actuals-to-date + Locked-in (contracted) + Weighted pipeline
    ══════════════════════════════════════════════════════════════════ */
 /* Confidence bands by uncertainty tier — slider min/max = P10/P90 limits */
 var CONF_BANDS={
@@ -1101,7 +1101,7 @@ function renderRevenue(){
   h+='<div class="layer-card fadein">'
     +'<div class="layer l-actual"><div class="lt">Actuals to date (Jan–Jun)</div><div class="lv">AED '+(m.act/1000).toFixed(2)+'B</div><div class="lp">'+Math.round(m.act/m.rev*100)+'% · recognised, banked</div></div>'
     +'<div class="layer l-eq">+</div>'
-    +'<div class="layer l-contract"><div class="lt">Logged-in (contracted) Jun→Dec</div><div class="lv">AED '+(m.contract/1000).toFixed(2)+'B</div><div class="lp">'+Math.round(m.contract/m.rev*100)+'% · signed SPAs, net of cancel</div></div>'
+    +'<div class="layer l-contract"><div class="lt">Locked-in (contracted) Jun→Dec</div><div class="lv">AED '+(m.contract/1000).toFixed(2)+'B</div><div class="lp">'+Math.round(m.contract/m.rev*100)+'% · signed SPAs, net of cancel</div></div>'
     +'<div class="layer l-eq">+</div>'
     +'<div class="layer l-pipe"><div class="lt">Weighted sales estimate Jun→Dec</div><div class="lv">AED '+(m.pipe/1000).toFixed(2)+'B</div><div class="lp">'+Math.round(m.pipe/m.rev*100)+'% · probability-weighted</div></div>'
     +'<div class="layer l-eq">=</div>'
@@ -1123,7 +1123,7 @@ function renderRevenue(){
       +'<div class="bar-stack" style="width:74%;gap:0">'+seg('l-pipe',s.p)+seg('l-contract',s.c)+seg('l-actual',s.a)+'</div>'
       +'<div class="bar-lbl"'+(s.fwd?' style="color:var(--orange-soft)"':'')+'>'+s.m+'</div></div>';
   }).join('')+'</div>';
-  h+='<div class="legend"><span><i style="background:#5b6470"></i>Actuals (banked)</span><span><i style="background:var(--ok)"></i>Logged-in / contracted</span><span><i style="background:var(--orange)"></i>Weighted pipeline</span></div></div>';
+  h+='<div class="legend"><span><i style="background:#5b6470"></i>Actuals (banked)</span><span><i style="background:var(--ok)"></i>Locked-in / contracted</span><span><i style="background:var(--orange)"></i>Weighted pipeline</span></div></div>';
 
   // ── Budget → Prior → Current movement bridge + narrative ──
   var trio=[['Budget (AOP)',vt.budget,'budget'],['Prior Forecast',vt.prior,'prior'],['Current Forecast',cur,'current']];
@@ -2059,7 +2059,7 @@ function fiqSysPrompt(){
   }).join('\n');
   return "You are Sage, the CFO forecasting copilot embedded in DAMAC Group's ForecastIQ (by Tiger Analytics). Senior FP&A / CFO-advisor voice — precise, decisive, grounded ONLY in the live forecast data below. Never invent figures.\n\n"
     +"FY2026 GROUP FORECAST (live, AED M):\n"
-    +"- Revenue "+Math.round(m.rev)+" = Actuals-to-date "+Math.round(m.act)+" + Logged-in/contracted "+Math.round(m.contract)+" + probability-weighted pipeline "+Math.round(m.pipe)+" ("+Math.round(m.locked/m.rev*100)+"% locked-in)\n"
+    +"- Revenue "+Math.round(m.rev)+" = Actuals-to-date "+Math.round(m.act)+" + Locked-in/contracted "+Math.round(m.contract)+" + probability-weighted pipeline "+Math.round(m.pipe)+" ("+Math.round(m.locked/m.rev*100)+"% locked-in)\n"
     +"- Gross profit "+Math.round(m.gp)+" ("+(m.gp/m.rev*100).toFixed(1)+"%), EBITDA "+Math.round(m.ebitda)+" ("+(m.ebitda/m.rev*100).toFixed(1)+"%), Net profit "+Math.round(m.np)+"\n"
     +"- Operating cash "+Math.round(m.cash)+", Q3 trough "+Math.round(m.minCash)+" vs AED 800M comfort floor; net finance cost "+Math.round(m.finance)+"\n"
     +"REVENUE VERSIONS: Budget(AOP) "+vt.budget+" -> Prior forecast "+vt.prior+" -> Current "+Math.round(m.rev)+" (cut in Q1 on Safa Two & Couture, recovered on Islands/Lagoons velocity)\n"
@@ -2141,7 +2141,7 @@ function sageAnswer(q){
   if(/locked|contracted|coverage|de-risk|how much revenue/.test(q)) return '<strong>77% of the FY26 forecast is locked-in</strong> — AED 10.9B of contracted SPAs net of expected cancellation, out of AED 14.2B. Coverage varies by stage: near-handover projects like Riverside and Safa Two\'s structure tranche are 94%+ secured, while early launches like Couture sit near 52%. Open the <strong>Revenue</strong> tab and cut by Stage to see the gradient — toggle the Coverage % column on.';
   if(/budget|aop|vs plan|prior forecast|version/.test(q)) return 'Against the AOP <strong>budget</strong>, the current forecast is broadly on plan in aggregate but with offsetting moves: Lagoons and Islands run ahead on velocity, while <strong>Safa Two is ~8% behind</strong> on international-buyer timing. The Revenue tab shows Budget vs Prior Forecast vs Locked-in vs Current with Δ columns — cut by project to see the swing, or by region to isolate the GBP/INR cohort.';
   if(/compare|side.by.side|side by side|stress vs|all scenario|pessimist|optimist/.test(q)) return 'Open <strong>Scenarios → Side-by-Side Compare</strong>. It puts Pessimistic, Base, Optimistic and your live mix in adjacent columns across revenue, EBITDA, margin, net profit, operating cash and the Q3 trough — each with a delta vs base, the driver assumptions, and a trough chart against the AED 800M floor. You can <strong>save a baseline</strong> to lock a reference and compare every change against it.';
-  if(/build|layer|made up|composition|actuals.*contract|three layer/.test(q)) return 'FY26 revenue builds in three layers: <strong>Actuals to date</strong> (AED 5.5B, banked Jan–Jun), <strong>Logged-in / contracted</strong> Jun→Dec (signed SPAs net of cancellation), and a <strong>probability-weighted sales estimate</strong> Jun→Dec for unsold inventory. The first two — ~78% — are de-risked; only the weighted pipeline carries sales risk, and that\'s the layer the Equalizer flexes. The Revenue tab shows the month-by-month stack.';
+  if(/build|layer|made up|composition|actuals.*contract|three layer/.test(q)) return 'FY26 revenue builds in three layers: <strong>Actuals to date</strong> (AED 5.5B, banked Jan–Jun), <strong>Locked-in / contracted</strong> Jun→Dec (signed SPAs net of cancellation), and a <strong>probability-weighted sales estimate</strong> Jun→Dec for unsold inventory. The first two — ~78% — are de-risked; only the weighted pipeline carries sales risk, and that\'s the layer the Equalizer flexes. The Revenue tab shows the month-by-month stack.';
   if(/changed|moved|movement|start.*year|budget to/.test(q)) return 'We <strong>started the year at the AED 14.15B budget</strong>. The Q1 reforecast trimmed it as Safa Two\'s international buyers slipped and Couture ran behind, then the current forecast <strong>recovered to AED 14.2B</strong> as Islands and Lagoons velocity beat plan. The Revenue landing page shows the Budget → Prior → Current bridge with the narrative; the variance grid below cuts it by project.';
   if(/fixed|outflow|bite|slow.*cash|contractor.*continue/.test(q)) return 'That\'s the off-plan asymmetry: <strong>~AED 1.11B/month of outflows are committed</strong> — contractors keep drawing on IPCs and debt keeps accruing — while only collections flex with sales velocity. So a demand dip doesn\'t just trim revenue, it opens a cash gap. The Cash tab charts fixed vs sales-driven flows; drop velocity on the Equalizer and watch the Q3 trough fall toward the AED 800M floor.';
   if(/equalizer|lever|slider|assumption/.test(q)) return 'The <strong>Equalizer</strong> (Scenarios → Equalizer) carries per-vertical revenue levers — velocity, price, conversion, cancellation, collection speed — each bounded by that vertical\'s P10–P90 confidence band, plus portfolio cost levers (construction, SG&A, land, EIBOR). Every move recomputes all four statements in lockstep. No certified builder, no version overlay.';
