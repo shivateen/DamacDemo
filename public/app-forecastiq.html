@@ -811,7 +811,7 @@ var VIEW_SEQ={
   bs:[['MODEL','Rolling WIP, contract assets/liabilities & escrow','orange'],['COMMENTARY','Contract liabilities AED 24.1B — strong forward cover','ok']],
   lrp:[['INGEST','Loading FY25 actuals + 3-year project delivery schedule','orange'],['DRIVERS','Extending velocity, price & milestone curves to FY28','orange'],['MODEL','Projecting P&L, cash & equity across FY26 → FY28','orange'],['COMMENTARY','Revenue CAGR ~17% · EBITDA margin expanding to 29.5%','ok'],['REPORT','3-year board plan ready — net profit to AED 4.33B','ok']],
   scn:[['DRIVERS','Driver sensitivities calibrated from 5-year history','orange'],['SCENARIO','3 scenarios staged — adjust drivers to recompute live','ok']],
-  agents:[['INGEST','Standing by — next auto-refresh 02:00, nightly','ok'],['MODEL','Last run model confidence: 91.4%','ok']]
+  agents:[['INGEST','Standing by — next auto-refresh 02:00, weekly','ok'],['MODEL','Last run model confidence: 91.4%','ok']]
 };
 
 function go(view){
@@ -856,7 +856,7 @@ function renderOverview(){
     +kpi('FY26 EBITDA','AED 3.94B','27.7% margin','ok','conf 89%')
     +kpi('Net Profit','AED 2.86B','+17.6% vs FY25','ok','conf 88%')
     +kpi('Operating Cash','AED 3.1B','Q3 dip to AED 2.98B','warn','conf 85%')
-    +kpi('Forecast Refresh','Nightly','last: 03:15 today','info','auto')
+    +kpi('Forecast Refresh','Weekly','last: 03:15 today','info','auto')
     +'</div>';
 
   h+=srcStrip();
@@ -884,7 +884,7 @@ function renderOverview(){
   h+='<div class="grid-2">'
     +'<div class="block fadein"><h3>Anaplan today vs ForecastIQ</h3><div class="h-sub">why this replaces the point-solution pain</div>'
     + cmpRow('Model change needs certified builder','Self-serve — adjust drivers live')
-    + cmpRow('Batch/manual data loads','Automated nightly CRM + ERP ingestion')
+    + cmpRow('Batch/manual data loads','Automated weekly CRM + ERP ingestion')
     + cmpRow('Black-box variances','AI variance narrative + drill-down')
     + cmpRow('No natural-language access','Ask Sage any number or what-if')
     + cmpRow('Generic templates','RERA escrow & IFRS 15 tuned for Damac')
@@ -1720,8 +1720,8 @@ function scenarioNarrative(r,trough){
 
 /* ── AGENTS VIEW ── */
 function renderAgents(){
-  var h='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg></div><h3>Autonomous Forecast Pipeline</h3><span class="badge">nightly · 02:00</span></div>'
-    +'<p>Six agents run unattended every night, turning raw enterprise data into a board-ready forecast — no analyst rebuild. INGEST pulls the source systems, DRIVERS detects what moved, MODEL projects all three statements, SCENARIO pre-computes stress and upside, COMMENTARY writes the variance narrative, and REPORT assembles the CFO pack.</p></div>';
+  var h='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg></div><h3>Autonomous Forecast Pipeline</h3><span class="badge">weekly · 02:00</span></div>'
+    +'<p>Six agents run unattended every week, turning raw enterprise data into a board-ready forecast — no analyst rebuild. INGEST pulls the source systems, DRIVERS detects what moved, MODEL projects all three statements, SCENARIO pre-computes stress and upside, COMMENTARY writes the variance narrative, and REPORT assembles the CFO pack.</p></div>';
   h+='<div class="tbl-wrap fadein"><table><thead><tr><th>Agent</th><th>Role</th><th>Last run</th><th>Output</th><th>Status</th></tr></thead><tbody>';
   var rows=[
     ['INGEST','Data Ingestion','03:15','6 sources · 412 entities',pill('✓ Synced','ok')],
@@ -1955,7 +1955,7 @@ function startTicker(){
 
 /* ── BOOT ── */
 renderMesh();
-emit('INGEST','ForecastIQ online — nightly feeds synced 03:15','ok');
+emit('INGEST','ForecastIQ online — weekly feeds synced 03:15','ok');
 emit('DRIVERS','14 drivers calibrated from 5-year history','ok');
 emit('MODEL','FY26 base forecast loaded — 91.4% confidence','ok');
 go('revenue');
