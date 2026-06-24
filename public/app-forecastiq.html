@@ -198,6 +198,22 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 .bar.np-bar{background:linear-gradient(180deg,var(--ok),rgba(46,168,109,.45))}
 .bar-lbl{font-size:8.5px;color:var(--ink-3);font-family:var(--mono);white-space:nowrap}
 .bar-val{font-size:8.5px;color:var(--ink-2);font-family:var(--mono);font-weight:600}
+/* cash-flow chart: bars + cumulative trend line + hover narrative */
+.cf-chart{position:relative}
+.cf-plot{position:relative;display:flex;align-items:flex-end;gap:5px;height:160px;padding-top:14px}
+.cf-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;cursor:pointer}
+.cf-col:hover{background:rgba(127,127,127,.06);border-radius:5px}
+.cf-bars{width:100%;display:flex;flex-direction:row;gap:2px;align-items:flex-end;justify-content:center;height:100%}
+.cf-bar{width:46%;border-radius:3px 3px 0 0;min-height:2px;transition:height .6s cubic-bezier(.4,0,.2,1)}
+.cf-bar.in{background:linear-gradient(180deg,var(--ok),rgba(46,168,109,.5))}
+.cf-bar.out{background:linear-gradient(180deg,var(--risk),rgba(224,82,82,.5))}
+.cf-trend{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cf-labels{display:flex;gap:5px;margin-top:5px}
+.cf-labels span{flex:1;text-align:center;font-size:8.5px;color:var(--ink-3);font-family:var(--mono)}
+.cf-tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);width:210px;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;box-shadow:0 10px 28px rgba(0,0,0,.22);font-size:11px;line-height:1.45;color:var(--ink);opacity:0;visibility:hidden;transition:opacity .12s;z-index:30;pointer-events:none}
+.cf-col:hover .cf-tip{opacity:1;visibility:visible}
+.cf-tip .tt-h{font-weight:700;font-size:11.5px;margin-bottom:3px}
+.cf-tip .tt-net{font-family:var(--mono);font-weight:600;font-size:10.5px;color:var(--orange-soft)}
 .legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
 .legend span{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-3)}
 .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -1270,18 +1286,34 @@ function renderCash(){
   });
   h+='<div style="font-size:10.5px;color:var(--ink-3);margin-top:10px;line-height:1.5"><strong style="color:var(--risk)">AED ~1.11B/mo of outflows are committed</strong> — contractors keep building and debt keeps accruing regardless of sales. Only the green inflow line flexes with velocity. That asymmetry is what turns a demand dip into a liquidity event; model it on the Equalizer and watch this trough against the AED 800M floor.</div></div>';
 
-  // inflow/outflow chart
-  h+='<div class="block fadein"><h3>Monthly Cash — Inflow vs Outflow</h3><div class="h-sub">collections (green) vs construction & opex outflow (red) · AED M</div>';
+  // inflow/outflow chart with cumulative-cash trend line + hover narrative
+  function cashNarr(s,isT){
+    var head=s.m+' — '+(s.net>=0?'net inflow':'net outflow');
+    var body=isT?'Q3 liquidity trough. Safa Two\'s international (GBP/INR) collections lag while contractor drawdowns and the USD facility reprice land together — the buffer holds above the AED 800M floor.'
+      :(s.net<0?'Construction drawdowns (AED '+Math.abs(s.out)+'M) outpace collections (AED '+s.in+'M); the cash buffer draws down this month.'
+                :'Collections (AED '+s.in+'M) cover construction + debt service (AED '+Math.abs(s.out)+'M); the buffer rebuilds.');
+    return '<div class="tt-h"'+(isT?' style="color:var(--warn)"':'')+'>'+head+(isT?' · trough':'')+'</div>'
+      +'<div class="tt-net">net '+(s.net>=0?'+':'−')+'AED '+Math.abs(s.net)+'M · cumulative AED '+(s.cum/1000).toFixed(2)+'B</div>'
+      +'<div style="margin-top:4px;color:var(--ink-2)">'+body+'</div>';
+  }
+  h+='<div class="block fadein"><h3>Monthly Cash — Inflow vs Outflow</h3><div class="h-sub">collections (green) vs construction & opex outflow (red) · AED M · <span style="color:var(--orange-soft)">orange line = cumulative cash balance</span> · hover a month for the story</div>';
   var mx=2000;
-  h+='<div class="chart">'+series.map(function(s){
-    var inH=s.in/mx*100, outH=Math.abs(s.out)/mx*100;
-    return '<div class="bar-col" title="'+s.m+': net '+(s.net>=0?'+':'')+s.net+'M, cum '+(s.cum/1000).toFixed(2)+'B">'
-      +'<div class="bar-stack" style="flex-direction:row;gap:2px;align-items:flex-end">'
-      +'<div class="bar inflow" style="height:'+inH+'%;width:46%"></div>'
-      +'<div class="bar outflow" style="height:'+outH+'%;width:46%"></div>'
-      +'</div><div class="bar-lbl">'+s.m.replace('26','').replace('27','')+'</div></div>';
-  }).join('')+'</div>';
-  h+='<div class="legend"><span><i style="background:var(--ok)"></i>Collections in</span><span><i style="background:var(--risk)"></i>Construction + opex out</span></div></div>';
+  var cmin=Math.min.apply(null,series.map(function(s){return s.cum;}));
+  var cmax=Math.max.apply(null,series.map(function(s){return s.cum;}));
+  var crange=(cmax-cmin)||1, N=series.length;
+  function trendY(c){return (94-((c-cmin)/crange)*88).toFixed(2);}  // 6 (top) .. 94 (bottom)
+  var pts=series.map(function(s,i){return (((i+0.5)/N)*100).toFixed(2)+','+trendY(s.cum);}).join(' ');
+  h+='<div class="cf-chart"><div class="cf-plot">';
+  h+=series.map(function(s){
+    var inH=s.in/mx*100, outH=Math.abs(s.out)/mx*100, isT=(s.m===minM);
+    return '<div class="cf-col">'
+      +'<div class="cf-tip">'+cashNarr(s,isT)+'</div>'
+      +'<div class="cf-bars"><div class="cf-bar in" style="height:'+inH+'%"></div><div class="cf-bar out" style="height:'+outH+'%"></div></div>'
+      +'</div>';
+  }).join('');
+  h+='<svg class="cf-trend" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="'+pts+'" fill="none" stroke="var(--orange)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+  h+='</div><div class="cf-labels">'+series.map(function(s){return '<span>'+s.m.replace('26','').replace('27','')+'</span>';}).join('')+'</div></div>';
+  h+='<div class="legend"><span><i style="background:var(--ok)"></i>Collections in</span><span><i style="background:var(--risk)"></i>Construction + opex out</span><span><i style="background:var(--orange)"></i>Cumulative cash</span></div></div>';
 
   // cash split + runway
   h+='<div class="grid-2">';
