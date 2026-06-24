@@ -1595,7 +1595,21 @@ function applyBundle(dv){
 function simBundle(dv){var snap=snapState();applyBundle(dv);var m=modelCompute();restoreState(snap);return m;}
 
 /* ── saved scenarios + global active selection ── */
-var SCN_SAVED=[];        /* [{id,name,state}] user-saved templates */
+/* build a full saved-scenario state from a flat lever bundle (band-clamped per
+   vertical), without disturbing live state — used to pre-seed demo scenarios */
+function bundleToState(dv){
+  return {
+    verts:VERTICALS.map(function(v){var o={};VERT_PARAMS.forEach(function(p){var raw=dv[p.id]!=null?dv[p.id]:0,b=band(v,p.id);o[p.id]=Math.max(b[0],Math.min(b[1],raw));});return o;}),
+    cost:COSTLV.reduce(function(o,c){var raw=dv[c.id]!=null?dv[c.id]:0;o[c.id]=Math.max(c.min,Math.min(c.max,raw));return o;},{}),
+    cash:CASHLV.reduce(function(o,c){var raw=dv[c.id]!=null?dv[c.id]:0;o[c.id]=Math.max(c.min,Math.min(c.max,raw));return o;},{})
+  };
+}
+/* three pre-built demo scenarios (distinct P&L / Cash / Balance-Sheet outcomes) */
+var SCN_SAVED=[
+  {id:'demo-up',  name:'Upside — Accelerated Demand', state:bundleToState({velocity:15,price:6,prob:6,constcost:-3,sga:-2,eibor:-25,collect:-2,advance:8})},
+  {id:'demo-down',name:'Downside — Demand Shock',     state:bundleToState({velocity:-25,price:-8,prob:-8,cancel:6,constcost:8,eibor:150,collect:2})},
+  {id:'demo-liq', name:'Liquidity Stress — Cash Squeeze', state:bundleToState({velocity:-5,price:-2,cancel:3,constcost:6,eibor:120,collect:3,drawpace:-2,advance:-8,standby:60})}
+];
 var activeSavedId=null;  /* selected saved scenario id, null = Base case */
 var scnEnabled=true;     /* master Active / Inactive toggle */
 var _scnSeq=1;
