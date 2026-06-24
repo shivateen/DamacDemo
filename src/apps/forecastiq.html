@@ -90,6 +90,17 @@ input,textarea{font-family:var(--font);background:none;border:none;outline:none;
 .scn-saved-chip .x:hover{color:var(--risk)}
 .scn-save-inp{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12.5px;padding:7px 11px;font-family:inherit;min-width:180px}
 .scn-save-inp:focus{outline:none;border-color:var(--orange-dim)}
+/* external news feed (overview) */
+.news-live{font-size:10px;font-family:var(--mono);color:var(--orange-soft);display:flex;align-items:center;gap:5px}
+.news-load{font-size:11.5px;color:var(--ink-3);padding:10px 2px}
+.news-link{text-decoration:none;color:inherit;display:block}
+.news-item{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.news-link:last-child .news-item,.news-item:last-child{border-bottom:none}
+.news-link:hover .news-title{color:var(--orange-soft)}
+.news-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);margin-top:5px;flex:none}
+.news-title{font-size:11.5px;color:var(--ink);font-weight:500;line-height:1.4}
+.news-meta{font-size:10px;color:var(--ink-3);font-family:var(--mono);margin-top:2px}
+.news-foot{font-size:9.5px;color:var(--ink-3);font-family:var(--mono);margin-top:8px}
 .reforecast-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:10px;padding:11px 14px;margin-bottom:12px}
 .reforecast-banner .rf-k{font-size:10px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
 .reforecast-banner .rf-v{font-size:14px;font-weight:600;color:var(--ink)}
@@ -882,12 +893,8 @@ function renderOverview(){
   h+='</tbody></table></div>';
 
   h+='<div class="grid-2">'
-    +'<div class="block fadein"><h3>Anaplan today vs ForecastIQ</h3><div class="h-sub">why this replaces the point-solution pain</div>'
-    + cmpRow('Model change needs certified builder','Self-serve — adjust drivers live')
-    + cmpRow('Batch/manual data loads','Automated weekly CRM + ERP ingestion')
-    + cmpRow('Black-box variances','AI variance narrative + drill-down')
-    + cmpRow('No natural-language access','Ask Sage any number or what-if')
-    + cmpRow('Generic templates','RERA escrow & IFRS 15 tuned for Damac')
+    +'<div class="block fadein"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Market &amp; news feed</h3><span class="news-live"><span class="live-dot" style="background:var(--orange)"></span>live</span></div><div class="h-sub">DAMAC &amp; Dubai real-estate headlines · auto-refreshed</div>'
+    +'<div id="newsFeed"><div class="news-load">Loading latest headlines…</div></div>'
     +'</div>'
     +'<div class="block fadein"><h3>Forecast confidence by statement</h3><div class="h-sub">model back-test vs last 8 quarters actuals</div>'
     + confRow('P&L — Revenue',91)
@@ -914,8 +921,67 @@ function renderOverview(){
   h+='<button class="btn-ghost" style="width:100%;margin-top:10px" onclick="go(\'lrp\')">Open the 3-Year Plan →</button></div>';
 
   el('content').innerHTML=h;
+  loadNewsFeed();
 }
-function cmpRow(a,b){return '<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:1;font-size:11.5px;color:var(--ink-3);text-decoration:line-through;opacity:.7">'+a+'</span><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:var(--orange);fill:none;stroke-width:2;flex-shrink:0"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span style="flex:1;font-size:11.5px;color:var(--ink);font-weight:500">'+b+'</span></div>';}
+/* ── EXTERNAL NEWS FEED — live DAMAC / Dubai real-estate headlines ──
+   Pulls a Google News RSS search via a CORS-friendly JSON proxy and falls back
+   to curated headlines if the live feed is unavailable (offline / rate-limited). */
+var NEWS_FALLBACK=[
+  {t:'DAMAC Properties posts record off-plan sales as Dubai demand holds firm',s:'Gulf News',a:'2h'},
+  {t:'Dubai residential prices rise again; villa segment leads the gains',s:'Arabian Business',a:'5h'},
+  {t:'UAE central bank holds rate as EIBOR steadies — developers watch financing costs',s:'Reuters',a:'8h'},
+  {t:'DAMAC Islands absorbs launch faster than planned, broker note says',s:'Khaleej Times',a:'1d'},
+  {t:'RERA tightens escrow reporting for off-plan projects in Dubai',s:'The National',a:'1d'}
+];
+function newsTimeAgo(s){try{var t=new Date(s).getTime();if(isNaN(t))return '';var d=(Date.now()-t)/1000;if(d<3600)return Math.max(1,Math.round(d/60))+'m';if(d<86400)return Math.round(d/3600)+'h';return Math.round(d/86400)+'d';}catch(e){return '';}}
+function newsItem(t,src,when,link){
+  var inner='<div class="news-item"><span class="news-dot"></span><div class="news-body"><div class="news-title">'+t+'</div><div class="news-meta">'+src+(when?' · '+when:'')+'</div></div></div>';
+  return link?'<a class="news-link" href="'+link+'" target="_blank" rel="noopener">'+inner+'</a>':inner;
+}
+function newsFallback(note){
+  var fc=el('newsFeed');if(!fc)return;
+  fc.innerHTML=NEWS_FALLBACK.map(function(n){return newsItem(n.t,n.s,n.a,null);}).join('')+'<div class="news-foot">'+(note||'curated headlines')+'</div>';
+}
+/* CORS proxies tried in order (Google News RSS has no CORS headers of its own) */
+var NEWS_PROXIES=[
+  function(u){return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u);},
+  function(u){return 'https://corsproxy.io/?url='+encodeURIComponent(u);},
+  function(u){return 'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u);}
+];
+function parseRSSItems(xml){
+  try{
+    var doc=new DOMParser().parseFromString(xml,'text/xml');
+    return [].slice.call(doc.getElementsByTagName('item')).slice(0,6).map(function(it){
+      function g(tag){var n=it.getElementsByTagName(tag)[0];return n?n.textContent:'';}
+      return {title:g('title'),link:g('link'),pubDate:g('pubDate'),source:g('source')};
+    });
+  }catch(e){return [];}
+}
+function renderNewsItems(items){
+  var fc=el('newsFeed');if(!fc)return;
+  fc.innerHTML=items.slice(0,6).map(function(it){
+    var t=it.title||'',src=it.source||'News';
+    if(!it.source){var m=t.match(/^(.+?)\s+-\s+([^-]+)$/);if(m){t=m[1];src=m[2];}}
+    return newsItem(t,src,newsTimeAgo(it.pubDate),it.link);
+  }).join('')+'<div class="news-foot">live · Google News · DAMAC / Dubai real estate</div>';
+}
+function loadNewsFeed(){
+  var fc=el('newsFeed');if(!fc)return;
+  if(!window._newsTimer){window._newsTimer=setInterval(function(){if(el('newsFeed'))loadNewsFeed();},180000);}
+  var rss='https://news.google.com/rss/search?q='+encodeURIComponent('DAMAC Properties OR "Dubai real estate"')+'&hl=en-US&gl=US&ceid=US:en';
+  var i=0,settled=false;
+  var to=setTimeout(function(){if(!settled){settled=true;newsFallback('live feed slow — curated headlines');}},9000);
+  (function tryNext(){
+    if(settled)return;
+    if(i>=NEWS_PROXIES.length){settled=true;clearTimeout(to);newsFallback('live feed unavailable — curated headlines');return;}
+    fetch(NEWS_PROXIES[i++](rss)).then(function(r){if(!r.ok)throw 0;return r.text();}).then(function(txt){
+      if(settled)return;
+      var items=parseRSSItems(txt);
+      if(items.length){settled=true;clearTimeout(to);if(el('newsFeed'))renderNewsItems(items);}
+      else tryNext();
+    }).catch(function(){tryNext();});
+  })();
+}
 function confRow(lbl,pct){
   var tone=pct>=90?'var(--ok)':pct>=86?'var(--orange)':'var(--warn)';
   return '<div class="runway-row"><span class="rn">'+lbl+'</span><div class="runway-track"><div class="runway-fill" style="width:'+pct+'%;background:'+tone+'"></div></div><span class="rv">'+pct+'% conf</span></div>';
