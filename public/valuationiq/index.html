@@ -408,6 +408,18 @@
             </div>
           </sc-if>
 
+          <!-- debate-the-assessment chip row (scripted demo) -->
+          <sc-if value="{{ showDebate }}" hint-placeholder-val="">
+            <div style="background:#fff;border:1px solid #e3ded2;border-radius:8px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#8a6a1f;white-space:nowrap;">Debate the assessment</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <sc-for list="{{ debateChips }}" as="d" hint-placeholder-count="4">
+                  <button onClick="{{ d.go }}" style="background:rgba(176,141,63,.08);border:1px solid #e8d4a0;color:#101d33;border-radius:999px;padding:6px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">{{ d.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
           <!-- AI Analyst Activity (collapsible) -->
           <div style="background:#fff;border:1px solid #e3ded2;border-radius:8px;margin-bottom:18px;overflow:hidden;">
             <button onClick="{{ toggleAnalyst }}" style="width:100%;display:flex;align-items:center;gap:14px;border:none;background:none;cursor:pointer;font-family:inherit;padding:14px 18px;text-align:left;">
@@ -1425,10 +1437,7 @@
         </div>
         <div style="padding:20px 22px;">
           <div style="font-size:13px;color:#cdd5e2;margin-bottom:11px;">{{ modalPrompt }}</div>
-          <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start;">
-            <span style="color:#8a97b0;font-size:15px;">💬</span>
-            <span style="flex:1;font-size:13px;color:#7d8aa3;line-height:1.5;font-style:italic;">{{ modalPlaceholder }}</span>
-          </div>
+          <textarea id="create-prompt-input" placeholder="{{ modalPlaceholder }}" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:13px 14px;color:#e6ecf5;font-size:13px;width:100%;min-height:64px;resize:vertical;font-family:inherit;line-height:1.5;outline:none;box-sizing:border-box;">{{ createPrompt }}</textarea>
 
           <sc-if value="{{ modalIsTemplate }}" hint-placeholder-val="">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px;">
@@ -1485,6 +1494,9 @@ class Component extends DCLogic {
     altOpen: false,
     createModal: null,
     analyzing: false,
+    demoCaseId: null,
+    demoReady: false,
+    createPrompt: '',
     // ---- realtime voice / live-valuation state ----
     assumptionsByCase: {},        // { caseId: { modelKey: value } } overrides for the calc engine
     kpiBaseline: null,            // pinned baseline snapshot for delta rendering
@@ -1960,18 +1972,72 @@ class Component extends DCLogic {
     ai:{ intent:'Capital structure', text:'A balanced 60% debt structure is recommended — it maximizes equity IRR at 18.6% while keeping Net Debt / EBITDA below 4.0x and DSCR above 1.5x after stabilization. Opening the advisor.', sources:['Treasury Policy','Debt Sizing Model'] },
     after:()=>{ this.setState({ screen:'capital' }); } }); }
 
-  runAgents(){
+  // ---- debate the Dubai 500MW assessment (scripted) ----
+  debateHurdle(){ this.ask('Does this really clear our hurdle, or is it marginal?', { thinking:'Re-checking the hurdle spread and downside…',
+    ai:{ intent:'Hurdle test · Dubai 500MW', text:'Not marginal. Project IRR is 16.4% and equity IRR 19.2%, clearing your 10% hurdle by +6.4pp on a mid-case EV of $7.2B (range $6.7B–$7.6B) and NPV of +$1.05B. Even in the power-cost downside the project IRR stays above the 10% hurdle, so the +6.4pp spread is genuine headroom, not a rounding effect.', sources:['Valuation Model','Sensitivity Model','Football Field'] } }); }
+
+  debatePower(){ this.ask('What happens if power costs spike 20%?', { thinking:'Re-running the DCF with a +20% power shock…',
+    ai:{ intent:'Scenario · Power cost +20%', text:'A +20% power shock pulls mid-case Enterprise Value down roughly −$500M, from $7.2B toward $6.7B, and trims project IRR by about 2pp off the 16.4% base. The long-term anchor-tenant PPA absorbs most of the exposure, so project IRR still lands above the 10% hurdle and NPV stays positive. I’d recommend holding the PPA term as a financing condition.', sources:['Sensitivity Model','Forecast Model','Risk Matrix'] } }); }
+
+  debateBuildBuy(){ this.ask('Why build greenfield instead of acquiring an operator?', { thinking:'Comparing build economics against an acquire alternative…',
+    ai:{ intent:'Build vs buy', text:'Build wins on returns and control. Greenfield delivers a 16.4% project IRR at a $7.2B mid EV; a comparable operator acquisition models roughly 4pp lower (~12% IRR) once we pay the platform premium and inherit legacy power contracts. Building also lets us lock an AI-optimized, high-density design and capture the full $1.05B NPV rather than sharing it with a seller.', sources:['Valuation Model','Precedent Transactions','Debt Sizing Model'] } }); }
+
+  debateKiller(){ this.ask('What single thing kills this deal?', { thinking:'Ranking dependencies by EV-at-stake…',
+    ai:{ intent:'Top dependency', text:'One gate dominates: the anchor-tenant power agreement. It underpins both the 500MW supply and the PPA hedge, and without it the −$500M power downside is unmitigated and the $7.2B mid EV / 16.4% IRR no longer hold. Mitigation is to make the signed anchor-tenant power agreement a condition precedent to financial close — every other risk is secondary to it.', sources:['Risk Matrix','Valuation Model','Sensitivity Model'] } }); }
+
+  runAgents(interval){
+    const ms=interval||520;
     this.setState({ agentStage:-1 });
     let i=0;
-    const step=()=>{ i++; this.setState({ agentStage:i }); if(i<8) this._t=setTimeout(step, 520); };
+    const step=()=>{ i++; this.setState({ agentStage:i }); if(i<8) this._t=setTimeout(step, ms); };
     this._t=setTimeout(step, 300);
+  }
+  // ---- scripted New-Case demo (Dubai 500MW): ~5.5s auto-tour ----
+  runCreateDemo(id){
+    // clear any prior demo / agent timers so a re-run can't double up
+    if(this._demo){ this._demo.forEach(h=>clearTimeout(h)); }
+    this._demo=[];
+    clearTimeout(this._t); clearTimeout(this._an1); clearTimeout(this._an2);
+
+    // t=0 — jump into the studio, kick off the eight agents
+    this.setState({ createModal:null, activeCase:id, screen:'studio', analyzing:true, analystOpen:true, agentStage:-1, demoCaseId:id, demoReady:false });
+    this.push('ai', { intent:'Building investment case', text:'Spinning up the Dubai 500 MW data center analysis — eight agents now running across market, power, forecast and valuation.', sources:['Market Model','Power & PPA Model','Forecast Model','Valuation Model'] });
+    this.runAgents(280);
+
+    // t≈2600 — mid-progress; surface the investment summary
+    this._demo.push(setTimeout(()=>{
+      this.setState({ screen:'casesummary' });
+      const c=this.dynamicCases[id]; if(c){ c.__meta.steps=[100,100,80,40,0,0,0,0]; c.__meta.buildPct=55; }
+      this.forceUpdate();
+    }, 2600));
+
+    // t≈3800 — further along
+    this._demo.push(setTimeout(()=>{
+      const c=this.dynamicCases[id]; if(c){ c.__meta.steps=[100,100,100,100,80,40,0,0]; c.__meta.buildPct=82; }
+      this.forceUpdate();
+    }, 3800));
+
+    // t≈5200 — complete
+    this._demo.push(setTimeout(()=>{
+      const c=this.dynamicCases[id]; if(c){ c.__meta.steps=[100,100,100,100,100,100,100,100]; c.__meta.buildPct=100; }
+      this.setState({ analyzing:false, demoReady:true });
+    }, 5200));
+
+    // t≈5300 — final narration + spotlight
+    this._demo.push(setTimeout(()=>{
+      this.push('ai', { intent:'Investment case complete', text:'PROCEED. Enterprise value $6.7B–$7.6B (mid $7.2B), project IRR 16.4%, equity IRR 19.2% — clears the 10% hurdle by 6.4pp. NPV +$1.05B. Top dependency: the anchor-tenant power agreement.', sources:['Valuation Model','Football Field','Risk Matrix','Debt Sizing Model'] });
+      this.setState({ spotlight:true });
+    }, 5300));
   }
   componentDidMount(){
     // Enter-to-send for the copilot text box (delegated, robust to re-renders).
     this._chatKey = (e)=>{ if(e.target && e.target.id==='copilot-input' && e.key==='Enter'){ e.preventDefault(); this.sendChat(); } };
     document.addEventListener('keydown', this._chatKey);
+    // Keep the create-prompt textarea value across re-renders without forcing a re-render (no caret jumps).
+    this._createPromptIn = (e)=>{ if(e.target && e.target.id==='create-prompt-input'){ this.state.createPrompt = e.target.value; } };
+    document.addEventListener('input', this._createPromptIn);
   }
-  componentWillUnmount(){ clearTimeout(this._t); if(this._chatKey) document.removeEventListener('keydown', this._chatKey); if(this._copilot){ try { this._copilot.stop(); } catch(e){} } }
+  componentWillUnmount(){ clearTimeout(this._t); clearTimeout(this._an1); clearTimeout(this._an2); if(this._demo){ this._demo.forEach(h=>clearTimeout(h)); } if(this._chatKey) document.removeEventListener('keydown', this._chatKey); if(this._createPromptIn) document.removeEventListener('input', this._createPromptIn); if(this._copilot){ try { this._copilot.stop(); } catch(e){} } }
 
   undoRiyadh(){ this.setState({ riyadhRamp:false }); }
   undoPowerShock(){ this.setState({ powerShock:false }); }
@@ -2009,25 +2075,36 @@ class Component extends DCLogic {
   dynamicCases = {};
   caseById(id){ return this.dynamicCases[id] || this.CASES[id]; }
   metaById(id){ return (this.dynamicCases[id] && this.dynamicCases[id].__meta) || this.CASE_META[id]; }
-  openCreate(mode, baseId){ this.setState({ createModal:{ mode, baseId:baseId||null }, caseMenuOpen:false }); }
+  openCreate(mode, baseId){ this.setState({ createModal:{ mode, baseId:baseId||null }, caseMenuOpen:false, createPrompt: mode==='template' ? 'Create a similar facility in Abu Dhabi but increase capacity to 500MW for AI workloads.' : 'Evaluate building a 500 MW hyperscale data center in Dubai.' }); }
   closeCreate(){ this.setState({ createModal:null }); }
   submitCreate(){
-    const cm=this.state.createModal||{}; const base=this.caseById(cm.baseId||'dubaiAI');
+    const cm=this.state.createModal||{};
+    if(cm.mode==='template'){
+      // ---- template path (copy a baseline case, short progressive populate) ----
+      const base=this.caseById(cm.baseId||'dubaiAI');
+      const id='case_'+Date.now();
+      const newCase=Object.assign({}, base, {
+        name:'Abu Dhabi AI Campus (from '+base.name+')',
+        loc:'Abu Dhabi, UAE · 500MW hyperscale',
+        status:'Draft Valuation', fromTemplate:base.name,
+      });
+      newCase.__meta={ stage:1, mode:'build', statusLabel:'Under Analysis', buildPct:18, buildAnalysts:3, steps:[100,60,20,0,0,0,0,0] };
+      this.dynamicCases[id]=newCase;
+      if(!this.caseOrder.includes(id)) this.caseOrder=[id, ...this.caseOrder];
+      this.setState({ createModal:null, activeCase:id, screen:'casesummary', analyzing:true, analystOpen:true, altOpen:false });
+      // progressive populate
+      clearTimeout(this._an1); clearTimeout(this._an2);
+      this._an1=setTimeout(()=>{ const c=this.dynamicCases[id]; if(c){ c.__meta.steps=[100,100,80,60,40,20,0,0]; c.__meta.buildPct=64; } this.forceUpdate(); }, 1400);
+      this._an2=setTimeout(()=>{ this.setState({ analyzing:false }); }, 2800);
+      return;
+    }
+    // ---- new (from scratch) path: scripted Dubai 500MW demo ----
     const id='case_'+Date.now();
-    const isTpl=cm.mode==='template';
-    const newCase=Object.assign({}, base, {
-      name:isTpl?'Abu Dhabi AI Campus (from '+base.name+')':'New Investment Case',
-      loc:isTpl?'Abu Dhabi, UAE · 500MW hyperscale':'Dubai, UAE · 500MW hyperscale',
-      status:'Draft Valuation', fromTemplate:isTpl?base.name:null,
-    });
-    newCase.__meta={ stage:1, mode:'build', statusLabel:'Under Analysis', buildPct:18, buildAnalysts:3, steps:[100,60,20,0,0,0,0,0] };
+    const newCase=Object.assign({}, this.DEMO_CASE, { status:'Draft Valuation', fromTemplate:null });
+    newCase.__meta={ stage:1, mode:'build', statusLabel:'Under Analysis', buildPct:8, buildAnalysts:8, steps:[20,0,0,0,0,0,0,0] };
     this.dynamicCases[id]=newCase;
     if(!this.caseOrder.includes(id)) this.caseOrder=[id, ...this.caseOrder];
-    this.setState({ createModal:null, activeCase:id, screen:'casesummary', analyzing:true, analystOpen:true, altOpen:false });
-    // progressive populate
-    clearTimeout(this._an1); clearTimeout(this._an2);
-    this._an1=setTimeout(()=>{ const c=this.dynamicCases[id]; if(c){ c.__meta.steps=[100,100,80,60,40,20,0,0]; c.__meta.buildPct=64; } this.forceUpdate(); }, 1400);
-    this._an2=setTimeout(()=>{ this.setState({ analyzing:false }); }, 2800);
+    this.runCreateDemo(id);
   }
 
   // ---- valuation case library (drives the Case Summary) ----
@@ -2061,6 +2138,11 @@ class Component extends DCLogic {
       risks:[['Approval Timeline','−$190M EV','Early regulator engagement'],['Single-counterparty','−$160M EV','Secondary commercial tenants'],['Capex Inflation','−$120M EV','Fixed-price procurement']],
       pending:[['Government MoU',60],['Regulatory Approval',45],['Financial Model',100],['Legal Due Diligence',80]] },
   };
+  // ---- scripted demo case (Dubai 500MW hyperscale AI campus) ----
+  DEMO_CASE = { name:'Dubai Hyperscale AI Campus', loc:'Dubai, UAE · 500MW hyperscale', status:'Draft Valuation', rec:'PROCEED', recColor:'#1f7a4d', conf:84, ic:80, mid:7.2, evLo:6.7, evHi:7.6, invest:'$5.9B', npv:'+$1.05B', npvPos:true, pirr:'16.4%', eirr:'19.2%', payback:'6.5 yrs', moic:'2.2x', hurdle:'Passes CFO hurdle by +6.4pp',
+    thesis:['Hyperscaler AI demand outstripping GCC capacity through 2030','500MW secured via DEWA grid plus anchor-tenant PPA','UAE sovereign AI build-out anchors long-duration offtake','Project IRR 16.4% clears the 10% hurdle with headroom','Precedent hyperscale transactions support a $/MW premium'],
+    risks:[['Power Price Volatility','−$500M EV','Long-term power purchase agreement caps exposure'],['Anchor Tenant Power Gate','−$420M EV','Lock anchor-tenant power agreement before financial close'],['Construction Delay','−$300M EV','Fixed-price EPC with milestone incentives']],
+    pending:[['Anchor-Tenant Power Agreement',70],['Anchor Tenant Contract',75],['Legal Due Diligence',100],['Environmental Approval',95]] };
   caseOrder = ['dubaiAI','dubaiDC01','riyadh','jeddah','dubaiSouth','neom','abudhabi'];
 
   // lifecycle stages (idea → monitoring)
@@ -2232,6 +2314,14 @@ class Component extends DCLogic {
       alts, altQuick,
       // lifecycle CTAs
       goContinueAnalysis:()=>this.setScreen('studio'), goFunding:()=>this.setScreen('capital'), goICsubmit:()=>this.setScreen('ic'),
+      // debate-the-assessment chips (scripted demo case only, once analysis completes)
+      showDebate: this.state.demoCaseId===id && this.state.demoReady,
+      debateChips: [
+        { label:'Does it clear the hurdle?', go:()=>this.debateHurdle() },
+        { label:'What if power +20%?', go:()=>this.debatePower() },
+        { label:'Why build vs acquire?', go:()=>this.debateBuildBuy() },
+        { label:'What kills this deal?', go:()=>this.debateKiller() },
+      ],
     };
   }
 

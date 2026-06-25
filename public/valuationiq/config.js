@@ -22,7 +22,7 @@
 
   root.VALUATION_CONFIG = {
     // "" on localhost (relative calls hit the dev server); Render URL in prod.
-    API_BASE: isLocal ? '' : 'https://damac-valuation.onrender.com',
+    API_BASE: isLocal ? '' : 'https://damac-valuation-app.onrender.com',
 
     // Derived from API_BASE unless a consumer overrides this property directly.
     get tokenEndpoint() { return this.API_BASE + '/api/v02/realtime-token'; },
