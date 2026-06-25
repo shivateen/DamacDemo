@@ -1633,7 +1633,25 @@ function applyActiveScenario(){
   else{restoreState(null);activeScenario='base';}
   updateScnPill();
 }
-function selectScenario(id){activeSavedId=(id==='__base'?null:id);applyActiveScenario();renderCurrent();}
+/* light the agent mesh node-by-node to show the scenario being executed */
+function runScenarioAgents(name){
+  var seq=[
+    ['INGEST','Re-ingesting CRM, ERP & escrow feeds for "'+name+'"','orange'],
+    ['DRIVERS','Applying scenario levers — velocity, price, cost & collections','orange'],
+    ['MODEL','Recomputing P&L, cash flow & balance sheet in lockstep','orange'],
+    ['SCENARIO','"'+name+'" staged across all four statements','orange'],
+    ['COMMENTARY','Reading the variance vs the base case','warn'],
+    ['REPORT','Scenario pack refreshed — '+name,'ok']
+  ];
+  seq.forEach(function(s,i){setTimeout(function(){
+    emit(s[0],s[1],s[2]); setActive([s[0]]);
+    if(i===seq.length-1)setTimeout(function(){setActive([]);},800);
+  },i*430);});
+}
+function selectScenario(id){
+  activeSavedId=(id==='__base'?null:id);applyActiveScenario();renderCurrent();
+  if(activeSavedId!==null){var s=activeScn();runScenarioAgents(((s&&s.name)||'Scenario').split(' — ')[0]);}
+}
 function toggleScnEnabled(){scnEnabled=!scnEnabled;applyActiveScenario();renderCurrent();}
 function saveCurrentScenario(){
   var inp=el('scnSaveName'),name=inp&&inp.value?inp.value.trim():'';
