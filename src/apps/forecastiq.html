@@ -446,10 +446,6 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
 <!-- LEFT NAV -->
 <nav class="nav">
   <div class="logo">T</div>
-  <button class="nav-btn" id="nb-scn" onclick="go('scn')">
-    <svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/><circle cx="18" cy="8" r="2"/><circle cx="15" cy="14" r="2"/></svg>
-    Scenarios
-  </button>
   <button class="nav-btn active" id="nb-overview" onclick="go('overview')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Overview
@@ -473,6 +469,10 @@ tr.sub-total td{font-weight:600;color:var(--ink)}
   <button class="nav-btn" id="nb-bs" onclick="go('bs')">
     <svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M4 21h16M6 12h.01M6 16h.01M18 12h.01M18 16h.01"/></svg>
     Balance Sheet
+  </button>
+  <button class="nav-btn" id="nb-scn" onclick="go('scn')">
+    <svg viewBox="0 0 24 24"><path d="M4 4v16M4 8h10M4 14h7"/><circle cx="18" cy="8" r="2"/><circle cx="15" cy="14" r="2"/></svg>
+    Scenarios
   </button>
   <button class="nav-btn" id="nb-lrp" onclick="go('lrp')">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/><path d="M18 6h-3M18 6v3"/></svg>
@@ -1792,7 +1792,8 @@ function stressMatrix(kind,list,title,rowlabel){
 }
 
 /* ── EQUALIZER — per-vertical revenue levers + cost levers, lockstep recompute ── */
-var eqSelVert='lagoons';
+var eqSelVert='overall';
+function overallVal(id){var s=0;VERTICALS.forEach(function(v){s+=(v.a[id]||0);});return Math.round(s/VERTICALS.length);}
 function lever(key,name,val,min,max,unit,handler,confTxt){
   var range=max-min||1;
   var loP=(range*0.25)/range*100, hiP=(range*0.75)/range*100;
@@ -1804,16 +1805,19 @@ function lever(key,name,val,min,max,unit,handler,confTxt){
     +'<div class="lever-meta"><span>'+min+unit+'</span><span>P10–P90 band</span><span>'+(max>0?'+':'')+max+unit+'</span></div></div>';
 }
 function renderEqualizer(){
-  var v=VERTICALS.find(function(x){return x.id===eqSelVert;});
+  var ov=(eqSelVert==='overall');
+  var v=ov?null:VERTICALS.find(function(x){return x.id===eqSelVert;});
+  if(!ov&&!v){eqSelVert='overall';ov=true;}
   var h='<div class="grid-2" style="grid-template-columns:1.12fr 1fr">';
   // LEFT — lever groups (Revenue · Cost & finance · Cash-flow)
   h+='<div>';
-  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">each vertical carries its own assumptions & confidence limits · drag to model</div>';
-  h+='<div class="eq-vert">'+VERTICALS.map(function(x){return '<div class="eq-vchip'+(x.id===eqSelVert?' on':'')+'" onclick="selectVert(\''+x.id+'\')">'+x.name+'<span class="vs">'+x.stage+' · '+x.unc+' conf</span></div>';}).join('')+'</div>';
+  h+='<div class="block fadein" style="margin-bottom:14px"><h3>Revenue levers — by vertical</h3><div class="h-sub">'+(ov?'Overall — moves every vertical together (each clamped to its own confidence band)':'each vertical carries its own assumptions & confidence limits · drag to model')+'</div>';
+  h+='<div class="eq-vert"><div class="eq-vchip'+(ov?' on':'')+'" onclick="selectVert(\'overall\')">Overall<span class="vs">all verticals · portfolio</span></div>'
+    +VERTICALS.map(function(x){return '<div class="eq-vchip'+(x.id===eqSelVert?' on':'')+'" onclick="selectVert(\''+x.id+'\')">'+x.name+'<span class="vs">'+x.stage+' · '+x.unc+' conf</span></div>';}).join('')+'</div>';
   h+='<div style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px">';
   VERT_PARAMS.forEach(function(p){
-    var b=band(v,p.id);
-    h+=lever('v-'+p.id,p.n,v.a[p.id],b[0],b[1],p.unit,"onVert('"+p.id+"',this.value)",v.unc+' conf');
+    var b=ov?CONF_BANDS.high[p.id]:band(v,p.id);
+    h+=lever('v-'+p.id,p.n,ov?overallVal(p.id):v.a[p.id],b[0],b[1],p.unit,"onVert('"+p.id+"',this.value)",ov?'all verticals':v.unc+' conf');
   });
   h+='</div></div>';
   h+='<div class="block fadein"><h3>Cost & finance levers</h3><div class="h-sub">portfolio-wide — flow to COGS, SG&A and below-EBITDA finance</div>';
@@ -1851,8 +1855,11 @@ var _leverEmitT=0;
 function leverEmit(src){var now=Date.now();if(now-_leverEmitT<1100)return;_leverEmitT=now;var m=modelCompute();
   emit('MODEL','Recomputing all 4 statements — rev AED '+(m.rev/1000).toFixed(2)+'B · cash AED '+(m.cash/1000).toFixed(2)+'B'+(m.minCash<800?' · trough below floor':''),m.minCash<800?'warn':'orange');
   setActive(['MODEL','SCENARIO']);setTimeout(function(){setActive([]);},650);}
-function onVert(id,val){var v=VERTICALS.find(function(x){return x.id===eqSelVert;});v.a[id]=parseFloat(val);
-  var sign=(v.a[id]>0&&id!=='collect'?'+':'');el('lvv-v-'+id).textContent=sign+v.a[id]+(VERT_PARAMS.find(function(p){return p.id===id;}).unit);
+function onVert(id,val){
+  val=parseFloat(val);var meta=VERT_PARAMS.find(function(p){return p.id===id;}),disp;
+  if(eqSelVert==='overall'){VERTICALS.forEach(function(v){var b=band(v,id);v.a[id]=Math.max(b[0],Math.min(b[1],val));});disp=val;}
+  else{var v=VERTICALS.find(function(x){return x.id===eqSelVert;});v.a[id]=val;disp=v.a[id];}
+  var sign=(disp>0&&id!=='collect'?'+':'');el('lvv-v-'+id).textContent=sign+disp+(meta?meta.unit:'');
   clearPresetHint();renderEqBuild();renderImpact();eqLiveTouch();leverEmit();}
 function onCost(id,val){var c=COSTLV.find(function(x){return x.id===id;});c.val=parseFloat(val);
   var sign=(c.val>0?'+':'');el('lvv-c-'+id).textContent=sign+c.val+c.unit;
