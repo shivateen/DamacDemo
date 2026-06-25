@@ -2243,6 +2243,17 @@ var VAL_BETA_LINK = "";
     }
   }, true);
 
+  // ── Beta tiles → navigate within the shell ───────────────────────────────
+  // Forecasting & Scenario Planning -> ForecastIQ ; Dialogue with Data -> ValuationIQ.
+  // Capture phase + stopImmediatePropagation overrides the app's default window.open.
+  document.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.betaLaunch, #fcBeta') : null;
+    if(!b) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var app = (b.id === 'fcBeta') ? 'forecast' : b.getAttribute('data-app');
+    window.parent.postMessage({__navTo: (app === 'valuations') ? 'valuationiq' : 'forecastiq'}, '*');
+  }, true);
+
   // ── CloseIQ launcher on Controllership tower detail page ──────────────────
   function addCloseIQLauncher(){
     var main = document.getElementById('main');
