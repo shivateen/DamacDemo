@@ -1458,7 +1458,8 @@ function renderLRP(){
   var npMarg=LRP.years.map(function(_,i){return LRP.np[i]/LRP.revenue[i]*100;});
   var cumCash=LRP.opcash[1]+LRP.opcash[2]+LRP.opcash[3];
 
-  var h='<div class="kpi-row fadein">'
+  var h='<div style="display:flex;justify-content:flex-end;margin-bottom:6px">'+xlBtn()+'</div>';
+  h+='<div class="kpi-row fadein">'
     +kpi('FY28 Revenue','AED '+(LRP.revenue[3]/1000).toFixed(2)+'B',pct(d.rev)+' CAGR (26–28)','ok','3-yr plan')
     +kpi('FY28 EBITDA','AED '+(LRP.ebitda[3]/1000).toFixed(2)+'B',ebMarg[3].toFixed(1)+'% margin','ok',pct(d.ebitda)+' CAGR')
     +kpi('FY28 Net Profit','AED '+(LRP.np[3]/1000).toFixed(2)+'B',npMarg[3].toFixed(1)+'% margin','ok',pct(d.np)+' CAGR')
@@ -1666,6 +1667,43 @@ function fcPeriodSel(){
   return '<span style="margin-left:auto"></span><span class="lbl">Period</span><select class="scn-select" style="min-width:150px" onchange="setFcPeriod(this.value)">'
     +P.map(function(p){return '<option value="'+p[0]+'"'+(fcPeriod===p[0]?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
 }
+/* ── Excel (CSV) export ── scrape the page's tables (or build Cash rows) and download ── */
+var VIEWNAME={overview:'Overview',revenue:'Revenue',pnl:'P&L',cash:'Cash-Flow',bs:'Balance-Sheet',lrp:'3-Year-Plan',scn:'Scenario-Comparison',assume:'Assumptions',agents:'Agents'};
+function _csvCell(s){s=(s==null?'':String(s)).replace(/ /g,' ').replace(/\s+/g,' ').trim();return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+function _scrapeTables(){
+  var rows=[],tables=el('content').querySelectorAll('table');
+  Array.prototype.forEach.call(tables,function(t,ti){
+    if(ti)rows.push([]);
+    Array.prototype.forEach.call(t.querySelectorAll('tr'),function(tr){
+      var cs=Array.prototype.map.call(tr.querySelectorAll('th,td'),function(c){return c.textContent;});
+      if(cs.length)rows.push(cs);
+    });
+  });
+  return rows;
+}
+function _cashRows(){
+  var m=modelCompute(),f=fcFactor(),cum=CASH_OPENING;
+  var rows=[['Month','Inflow (AED M)','Outflow (AED M)','Net (AED M)','Cumulative cash (AED B)']];
+  CASH.forEach(function(c){cum+=c.in+c.out;rows.push([c.m,Math.round(c.in),Math.round(c.out),Math.round(c.in+c.out),(cum/1000).toFixed(2)]);});
+  rows.push([]);rows.push(['Headline','Value']);
+  rows.push(['Net operating cash','AED '+(m.cash*f/1000).toFixed(2)+'B']);
+  rows.push(['Closing cash','AED '+(cum/1000).toFixed(2)+'B']);
+  rows.push(['Q3 cash trough','AED '+(m.minCash/1000).toFixed(2)+'B']);
+  return rows;
+}
+function exportView(){
+  var name=VIEWNAME[curView]||'ForecastIQ';
+  var rows=(curView==='cash')?_cashRows():_scrapeTables();
+  if(!rows.length){showToast('Nothing to export on this page');return;}
+  rows.unshift([]);rows.unshift(['ForecastIQ · '+name+' · FY2026'+((typeof fcPeriod!=='undefined'&&fcPeriod!=='FY')?' · '+fcPeriod:'')]);
+  var csv=rows.map(function(r){return r.map(_csvCell).join(',');}).join('\r\n');
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='ForecastIQ-'+name.replace(/[^A-Za-z0-9]+/g,'-')+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);if(a.parentNode)a.parentNode.removeChild(a);},150);
+  showToast('Exported '+name+' to Excel (CSV)');
+}
+function xlBtn(ml){return '<button class="btn-ghost" onclick="exportView()" title="Download this page to Excel (CSV)" style="'+(ml?'margin-left:auto;':'')+'display:inline-flex;align-items:center;gap:5px;font-size:11.5px;white-space:nowrap">⬇ Excel</button>';}
 function scnSelectorBar(){
   var opts='<option value="__base"'+(activeSavedId===null?' selected':'')+'>Base case</option>';
   opts+=SCN_SAVED.map(function(s){return '<option value="'+s.id+'"'+(activeSavedId===s.id?' selected':'')+'>'+s.name+'</option>';}).join('');
@@ -1673,7 +1711,7 @@ function scnSelectorBar(){
   return '<div class="scn-selbar fadein"><span class="lbl">Scenario</span>'
     +'<select class="scn-select" onchange="selectScenario(this.value)">'+opts+'</select>'
     +'<span style="font-size:11px;color:var(--ink-3)">'+note+'</span>'
-    +fcPeriodSel()+'</div>';
+    +fcPeriodSel()+xlBtn()+'</div>';
 }
 /* scenario workspace controls atop the Scenarios tab */
 function scnWorkspaceBar(){
@@ -1859,7 +1897,7 @@ function renderScnCompare(){
     var up=d>=0,col=up?'var(--ok)':'var(--risk)';
     var txt=kind==='pct'?((d>=0?'+':'')+d.toFixed(1)+'pp'):((d>=0?'+':'−')+bn(Math.round(Math.abs(d))));
     return ' <span class="scn-delta" style="color:'+col+'">'+(up?'▲':'▼')+txt+'</span>';}
-  var h='<div class="sec-h fadein"><h2>Scenario Comparison Board</h2><span class="meta">Base + up to 3 saved scenarios · P&amp;L · Cash · Balance Sheet</span></div>';
+  var h='<div class="sec-h fadein"><h2>Scenario Comparison Board</h2><span class="meta">Base + up to 3 saved scenarios · P&amp;L · Cash · Balance Sheet</span>'+xlBtn(true)+'</div>';
   h+='<div class="scn-selbar fadein"><span class="lbl">Compare</span><span class="scn-saved-chip on" style="cursor:default;opacity:.85">Base case</span>'
     +(SCN_SAVED.length?SCN_SAVED.map(function(s){return '<span class="scn-saved-chip'+(cmpSel.indexOf(s.id)>=0?' on':'')+'" onclick="toggleCmp(\''+s.id+'\')">'+s.name+'</span>';}).join(''):'<span style="font-size:11.5px;color:var(--ink-3)">No saved scenarios yet — build one on the Equalizer.</span>')
     +'<span style="font-size:11px;color:var(--ink-3);margin-left:auto">pick up to 3</span></div>';
