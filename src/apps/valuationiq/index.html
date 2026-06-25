@@ -82,10 +82,10 @@
       </div>
       <div style="display:flex;align-items:center;gap:9px;padding-left:4px;">
         <div style="text-align:right;line-height:1.15;">
-          <div style="font-size:12.5px;font-weight:600;color:#101d33;">Tariq Al-Mansoori</div>
+          <div style="font-size:12.5px;font-weight:600;color:#101d33;">John Smith</div>
           <div style="font-size:10.5px;color:#8a8270;">Group CFO</div>
         </div>
-        <div style="width:36px;height:36px;border-radius:50%;background:#101d33;color:#d9b766;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-weight:600;font-size:14px;">TA</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:#101d33;color:#d9b766;display:flex;align-items:center;justify-content:center;font-family:'Source Serif 4',serif;font-weight:600;font-size:14px;">JS</div>
       </div>
     </header>
 
@@ -1437,7 +1437,7 @@
         </div>
         <div style="padding:20px 22px;">
           <div style="font-size:13px;color:#cdd5e2;margin-bottom:11px;">{{ modalPrompt }}</div>
-          <textarea id="create-prompt-input" placeholder="{{ modalPlaceholder }}" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:13px 14px;color:#e6ecf5;font-size:13px;width:100%;min-height:64px;resize:vertical;font-family:inherit;line-height:1.5;outline:none;box-sizing:border-box;">{{ createPrompt }}</textarea>
+          <textarea id="create-prompt-input" placeholder="{{ modalPlaceholder }}" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:13px 14px;color:#e6ecf5;font-size:13px;width:100%;min-height:64px;resize:vertical;font-family:inherit;line-height:1.5;outline:none;box-sizing:border-box;"></textarea>
 
           <sc-if value="{{ modalIsTemplate }}" hint-placeholder-val="">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px;">
@@ -2037,7 +2037,7 @@ class Component extends DCLogic {
     this._createPromptIn = (e)=>{ if(e.target && e.target.id==='create-prompt-input'){ this.state.createPrompt = e.target.value; } };
     document.addEventListener('input', this._createPromptIn);
   }
-  componentWillUnmount(){ clearTimeout(this._t); clearTimeout(this._an1); clearTimeout(this._an2); if(this._demo){ this._demo.forEach(h=>clearTimeout(h)); } if(this._chatKey) document.removeEventListener('keydown', this._chatKey); if(this._createPromptIn) document.removeEventListener('input', this._createPromptIn); if(this._copilot){ try { this._copilot.stop(); } catch(e){} } }
+  componentWillUnmount(){ clearTimeout(this._t); clearTimeout(this._an1); clearTimeout(this._an2); clearTimeout(this._seedT); if(this._demo){ this._demo.forEach(h=>clearTimeout(h)); } if(this._chatKey) document.removeEventListener('keydown', this._chatKey); if(this._createPromptIn) document.removeEventListener('input', this._createPromptIn); if(this._copilot){ try { this._copilot.stop(); } catch(e){} } }
 
   undoRiyadh(){ this.setState({ riyadhRamp:false }); }
   undoPowerShock(){ this.setState({ powerShock:false }); }
@@ -2075,7 +2075,14 @@ class Component extends DCLogic {
   dynamicCases = {};
   caseById(id){ return this.dynamicCases[id] || this.CASES[id]; }
   metaById(id){ return (this.dynamicCases[id] && this.dynamicCases[id].__meta) || this.CASE_META[id]; }
-  openCreate(mode, baseId){ this.setState({ createModal:{ mode, baseId:baseId||null }, caseMenuOpen:false, createPrompt: mode==='template' ? 'Create a similar facility in Abu Dhabi but increase capacity to 500MW for AI workloads.' : 'Evaluate building a 500 MW hyperscale data center in Dubai.' }); }
+  openCreate(mode, baseId){
+    const p = mode==='template'
+      ? 'Create a similar facility in Abu Dhabi but increase capacity to 500MW for AI workloads.'
+      : 'Evaluate building a 500 MW hyperscale data center in Dubai.';
+    this.setState({ createModal:{ mode, baseId:baseId||null }, caseMenuOpen:false, createPrompt:p });
+    clearTimeout(this._seedT);
+    this._seedT = setTimeout(()=>{ const el=document.getElementById('create-prompt-input'); if(el) el.value=p; }, 0);
+  }
   closeCreate(){ this.setState({ createModal:null }); }
   submitCreate(){
     const cm=this.state.createModal||{};
