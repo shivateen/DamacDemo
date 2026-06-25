@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance AI Console — Tiger</title>
+<title>DAMAC Finance Command Center — Tiger</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
 <style>
   :root{
@@ -46,12 +46,7 @@
     .c-pink{background:#72243e; color:#f4c0d1;} .c-gray{background:#444441; color:#d3d1c7;}
   }
   .card{border:0.5px solid var(--bd3); border-radius:var(--r-lg); padding:0.9rem 1rem; background:var(--bg1);}
-  .cc-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:6px 0;border-radius:6px;overflow:hidden}
-  .cc-tbl th{background:rgba(240,140,30,.12);color:var(--tx2);font-weight:600;padding:5px 8px;border:1px solid var(--bd3);text-align:left;font-size:11px}
-  .cc-tbl td{padding:4px 8px;border:1px solid var(--bd3);color:var(--tx1);vertical-align:top}
-  .cc-tbl tr:nth-child(even) td{background:var(--bg2)}
   .mcard{background:var(--bg2); border-radius:var(--r-md); padding:0.6rem 0.8rem;}
-  select.fsel{font-family:var(--font);font-size:12px;color:var(--tx1);background:var(--bg2);border:0.5px solid var(--bd2);border-radius:var(--r-md);padding:5px 10px;cursor:pointer;outline:none;min-width:160px;}
   .pill{font-size:11px; padding:3px 9px; border-radius:99px; display:inline-flex; align-items:center; gap:4px;}
   .secthead{font-size:12px; font-weight:500; color:var(--tx2); margin:0 0 6px; text-transform:none;}
   table.brk{width:100%; border-collapse:collapse; font-size:13px;}
@@ -67,55 +62,14 @@
   .fadein{animation:fadein .4s ease both;}
   .loadbar{height:6px; border-radius:99px; background:var(--bg2); overflow:hidden; width:260px;}
   .loadbar div{height:100%; width:0; background:var(--tx-info); border-radius:99px; transition:width 2.8s ease;}
+  @keyframes betapop{0%{box-shadow:0 0 0 0 rgba(55,138,221,0.70); transform:scale(1);}25%{transform:scale(1.06);}55%{box-shadow:0 0 0 18px rgba(55,138,221,0);}100%{box-shadow:0 0 0 0 rgba(55,138,221,0); transform:scale(1);}}
+  .btn-beta{background:#185fa5; color:#fff; border:none; border-radius:var(--r-md); padding:9px 14px; font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:7px;}
+  .btn-beta.pop{animation:betapop 1.3s ease-out 1;}
+  .beta-pop{animation:betapop 1.3s ease-out 1;}
+  .btn-beta:hover{filter:brightness(1.10);}
+  .btn-beta:active{transform:scale(0.98);}
   a.demo{color:var(--tx-info); text-decoration:none; font-size:12px;}
   a.demo:hover{text-decoration:underline;}
-
-  /* ── Sage overlay ── */
-  :root{--cc-orange:#F07800;--cc-orange-soft:#F5A93E;--cc-orange-tint:rgba(240,120,0,.10);--cc-orange-dim:rgba(240,120,0,.30);}
-  @keyframes cc-pulse2{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.6);opacity:.4;}}
-  @keyframes cc-ring{0%{transform:scale(1);opacity:.8;}100%{transform:scale(1.35);opacity:0;}}
-  @keyframes cc-micpulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-  .cc-sage-fab{position:fixed;bottom:24px;right:24px;z-index:80;display:flex;align-items:center;gap:10px;background:var(--cc-orange);color:#fff;padding:12px 18px 12px 14px;border-radius:30px;font-weight:600;font-size:13px;box-shadow:0 10px 34px rgba(240,120,0,.32);transition:.2s;border:none;cursor:pointer;}
-  .cc-sage-fab:hover{background:var(--cc-orange-soft);transform:translateY(-2px);}
-  .cc-sage-fab-av{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;}
-  .cc-sage-fab-av svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;}
-  .cc-sage-pulse{width:7px;height:7px;border-radius:50%;background:#fff;animation:cc-pulse2 1.8s infinite;}
-  .cc-sage{position:fixed;bottom:0;right:16px;width:440px;max-width:96vw;height:min(680px,90vh);background:var(--bg1);border:1px solid var(--bd3);border-radius:18px 18px 0 0;z-index:120;display:flex;flex-direction:column;transform:translateY(105%);transition:.34s cubic-bezier(.4,0,.2,1);box-shadow:-20px -10px 60px rgba(0,0,0,.22);overflow:hidden;}
-  .cc-sage.on{transform:none;}
-  .cc-sage.expanded{width:min(720px,96vw);height:min(88vh,920px);}
-  .cc-sage.dragged{border-radius:18px;}
-  .cc-sage-head{cursor:grab;}
-  .cc-sage-head:active{cursor:grabbing;}
-  .cc-sage-head{padding:16px 18px;border-bottom:1px solid var(--bd3);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg2),var(--bg1));}
-  .cc-sage-orb{width:38px;height:38px;border-radius:11px;background:var(--cc-orange-tint);border:1px solid var(--cc-orange-dim);display:flex;align-items:center;justify-content:center;flex:none;position:relative;}
-  .cc-sage-orb svg{width:20px;height:20px;stroke:var(--cc-orange-soft);fill:none;stroke-width:1.8;}
-  .cc-sage-orb.speaking::after{content:"";position:absolute;inset:-4px;border-radius:13px;border:2px solid var(--cc-orange);animation:cc-ring 1.1s infinite;}
-  .cc-sage-id{flex:1;min-width:0;}
-  .cc-sage-id .n{font-weight:600;font-size:14px;color:var(--tx1);}
-  .cc-sage-id .r{font-size:10.5px;color:var(--tx3);}
-  .cc-sage-x{flex:none;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tx2);font-size:20px;border:1px solid var(--bd3);background:var(--bg2);cursor:pointer;}
-  .cc-sage-x:hover{background:var(--bg-danger);color:var(--tx-danger);border-color:var(--tx-danger);}
-  .cc-sage-controls{display:flex;align-items:center;gap:7px;padding:9px 16px;border-bottom:1px solid var(--bd3);flex-wrap:wrap;background:var(--bg1);}
-  .cc-mode-pill{font-size:9.5px;font-family:monospace;padding:5px 9px;border-radius:7px;background:var(--bg2);color:var(--tx3);border:1px solid var(--bd3);white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
-  .cc-mode-pill:hover{border-color:var(--cc-orange-dim);}
-  .cc-mode-pill.live{background:var(--bg-success);color:var(--tx-success);border-color:var(--tx-success);}
-  .cc-sage-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-  .cc-msg-user{align-self:flex-end;max-width:85%;background:var(--tx1);color:var(--bg1);padding:9px 13px;border-radius:14px 14px 3px 14px;font-size:13px;line-height:1.5;}
-  .cc-msg-bot{align-self:flex-start;max-width:92%;}
-  .cc-msg-bot-bub{background:var(--bg2);padding:10px 13px;border-radius:14px 14px 14px 3px;font-size:13px;line-height:1.6;}
-  .cc-sage-suggest{display:flex;gap:7px;flex-wrap:wrap;padding:0 16px 10px;}
-  .cc-sage-suggest button{font-size:11px;padding:5px 11px;border-radius:20px;border:1px solid var(--bd3);background:var(--bg1);color:var(--tx2);cursor:pointer;font-family:inherit;}
-  .cc-sage-suggest button:hover{border-color:var(--cc-orange-dim);color:var(--cc-orange-soft);}
-  .cc-sage-foot{padding:12px 16px;border-top:1px solid var(--bd3);display:flex;align-items:center;gap:9px;}
-  .cc-sage-input{flex:1;background:var(--bg2);border:1px solid var(--bd3);border-radius:11px;padding:11px 13px;color:var(--tx1);font-family:inherit;font-size:13px;resize:none;max-height:90px;outline:none;}
-  .cc-sage-input:focus{border-color:var(--cc-orange-dim);}
-  .cc-mic-btn,.cc-send-btn{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;transition:.15s;border:none;cursor:pointer;}
-  .cc-mic-btn{background:var(--bg2);border:1px solid var(--bd3);color:var(--tx2);}
-  .cc-mic-btn:hover{border-color:var(--cc-orange-dim);color:var(--cc-orange-soft);}
-  .cc-mic-btn.listening{background:var(--bg-danger);border-color:var(--tx-danger);color:var(--tx-danger);animation:cc-micpulse 1.2s infinite;}
-  .cc-send-btn{background:var(--cc-orange);color:#fff;}
-  .cc-send-btn:hover{background:var(--cc-orange-soft);}
-  .cc-mic-btn svg,.cc-send-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;}
 </style>
 </head>
 <body>
@@ -126,7 +80,7 @@
     <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:1.4rem;">
       <div style="width:52px; height:52px; border-radius:var(--r-md); background:var(--tx1); color:var(--bg1); display:flex; align-items:center; justify-content:center;"><i class="ti ti-building-skyscraper" style="font-size:30px;" aria-hidden="true"></i></div>
       <div style="text-align:center;">
-        <div style="font-size:17px; font-weight:500;">Finance AI Console</div>
+        <div style="font-size:17px; font-weight:500;">DAMAC FinanceIQ Console</div>
         <div style="font-size:12px; color:var(--tx3);">Powered by Tiger</div>
       </div>
     </div>
@@ -169,32 +123,25 @@
       <div style="font-size:20px; font-weight:500;">Select your workspace</div>
       <div style="font-size:13px; color:var(--tx2); margin-top:4px;">Signed in as cfo@damac.ae · your command center adapts to your role</div>
     </div>
-    <div id="personaGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;"></div>
+    <div id="personaGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px;"></div>
     <div id="personaMsg" style="text-align:center; font-size:13px; color:var(--tx2); margin-top:18px; min-height:20px;"></div>
   </div>
 </div>
 
 <div id="shell" style="display:none; position:relative; min-height:680px; background:var(--bg1); border:0.5px solid var(--bd3); border-radius:var(--r-lg); overflow:hidden;">
-<h2 class="sr-only">Finance AI Console: navigation with Home, Insights, Engagements and Threads, full detail pages per finance function, KPI drill-downs with conversational chat, the Tiger engagement tracker in the middle of Wave 1, and a voice assistant available on every screen.</h2>
+<h2 class="sr-only">DAMAC FinanceIQ Console: navigation with Home, Insights, Engagements and Threads, full detail pages per finance function, KPI drill-downs with conversational chat, the Tiger engagement tracker in the middle of Wave 1, and a voice assistant available on every screen.</h2>
 
 <div style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.2rem; border-bottom:0.5px solid var(--bd3);">
   <div style="display:flex; align-items:center; gap:10px;">
     <div style="width:34px; height:34px; border-radius:var(--r-md); background:var(--tx1); color:var(--bg1); display:flex; align-items:center; justify-content:center;"><i class="ti ti-building-skyscraper" style="font-size:20px;" aria-hidden="true"></i></div>
     <div>
-      <div style="font-size:15px; font-weight:500;">Finance AI Console</div>
+      <div style="font-size:15px; font-weight:500;">DAMAC FinanceIQ Console</div>
       <div id="hdrSub" style="font-size:12px; color:var(--tx3);">Powered by Tiger · Group view · AED · FY2026</div>
     </div>
   </div>
   <div style="display:flex; align-items:center; gap:8px;">
-    <button id="hdrMic" class="btn" style="display:flex; align-items:center; gap:6px;"><i class="ti ti-microphone" style="font-size:16px;" aria-hidden="true"></i> Sage</button>
+    <button id="hdrMic" class="btn" style="display:flex; align-items:center; gap:6px;"><i class="ti ti-microphone" style="font-size:16px;" aria-hidden="true"></i> Talk to Tiger</button>
     <span class="pill" style="color:var(--tx-success); background:var(--bg-success);"><i class="ti ti-circle-filled" style="font-size:7px;" aria-hidden="true"></i> Live</span>
-    <div style="display:flex; align-items:center; gap:8px; padding:5px 11px 5px 6px; border:0.5px solid var(--bd3); border-radius:20px; background:var(--bg1);">
-      <div style="width:26px; height:26px; border-radius:50%; background:var(--tx1); color:var(--bg1); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">J</div>
-      <div>
-        <div style="font-size:12px; font-weight:600; line-height:1.15; color:var(--tx1);">John</div>
-        <div id="hdrRole" style="font-size:10px; color:var(--tx3); line-height:1.15;">Group Controller</div>
-      </div>
-    </div>
     <button id="hdrSwitch" class="btn" aria-label="Switch workspace" title="Switch workspace" style="padding:7px 9px;"><i class="ti ti-arrows-left-right" style="font-size:17px;" aria-hidden="true"></i></button>
     <button id="hdrLogout" class="btn" aria-label="Log out" title="Log out" style="padding:7px 9px;"><i class="ti ti-logout" style="font-size:17px;" aria-hidden="true"></i></button>
   </div>
@@ -216,49 +163,36 @@
   </div>
 </div>
 
-<!-- SAGE FAB -->
-<button class="cc-sage-fab" id="chatFab" onclick="openChat()">
-  <span class="cc-sage-fab-av"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg></span>
-  Ask Sage <span class="cc-sage-pulse"></span>
-</button>
+<button id="chatFab" aria-label="Open voice assistant" style="position:absolute; bottom:18px; right:18px; width:56px; height:56px; border-radius:50%; background:var(--tx1); color:var(--bg1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:5;"><i class="ti ti-microphone" style="font-size:26px;" aria-hidden="true"></i></button>
 
-<!-- SAGE PANEL -->
-<div class="cc-sage" id="chatPanel">
-  <div class="cc-sage-head" id="ccSageHead">
-    <div class="cc-sage-orb" id="ccSageOrb">
-      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/><path d="M9 21h6"/></svg>
+<div id="chatPanel" style="position:absolute; top:0; right:0; width:340px; height:100%; background:var(--bg1); border-left:0.5px solid var(--bd2); transform:translateX(100%); transition:transform .2s; z-index:6; display:flex; flex-direction:column;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1rem; border-bottom:0.5px solid var(--bd3);">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span id="voiceDot" style="width:9px; height:9px; border-radius:50%; background:var(--tx3);"></span>
+      <span style="font-size:14px; font-weight:500;">Tiger assistant</span>
+      <span id="voiceState" style="font-size:11px; color:var(--tx3);"></span>
     </div>
-    <div class="cc-sage-id">
-      <div class="n">Sage</div>
-      <div class="r">Finance AI assistant &nbsp;<span id="voiceState" style="color:var(--tx-success);"></span></div>
-    </div>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-      <button class="cc-sage-x" id="ccExpandBtn" onclick="toggleCCExpand()" title="Expand Sage" style="font-size:13px;">
-        <svg id="ccExpandIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-      </button>
-      <div class="cc-sage-x" id="chatClose" onclick="closeChat()" title="Close">×</div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <button id="convToggle" class="btn" title="Hands-free conversation: keeps listening after each reply" style="font-size:11px; padding:4px 8px;"><i class="ti ti-refresh" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Hands-free: off</button>
+      <button id="chatClose" aria-label="Close assistant" style="border:none; background:none; cursor:pointer; padding:2px; color:var(--tx2);"><i class="ti ti-x" style="font-size:20px;" aria-hidden="true"></i></button>
     </div>
   </div>
-  <div class="cc-sage-controls">
-    <button class="cc-mode-pill" id="ccAiMode" onclick="ccConnectAI()" title="Claude Sonnet 4.6 live reasoning">● Sonnet 4.6</button>
-    <button class="cc-mode-pill" id="ccMuteBtn" onclick="toggleCCMute()" title="Mute / unmute voice">
-      <svg id="ccMuteIcon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
-    </button>
-    <button class="cc-mode-pill" id="convToggle" onclick="toggleConv()" title="Hands-free conversation">↺ Hands-free: off</button>
+  <div id="msgs" style="flex:1; overflow-y:auto; padding:0.9rem; display:flex; flex-direction:column; gap:11px;"></div>
+  <div id="chipRow" style="display:flex; gap:5px; flex-wrap:wrap; padding:0 0.9rem 4px;"></div>
+  <div id="attachRow" style="display:flex; gap:5px; flex-wrap:wrap; padding:0 0.9rem;"></div>
+  <div style="padding:0.7rem 0.9rem; border-top:0.5px solid var(--bd3);">
+    <div style="display:flex; gap:6px; margin-bottom:7px;">
+      <button class="att btn" data-t="image" aria-label="Attach image" style="padding:6px 8px;"><i class="ti ti-photo" style="font-size:16px;" aria-hidden="true"></i></button>
+      <button class="att btn" data-t="video" aria-label="Attach video" style="padding:6px 8px;"><i class="ti ti-video" style="font-size:16px;" aria-hidden="true"></i></button>
+      <button class="att btn" data-t="doc" aria-label="Attach document" style="padding:6px 8px;"><i class="ti ti-file-text" style="font-size:16px;" aria-hidden="true"></i></button>
+      <button class="att btn" data-t="data" aria-label="Attach data" style="padding:6px 8px;"><i class="ti ti-database" style="font-size:16px;" aria-hidden="true"></i></button>
+    </div>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button id="micBtn" class="btn" aria-label="Speak" style="padding:8px 10px; flex-shrink:0;"><i class="ti ti-microphone" style="font-size:18px;" aria-hidden="true"></i></button>
+      <input id="chatInput" type="text" placeholder="Ask or speak…" style="flex:1; min-width:0; height:36px;" />
+      <button id="sendBtn" class="btn" aria-label="Send" style="padding:8px 10px; flex-shrink:0;"><i class="ti ti-arrow-up" style="font-size:18px;" aria-hidden="true"></i></button>
+    </div>
   </div>
-  <div class="cc-sage-body" id="msgs"></div>
-  <div class="cc-sage-suggest" id="chipRow"></div>
-  <div id="attachRow" style="display:flex;gap:5px;flex-wrap:wrap;padding:0 16px 4px;"></div>
-  <div class="cc-sage-foot">
-    <button class="cc-mic-btn" id="micBtn" title="Voice">
-      <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg>
-    </button>
-    <textarea class="cc-sage-input" id="chatInput" rows="1" placeholder="Ask about the financials, the Tiger program…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-    <button class="cc-send-btn" id="sendBtn" title="Send">
-      <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-    </button>
-  </div>
-  <span id="voiceDot" style="display:none;"></span>
 </div>
 </div>
 </div>
@@ -274,23 +208,29 @@ var DEMO_LINKS = {
   monthend: "",   /* Controllership - Month end closure */
   variance: ""    /* FP&A - Variance analysis    */
 };
+// Beta link for the standalone Forecasting & Scenario Planning app (opens in a new tab). Paste the URL when ready.
+var FC_BETA_LINK = "";
+// Beta link for the standalone Dialogue with Data — Valuations app (opens in a new tab). Paste the URL when ready.
+var VAL_BETA_LINK = "";
 
 (function(){
-  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, aiProj:null, pending:[], filterEntity:"all", filterVertical:"all"};
+  var S={screen:"home", persona:"cfo", tower:null, insight:null, report:null, workstream:null, aiProj:null, pending:[]};
+  function fcClone(o){var r={},k;for(k in o)r[k]=o[k];return r;}
+  S.drivers={salesVelocity:520,avgSellingPrice:3.85,collectionRate:0.43,constructionDraw:1.0,fxRate:3.6725,interestRate:0.0,opexGrowth:0.06,constructionCostInflation:0.0}; // baseline calibrated so computeModel ties to the dashboard KPIs
+  S.scenarios={
+    base:fcClone(S.drivers),
+    upside:{salesVelocity:600,avgSellingPrice:3.95,collectionRate:0.50,constructionDraw:1.0,fxRate:3.6725,interestRate:-0.005,opexGrowth:0.04,constructionCostInflation:0.0},
+    downside:{salesVelocity:416,avgSellingPrice:3.70,collectionRate:0.35,constructionDraw:1.15,fxRate:3.75,interestRate:0.0075,opexGrowth:0.09,constructionCostInflation:0.02},
+    custom:fcClone(S.drivers)
+  };
+  S.activeScenario="base";
   var navByPersona={
-    cfo:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"],["engagements","Special AI projects","ti-robot"]],
+    cfo:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["forecast","Forecasting","ti-chart-dots"],["datacenter","Data centers","ti-server-2"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"],["engagements","Special AI projects","ti-robot"]],
     analyst:[["home","Home","ti-home"],["insights","Insights","ti-chart-histogram"],["threads","Threads","ti-messages"],["reports","Reports","ti-report-analytics"]]
   };
 
   /* ---------------- data: home KPIs ---------------- */
-  var kpis=[
-    ["YTD Revenue","AED 12.3B","+18% YoY","success",["insightDetail","ytdrevenue"]],
-    ["YTD EBITDA","AED 4.1B","+23% YoY","success",["insightDetail","ytdebitda"]],
-    ["EBITDA margin","34.2%","+1.4 pts","success",["insightDetail","ebitda"]],
-    ["Group cash","AED 8.4B","+0.6B vs plan","success",["tower","treasury"]],
-    ["Liquidity","AED 12.1B","9.2 mo opex","success",["insightDetail","liquidity"]],
-    ["Compliance","100% on-time","CT 45% ready","warning",["tower","tax"]]
-  ];
+  var kpis=[["Group cash","AED 8.4B","+0.6B vs plan","success"],["Liquidity","AED 12.1B","9.2 mo opex","success"],["YTD collections","AED 6.7B","94% target","warning"],["EBITDA margin","34.2%","+1.4 pts","success"],["Escrow (RERA)","AED 5.2B","42 accounts","info"],["Forecast acc.","96%","13-wk","success"]];
 
   /* ---------------- data: functions (towers) ---------------- */
   var towers=[
@@ -406,20 +346,137 @@ var DEMO_LINKS = {
      deep:"The 40 bps improvement over eight quarters came from refinancing the syndicated facility and favourable repricing on bilaterals. The structural opportunity is behavioural: with T+1 visibility, treasury borrows precautionary buffers it often doesn't need. The AI 13-week forecast in pilot is showing 96% accuracy — confidence that supports running thinner buffers, worth an estimated 15-25 bps. The 2027 sukuk (AED 2.3B) is the next maturity event to position for, ideally 9-12 months ahead.",
      brk:{cols:["Instrument","Outstanding","Rate","Maturity"],rows:[["Sukuk","AED 2.3B","5.1%","2027"],["Syndicated facility","AED 2.6B","4.6%","2028"],["Bilateral facilities","AED 1.8B","4.9%","2026-27"],["Blended","AED 6.7B","4.8%","—"]]},
      drivers:["Syndicated refinancing completed below budget","Bilateral repricing on improved credit profile","Precautionary buffers still inflating drawn balances"],
-     qs:["What is the debt maturity profile?","How would better forecasting cut funding cost?","When should we position for the 2027 sukuk?"]},
-    {id:"ytdrevenue",l:"YTD Revenue",v:"AED 12.3B",c:"+18% YoY",t:"success",sp:[7.2,7.8,8.4,8.9,9.5,10.3,11.2,12.3],axis:"AED B",
-     n:"Revenue is AED 12.3B year to date, 4.2% ahead of budget. Premium launch pricing and strong unit volumes are the primary drivers; hospitality is recovering ahead of expectations.",
-     deep:"The AED 12.3B YTD compares to a budget of AED 11.8B (+4.2%) and AED 10.4B in the prior year (+18% YoY). The outperformance decomposes as: +2.4 pts from premium launch pricing, +1.1 pts from volume, and +0.7 pts from product mix shift toward higher-margin units. Hospitality contributes AED 1.2B YTD, recovering ahead of plan. The current run-rate implies a full-year number of AED 20–21B if H2 trajectory holds.",
-     brk:{cols:["Segment","AED B","% of total","YoY"],rows:[["Development","10.4","85%","+16%"],["Hospitality","1.2","10%","+28%"],["Other","0.7","5%","+12%"],["Group total","12.3","100%","+18%"]]},
-     drivers:["Premium launch pricing +2.4 pts vs budget","Unit volume above absorption plan","Hospitality recovery tracking ahead of forecast"],
-     qs:["Break down revenue by segment","What is the full-year revenue forecast?","How does pricing compare to last year?"]},
-    {id:"ytdebitda",l:"YTD EBITDA",v:"AED 4.1B",c:"+23% YoY",t:"success",sp:[2.2,2.4,2.7,2.9,3.2,3.5,3.8,4.1],axis:"AED B",
-     n:"EBITDA of AED 4.1B is 6.1% ahead of budget and 23% ahead of last year. Revenue outperformance and G&A discipline are the drivers; construction cost inflation on two sites is the forward watch.",
-     deep:"The AED 0.6B EBITDA beat vs budget decomposes as: AED 0.5B from revenue outperformance flowing through at margin, AED 0.15B from G&A running below budget on headcount phasing, partly offset by AED 0.05B of cost headwinds on Lagoons cluster F and Hills 2. Development contributes AED 3.25B at 31.2% margin; hospitality adds AED 0.27B at 22.4%. If construction cost drift on the two watch sites spreads, development margin gives back 0.5–0.8 pts over four quarters.",
-     brk:{cols:["Segment","EBITDA","Margin","YoY"],rows:[["Development","AED 3.25B","31.2%","+1.1 pts"],["Hospitality","AED 0.27B","22.4%","+0.3 pts"],["G&A (cost centre)","(AED 0.75B)","6.1% of rev","-0.4 pts"],["Group EBITDA","AED 4.1B","34.2%","+1.4 pts"]]},
-     drivers:["Revenue 4.2% ahead of budget flows through at margin","G&A AED 14M below budget on headcount phasing","Hospitality recovery contributing modestly"],
-     qs:["What is the EBITDA bridge vs budget?","Which segment is driving margin expansion?","What could erode EBITDA in H2?"]}
+     qs:["What is the debt maturity profile?","How would better forecasting cut funding cost?","When should we position for the 2027 sukuk?"]}
   ];
+
+  /* ================= FORECASTING ACCELERATOR + 3-STATEMENT ENGINE ================= */
+  // LIVE DATA: replace FC.* with Oracle Fusion (BICC extract / OTBI / FBDI) for GL, AP/AR, PPM project costs
+  // and Kyriba (REST API / SFTP) for cash positions, bank balances, debt instruments and FX. Map to the
+  // canonical dimensions below (entity, project, account, currency, month). Seed values used for demo only.
+  var FC={
+    opening:{cash:8.4,liquidity:12.1,escrow:5.2,receivables:2.7,debt:6.7,equity:18.0,ppe:17.1,payables:3.5,custAdv:5.2}, // assets==liab+equity at t0 (33.4 == 33.4)
+    horizon:12,
+    months:["Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun"],
+    recogCurve:[0.90,0.93,0.96,0.98,1.00,1.01,1.02,1.03,1.04,1.04,1.05,1.04], // off-plan recognition phasing; sums to 12.00 so FY revenue = 12 * monthly bookings
+    planCash:[8.6,8.9,9.2,9.5,9.8,10.1,10.4,10.7,11.0,11.2,11.35,11.5], // budget/plan closing-cash path (anchors 9.0 -> ~11.5)
+    histCash:[9.0,9.4,9.2,10.1,10.6,11.2,11.7,12.1], // historical liquidity sparkline anchor (latest = 12.1)
+    debtSchedule:[{name:"Sukuk",amt:2.3,rate:0.051,maturity:"2027"},{name:"Syndicated",amt:2.6,rate:0.046,maturity:"2028"},{name:"Bilateral",amt:1.8,rate:0.049,maturity:"2026-27"}],
+    baseRate:0.048, da:0.05, repay:0.035, capexBase:0.227, escrowInRate:0.15, escrowOutRate:0.147, taxRate:0.09, covenantLimit:3.5
+  };
+  // ---- Macro environment & external shocks (each shock is a full driver set, flows through computeModel) ----
+  var MACRO=[
+    ["Brent oil","$78 /bbl","supports regional liquidity","info"],
+    ["UAE GDP growth","4.2%","non-oil led","success"],
+    ["US Fed funds","4.75%","easing path priced","info"],
+    ["USD/AED","3.6725","peg intact","success"],
+    ["Dubai resi index","+6% YoY","demand resilient","success"],
+    ["Regional risk","Elevated","geopolitical premium","warning"]
+  ];
+  var FC_SHOCKS={
+    war:{label:"Regional conflict / war",icon:"ti-alert-triangle",note:"Demand and tourism shock with safe-haven capital outflows; construction inputs, insurance and freight up; financing tighter.",d:{salesVelocity:390,avgSellingPrice:3.70,collectionRate:0.37,constructionDraw:0.90,fxRate:3.70,interestRate:0.01,opexGrowth:0.08,constructionCostInflation:0.03}},
+    recession:{label:"Global recession",icon:"ti-chart-arrows-vertical",note:"Off-plan demand contracts and collections slow; modest input-cost relief offset by weaker absorption.",d:{salesVelocity:364,avgSellingPrice:3.60,collectionRate:0.36,constructionDraw:0.95,fxRate:3.6725,interestRate:0.0025,opexGrowth:0.05,constructionCostInflation:0.01}},
+    rate:{label:"Rate shock +200bps",icon:"ti-percentage",note:"The AED peg imports US tightening directly; financing cost and mortgage demand both hit.",d:{salesVelocity:468,avgSellingPrice:3.82,collectionRate:0.41,constructionDraw:1.0,fxRate:3.6725,interestRate:0.02,opexGrowth:0.06,constructionCostInflation:0.0}},
+    energy:{label:"Energy price spike",icon:"ti-flame",note:"Construction and operating costs rise; an oil windfall supports regional demand, partly offsetting.",d:{salesVelocity:546,avgSellingPrice:3.90,collectionRate:0.44,constructionDraw:1.0,fxRate:3.6725,interestRate:0.005,opexGrowth:0.10,constructionCostInflation:0.025}},
+    supply:{label:"Supply-chain disruption",icon:"ti-truck-loading",note:"Materials and equipment lead times stretch; capex and handovers slip while input costs inflate.",d:{salesVelocity:520,avgSellingPrice:3.85,collectionRate:0.43,constructionDraw:0.80,fxRate:3.6725,interestRate:0.0,opexGrowth:0.07,constructionCostInflation:0.02}},
+    peg:{label:"Capital flight / peg stress",icon:"ti-arrows-exchange",note:"Defensive rate hikes to hold the peg; FX and translation cost; collections and demand soften.",d:{salesVelocity:450,avgSellingPrice:3.78,collectionRate:0.35,constructionDraw:1.0,fxRate:3.80,interestRate:0.015,opexGrowth:0.06,constructionCostInflation:0.01}}
+  };
+  // ---- Data centers (EDGNEX) — standalone build-out forecast engine ----
+  var DC_BASE={capacityLive:150,capacityPipeline:600,leaseRate:130,utilization:0.82,capexPerMW:9.0,dcMargin:0.58};
+  var dcDriverMeta=[
+    {key:"capacityLive",label:"Live capacity",unit:"MW",disp:function(v){return Math.round(v);},parse:function(v){return parseFloat(v);}},
+    {key:"capacityPipeline",label:"Pipeline capacity",unit:"MW",disp:function(v){return Math.round(v);},parse:function(v){return parseFloat(v);}},
+    {key:"leaseRate",label:"Lease rate",unit:"$/kW/mo",disp:function(v){return Math.round(v);},parse:function(v){return parseFloat(v);}},
+    {key:"utilization",label:"Utilization",unit:"%",disp:function(v){return (v*100).toFixed(0);},parse:function(v){return parseFloat(v)/100;}},
+    {key:"capexPerMW",label:"Capex intensity",unit:"$m/MW",disp:function(v){return v.toFixed(1);},parse:function(v){return parseFloat(v);}},
+    {key:"dcMargin",label:"DC EBITDA margin",unit:"%",disp:function(v){return (v*100).toFixed(0);},parse:function(v){return parseFloat(v)/100;}}
+  ];
+  function dcCompute(d){
+    var aed=3.6725, total=d.capacityLive+d.capacityPipeline;
+    var revPerMW=(1000*d.utilization*d.leaseRate*12/1e6)*aed/1000; // AED B per MW per year
+    var runRate=d.capacityLive*revPerMW, stabRevenue=total*revPerMW, ebitda=stabRevenue*d.dcMargin;
+    var capex=total*d.capexPerMW*aed/1000;                          // AED B
+    var devYield=capex?100*ebitda/capex:0;
+    var frac=[0,0.16,0.32,0.48,0.62,0.76,0.90,1.0], cap=[],rev=[],i;
+    for(i=0;i<frac.length;i++){var c=d.capacityLive+(total-d.capacityLive)*frac[i]; cap.push(c); rev.push(c*revPerMW);}
+    return {liveCap:d.capacityLive,total:total,runRate:runRate,stabRevenue:stabRevenue,ebitda:ebitda,margin:100*d.dcMargin,capex:capex,devYield:devYield,util:100*d.utilization,capSeries:cap,revSeries:rev};
+  }
+  // computeModel(d): fully linked, double-entry 3-statement 12-month projection. BS balances and CF closing
+  // cash === BS cash by construction (interest is added back in CFO and paid in CFF; escrow is mirrored by a
+  // customer-advances liability; PPE rolls by capex - D&A; equity rolls by retained net income).
+  function computeModel(d){
+    var o=FC.opening, M=FC.horizon, eps=1e-6;
+    var grossMargin=0.42 - d.constructionCostInflation;          // gross development margin, eroded by construction cost inflation
+    var opexRatio=0.078*(1+(d.opexGrowth-0.06));                 // baseline opexGrowth 0.06 -> opex 7.8% of revenue -> FY EBITDA margin 34.2%
+    var blended=FC.baseRate + d.interestRate;                    // blended cost of debt = 4.8% + bps delta
+    var fxCost=Math.max(0,(d.fxRate-3.6725))*0.05;               // FX/depeg stress adds a little cost (peg = nil)
+    var bill=(d.salesVelocity*d.avgSellingPrice)/1000;           // monthly bookings, AED B
+    var cash=o.cash,recv=o.receivables,esc=o.escrow,debt=o.debt,eq=o.equity,ppe=o.ppe,pay=o.payables,custAdv=o.custAdv;
+    var P={revenue:[],cogs:[],ebitda:[],netIncome:[]}, B={cash:[],receivables:[],escrow:[],debt:[],equity:[]}, C={cfo:[],cfi:[],cff:[],closingCash:[]};
+    var balanced=true, cashTie=true, i;
+    for(i=0;i<M;i++){
+      var rev=bill*FC.recogCurve[i];
+      var cogs=rev*(1-grossMargin);
+      var gross=rev-cogs;
+      var opex=rev*opexRatio + fxCost;
+      var ebitda=gross-opex;
+      var da=FC.da;
+      var interest=debt*blended/12;
+      var pretax=ebitda-da-interest;
+      var tax=Math.max(0,pretax)*FC.taxRate;
+      var ni=pretax-tax;
+      var collections=d.collectionRate*(recv+rev);               // higher collectionRate => lower DSO, more cash
+      var newRecv=recv+rev-collections, dRecv=newRecv-recv;
+      var targetPay=cogs*3, newPay=pay+(targetPay-pay)*0.2, dPay=newPay-pay;
+      var dWC=dRecv-dPay;
+      var capex=d.constructionDraw*FC.capexBase;
+      var draws=0, repay=FC.repay, interestPaid=interest;
+      var escIn=bill*FC.escrowInRate, escOut=bill*FC.escrowOutRate;
+      var cfo=ni+da+interest-dWC;                                // indirect method: interest added back here, paid in CFF
+      var cfi=-capex;
+      var cff=draws-repay-interestPaid;
+      cash+=(cfo+cfi+cff); recv=newRecv; pay=newPay;
+      esc=esc+escIn-escOut; custAdv=esc;                         // escrow restricted; mirrored by customer-advances liability
+      ppe=ppe+capex-da; debt=debt+draws-repay; eq=eq+ni;
+      P.revenue.push(rev);P.cogs.push(cogs);P.ebitda.push(ebitda);P.netIncome.push(ni);
+      B.cash.push(cash);B.receivables.push(recv);B.escrow.push(esc);B.debt.push(debt);B.equity.push(eq);
+      C.cfo.push(cfo);C.cfi.push(cfi);C.cff.push(cff);C.closingCash.push(cash);
+      if(Math.abs((cash+recv+esc+ppe)-(debt+custAdv+pay+eq))>eps)balanced=false;  // assets == liabilities + equity
+      if(Math.abs(C.closingCash[i]-B.cash[i])>eps)cashTie=false;                  // CF closing cash == BS cash
+    }
+    function sum(a){var s=0,j;for(j=0;j<a.length;j++)s+=a[j];return s;}
+    var fyRev=sum(P.revenue), fyEbitda=sum(P.ebitda);
+    var marginPct=fyRev?100*fyEbitda/fyRev:0;
+    var monthlyBurn=(sum(P.cogs)+fyRev*opexRatio)/12;            // total monthly operating outflow
+    var closingCash=C.closingCash[M-1];
+    var liquidityMonths=monthlyBurn?closingCash/monthlyBurn:0;
+    return {months:FC.months,
+      pnl:{revenue:P.revenue,cogs:P.cogs,ebitda:P.ebitda,netIncome:P.netIncome,marginPct:marginPct},
+      bs:{cash:B.cash,receivables:B.receivables,escrow:B.escrow,debt:B.debt,equity:B.equity,balanced:balanced,cashTie:cashTie},
+      cf:{cfo:C.cfo,cfi:C.cfi,cff:C.cff,closingCash:C.closingCash},
+      headline:{closingCash:closingCash,liquidityMonths:liquidityMonths,forecastAccuracyPct:96,
+        covenantHeadroom:FC.covenantLimit-(debt/fyEbitda),varianceVsPlan:closingCash-FC.planCash[M-1]}};
+  }
+  var driverMeta=[
+    {key:"salesVelocity",label:"Sales velocity",unit:"units/mo",disp:function(v){return Math.round(v);},parse:function(v){return parseFloat(v);}},
+    {key:"avgSellingPrice",label:"Avg selling price",unit:"AED m/unit",disp:function(v){return v.toFixed(2);},parse:function(v){return parseFloat(v);}},
+    {key:"collectionRate",label:"Collection rate",unit:"%",disp:function(v){return (v*100).toFixed(0);},parse:function(v){return parseFloat(v)/100;}},
+    {key:"constructionDraw",label:"Construction draw",unit:"x",disp:function(v){return v.toFixed(2);},parse:function(v){return parseFloat(v);}},
+    {key:"interestRate",label:"Interest rate Δ",unit:"bps vs 4.8%",disp:function(v){return Math.round(v*10000);},parse:function(v){return parseFloat(v)/10000;}},
+    {key:"opexGrowth",label:"Opex growth",unit:"% YoY",disp:function(v){return (v*100).toFixed(0);},parse:function(v){return parseFloat(v)/100;}},
+    {key:"constructionCostInflation",label:"Constr. cost inflation",unit:"bps",disp:function(v){return Math.round(v*10000);},parse:function(v){return parseFloat(v)/10000;}},
+    {key:"fxRate",label:"FX rate",unit:"AED/USD (peg 3.67)",disp:function(v){return v.toFixed(2);},parse:function(v){return parseFloat(v);}}
+  ];
+  function fcSelfTest(){
+    var names=["base","upside","downside","custom"], ok=true, i;
+    for(i=0;i<names.length;i++){
+      var m=computeModel(S.scenarios[names[i]]);
+      console.assert(m.bs.balanced===true,"FC: balance sheet does not balance under "+names[i]);
+      console.assert(m.bs.cashTie===true,"FC: CF closing cash != BS cash under "+names[i]);
+      if(!m.bs.balanced||!m.bs.cashTie)ok=false;
+    }
+    var b=computeModel(S.scenarios.base);
+    console.log("FC self-test — base: closingCash="+b.headline.closingCash.toFixed(2)+"B, liquidity="+b.headline.liquidityMonths.toFixed(1)+" months, FY EBITDA margin="+b.pnl.marginPct.toFixed(1)+"%, all-scenario balanced+tie="+ok);
+  }
 
   /* ---------------- data: engagement ---------------- */
   var prog={value:"USD 2.5M",uc:44,waves:3,dur:"9 months",start:"4 May 2026",sponsor:"DAMAC Group CFO",partner:"Tiger engagement partner",steerco:"Fortnightly · next 24 Jun 2026",working:"Weekly working session · Tuesdays"};
@@ -693,7 +750,7 @@ var DEMO_LINKS = {
 
   /* ---------------- render: nav ---------------- */
   function renderNav(){
-    var parentScreen={tower:"home",workstream:"home",insightDetail:"insights",reportDetail:"reports",engagementDetail:"engagements"};
+    var parentScreen={tower:"home",workstream:"home",insightDetail:"insights",reportDetail:"reports",engagementDetail:"engagements",forecast:"forecast",scenario:"forecast",datacenter:"datacenter"};
     var cur=parentScreen[S.screen]||S.screen;
     document.getElementById("nav").innerHTML=(S.persona==="cfo"?navByPersona.cfo:navByPersona.analyst).map(function(it){
       var on=cur===it[0];
@@ -714,60 +771,42 @@ var DEMO_LINKS = {
 
   /* ---------------- render: home ---------------- */
   function homeHtml(){
-    var k=kpis.map(function(x){
-      var linked=!!x[4];
-      var attrs=linked?' class="mcard kpi-link" data-screen="'+x[4][0]+'" data-arg="'+x[4][1]+'" title="Open '+x[0]+' detail"':' class="mcard"';
-      var cursor=linked?' cursor:pointer;':'';
-      return '<div'+attrs+' style="'+cursor+'">'
-        +'<div style="font-size:12px; color:var(--tx2); display:flex; align-items:center; gap:4px;">'+x[0]+(linked?'<i class="ti ti-chevron-right" style="font-size:10px; color:var(--tx3);" aria-hidden="true"></i>':'')+'</div>'
-        +'<div style="font-size:19px; font-weight:500; line-height:1.2;">'+x[1]+'</div>'
-        +'<div style="font-size:11px; color:'+toneCol(x[3])+';">'+x[2]+'</div>'
-        +'</div>';
-    }).join("");
+    var k=kpis.map(function(x){return '<div class="mcard"><div style="font-size:12px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:19px; font-weight:500; line-height:1.2;">'+x[1]+'</div><div style="font-size:11px; color:'+toneCol(x[3])+';">'+x[2]+'</div></div>';}).join("");
     var t=towers.map(function(x){var s=stat[x.status];
       return '<button class="twr" data-id="'+x.id+'" style="text-align:left; cursor:pointer; border:0.5px solid var(--bd3); background:var(--bg1); border-radius:var(--r-md); padding:0.75rem 0.8rem; display:flex; flex-direction:column; gap:6px;">'+
         '<div style="display:flex; align-items:center; justify-content:space-between; width:100%;"><div class="'+x.ramp+'" style="width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center;"><i class="ti '+x.icon+'" style="font-size:17px;" aria-hidden="true"></i></div><i class="ti ti-chevron-right" style="font-size:15px; color:var(--tx3);" aria-hidden="true"></i></div>'+
         '<div style="font-size:13px; font-weight:500; line-height:1.25;">'+x.name+'</div>'+
         '<div style="font-size:11px; color:var(--tx2);">'+x.metric+'</div>'+
         '<div style="font-size:11px; color:'+toneCol(s[0])+';"><i class="ti '+s[2]+'" style="font-size:10px;" aria-hidden="true"></i> '+s[1]+'</div></button>';}).join("");
-    var filters=
-      '<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">'
-      +'<div style="display:flex; align-items:center; gap:6px;">'
-      +'<span style="font-size:11px; color:var(--tx2); white-space:nowrap;">Entity</span>'
-      +'<select id="filterEntity" class="fsel">'
-      +'<option value="all">Select all</option>'
-      +'<option value="damac-prop">DAMAC Properties LLC</option>'
-      +'<option value="damac-intl">DAMAC International</option>'
-      +'<option value="damac-hotels">DAMAC Hotels &amp; Resorts</option>'
-      +'<option value="damac-maison">DAMAC Maison</option>'
-      +'<option value="cavalli">Cavalli Estates LLC</option>'
-      +'<option value="amali">Amali Islands LLC</option>'
-      +'</select></div>'
-      +'<div style="display:flex; align-items:center; gap:6px;">'
-      +'<span style="font-size:11px; color:var(--tx2); white-space:nowrap;">Vertical</span>'
-      +'<select id="filterVertical" class="fsel">'
-      +'<option value="all">Select all</option>'
-      +'<option value="dev">Real Estate Development</option>'
-      +'<option value="hosp">Hospitality</option>'
-      +'<option value="retail">Commercial &amp; Retail</option>'
-      +'<option value="invest">Investment Holdings</option>'
-      +'</select></div>'
-      +'</div>';
-    return '<div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">'
-      +'<div style="font-size:15px; font-weight:500;">Key Performance Indicators (KPIs)</div>'
-      +'</div>'
-      +filters
-      +'<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:9px; margin-bottom:1.2rem;">'+k+'</div>'+
+    return '<div style="font-size:15px; font-weight:500; margin-bottom:8px;">Key Performance Indicators (KPIs)</div>'+
+      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:9px; margin-bottom:1.2rem;">'+k+'</div>'+
+      '<div class="card" style="background:var(--bg-info); border:none; margin-bottom:1.2rem;">'+
+        '<div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;"><i class="ti ti-sparkles" style="font-size:16px; color:var(--tx-info);" aria-hidden="true"></i><span class="secthead" style="margin:0; color:var(--tx-info);">Advanced · in beta</span></div>'+
+        '<div style="font-size:12.5px; color:var(--tx2); margin-bottom:12px;">Next-generation capabilities we are piloting — launch the standalone beta apps.</div>'+
+        '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:10px;">'+
+          betaTile("forecast","ti-chart-dots","Forecasting & Scenario Planning","Driver-based 3-statement reforecast, scenarios and external-shock stress testing")+
+          betaTile("valuations","ti-message-chatbot","Dialogue with Data — Valuations","Ask valuation questions in natural language; live answers from the data")+
+        '</div>'+
+        '<div id="betaHomeNote" style="display:none; font-size:11px; color:var(--tx-info); margin-top:9px;"><i class="ti ti-info-circle" style="font-size:12px; vertical-align:-2px;" aria-hidden="true"></i> These open the standalone beta apps in a new tab — link to be connected.</div>'+
+      '</div>'+
       '<div class="secthead">Finance functions · click any function to open its full page</div>'+
       '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:9px; margin-bottom:1rem;">'+t+'</div>'+
       '<div class="mcard" style="display:flex; align-items:center; gap:10px;"><i class="ti ti-microphone" style="font-size:20px; color:var(--tx-info);" aria-hidden="true"></i><div style="font-size:13px; color:var(--tx2);">Try the voice assistant: <span style="color:var(--tx1);">"How is liquidity?" · "Open treasury" · "What is the engagement status?" · "Which projects are at risk?"</span></div></div>';
   }
+  function betaTile(app,icon,name,tag){
+    return '<button class="betaLaunch beta-pop" data-app="'+app+'" style="text-align:left; cursor:pointer; border:none; border-radius:var(--r-md); background:#185fa5; color:#fff; padding:13px 15px; display:flex; align-items:center; gap:12px;">'+
+      '<i class="ti '+icon+'" style="font-size:24px; flex-shrink:0;" aria-hidden="true"></i>'+
+      '<div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:500; line-height:1.25;">'+name+' <span style="font-size:9px; background:rgba(255,255,255,0.24); padding:2px 7px; border-radius:99px; margin-left:2px; letter-spacing:0.4px; vertical-align:1px;">BETA</span></div><div style="font-size:11.5px; opacity:0.86; margin-top:3px; line-height:1.4;">'+tag+'</div></div>'+
+      '<i class="ti ti-arrow-right" style="font-size:18px; flex-shrink:0;" aria-hidden="true"></i>'+
+      '</button>';
+  }
   function bindHome(){
     Array.prototype.forEach.call(document.querySelectorAll(".twr"),function(b){b.onclick=function(){go("tower",b.getAttribute("data-id"));};});
-    Array.prototype.forEach.call(document.querySelectorAll(".kpi-link"),function(b){b.onclick=function(){go(b.getAttribute("data-screen"),b.getAttribute("data-arg"));};});
-    var fe=document.getElementById("filterEntity"), fv=document.getElementById("filterVertical");
-    if(fe){fe.value=S.filterEntity; fe.onchange=function(){S.filterEntity=fe.value;};}
-    if(fv){fv.value=S.filterVertical; fv.onchange=function(){S.filterVertical=fv.value;};}
+    Array.prototype.forEach.call(document.querySelectorAll(".betaLaunch"),function(b){b.onclick=function(){
+      var app=b.getAttribute("data-app"), url=(app==="valuations")?VAL_BETA_LINK:FC_BETA_LINK;
+      if(typeof url!=="undefined" && url){window.open(url,"_blank");}
+      else {var n=document.getElementById("betaHomeNote"); if(n)n.style.display="block";}
+    };});
   }
 
   /* ---------------- render: function page ---------------- */
@@ -778,7 +817,7 @@ var DEMO_LINKS = {
       var col=sub[1]>=70?"var(--tx-success)":sub[1]>=55?"var(--tx-warning)":"var(--tx-danger)";
       return '<div style="padding:8px 0; border-bottom:0.5px solid var(--bd3);"><div style="display:flex; align-items:center; gap:10px;"><div style="flex:1; font-size:13px; font-weight:500;">'+sub[0]+'</div><div style="width:110px; height:7px; background:var(--bg2); border-radius:99px; overflow:hidden;"><div style="width:'+sub[1]+'%; height:100%; background:'+col+';"></div></div><div style="width:36px; text-align:right; font-size:12px; color:var(--tx2);">'+sub[1]+'%</div></div><div style="font-size:12px; color:var(--tx2); margin-top:2px;">'+sub[2]+'</div></div>';}).join("");
     var li=function(arr,icon,col){return arr.map(function(i){return '<div style="display:flex; gap:8px; align-items:flex-start; padding:5px 0;"><i class="ti '+icon+'" style="font-size:15px; color:'+col+'; margin-top:2px;" aria-hidden="true"></i><span style="font-size:13px; line-height:1.5;">'+i+'</span></div>';}).join("");};
-    return backBtn("home","Finance AI Console")+
+    return backBtn("home","Command center")+
       '<div style="display:flex; align-items:center; gap:11px; margin-bottom:10px;"><div class="'+x.ramp+'" style="width:38px; height:38px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+x.icon+'" style="font-size:21px;" aria-hidden="true"></i></div><div><div style="font-size:18px; font-weight:500;">'+x.name+'</div><div style="font-size:12px; color:'+toneCol(s[0])+';"><i class="ti '+s[2]+'" style="font-size:10px;" aria-hidden="true"></i> '+s[1]+' · '+x.metric+'</div></div></div>'+
       '<div style="font-size:14px; line-height:1.65; color:var(--tx1); margin-bottom:14px; max-width:760px;">'+x.over+'</div>'+
       '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:16px;">'+st+'</div>'+
@@ -816,7 +855,110 @@ var DEMO_LINKS = {
         '<div class="card"><div class="secthead">Breakdown</div>'+brkTable(k.brk)+'</div>'+
         '<div class="card"><div class="secthead">What is driving it</div>'+dr+'</div></div>'+
       '<div class="card" style="margin-bottom:6px;"><div class="secthead">Commentary</div><div style="font-size:14px; line-height:1.65;">'+k.deep+'</div></div>'+
+      (k.id==="ebitda"?ebitdaScenarioHtml():"")+
       '<div class="secthead" style="margin-top:14px;">Ask about this metric — by voice or text</div>'+askChips(k.qs);
+  }
+
+  /* ================================================================
+     EBITDA MARGIN — SCENARIO PLANNER (drop-in)
+     Additive driver-bridge model, anchored to the insight card:
+     baseline 34.2% margin -> EBITDA AED 4.10B (revenue 12.0B).
+     Mirrors the card decomposition (+0.9 mix, +0.4 overhead, +0.1 hosp).
+     ================================================================ */
+  var EB_PRIOR = 34.2;
+  var EB_BASE = { revenue:12.0, mixPts:0.0, overheadPts:0.0, hospPts:0.0, constInflBps:0 };
+  var EB = Object.assign({}, EB_BASE);
+
+  function ebCompute(d){
+    var marginPct = EB_PRIOR + d.mixPts + d.overheadPts + d.hospPts - d.constInflBps/100;
+    var ebitda = d.revenue * marginPct/100;
+    var da = 0.45, interest = 6.7 * 0.048; // D&A; debt 6.7B @ 4.8%
+    var net = (ebitda - da - interest) * (1 - 0.09); // UAE CT 9%
+    return { marginPct:marginPct, ebitda:ebitda, net:net };
+  }
+
+  var EB_SLIDERS = [
+    ["revenue", "Revenue (AED B)", 10, 14, 0.1, "B"],
+    ["mixPts", "Premium-launch mix", -3, 3, 0.1, " pts"],
+    ["overheadPts", "Overhead (G&A) leverage", -3, 3, 0.1, " pts"],
+    ["hospPts", "Hospitality contribution", -2, 2, 0.1, " pts"],
+    ["constInflBps", "Construction cost inflation", 0, 400, 25, " bps"]
+  ];
+  function ebFmt(v,u){
+    if(u==="B") return v.toFixed(1)+"B";
+    if(u===" bps")return v.toFixed(0)+" bps";
+    return (v>=0?"+":"")+v.toFixed(1)+u;
+  }
+
+  function ebitdaScenarioHtml(){
+    var r = ebCompute(EB), b = ebCompute(EB_BASE);
+    var dPts = r.marginPct - b.marginPct;
+    var dCol = Math.abs(dPts)<0.05 ? "var(--tx2)" : dPts>0 ? "var(--tx-success)" : "var(--tx-danger)";
+    var arrow = Math.abs(dPts)<0.05 ? "ti-minus" : dPts>0 ? "ti-arrow-up-right" : "ti-arrow-down-right";
+    var head = '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:9px; margin-bottom:12px;">'+
+      '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">Scenario margin</div>'+
+      '<div style="font-size:22px; font-weight:600; line-height:1.15; color:'+dCol+';">'+r.marginPct.toFixed(1)+'%</div>'+
+      '<div style="font-size:11px; color:'+dCol+';"><i class="ti '+arrow+'" style="font-size:11px; vertical-align:-1px;" aria-hidden="true"></i> '+(dPts>=0?"+":"")+dPts.toFixed(1)+' pts vs base</div></div>'+
+      '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">EBITDA (FY)</div>'+
+      '<div style="font-size:19px; font-weight:500; line-height:1.2;">AED '+r.ebitda.toFixed(2)+'B</div>'+
+      '<div style="font-size:11px; color:var(--tx2);">base AED '+b.ebitda.toFixed(2)+'B</div></div>'+
+      '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">Net income (FY)</div>'+
+      '<div style="font-size:19px; font-weight:500; line-height:1.2;">AED '+r.net.toFixed(2)+'B</div>'+
+      '<div style="font-size:11px; color:var(--tx2);">after D&A, interest, 9% CT</div></div>'+
+      '</div>';
+    var rows = EB_SLIDERS.map(function(s){
+      var key=s[0], val=EB[key];
+      return '<div style="margin-bottom:11px;">'+
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px;">'+
+        '<span style="font-size:12px; color:var(--tx2);">'+s[1]+'</span>'+
+        '<span class="ebval" data-k="'+key+'" style="font-size:13px; font-weight:500;">'+ebFmt(val,s[5])+'</span>'+
+        '</div>'+
+        '<input type="range" class="ebsl" data-k="'+key+'" min="'+s[2]+'" max="'+s[3]+'" step="'+s[4]+'" value="'+val+'" style="width:100%; accent-color:var(--tx-info); cursor:pointer;">'+
+        '</div>';
+    }).join("");
+    var presets = '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">'+
+      '<button class="ebpre btn" data-p="up" style="font-size:12px;"><i class="ti ti-trending-up" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Margin upside</button>'+
+      '<button class="ebpre btn" data-p="down" style="font-size:12px;"><i class="ti ti-trending-down" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Margin downside</button>'+
+      '<button class="ebpre btn" data-p="reset" style="font-size:12px;"><i class="ti ti-refresh" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Reset to 34.2%</button>'+
+      '</div>';
+    return '<div class="card" style="margin:14px 0 6px; background:var(--bg-info); border:none;">'+
+      '<div class="secthead" style="color:var(--tx-info);">Scenario planner · flex the EBITDA margin up or down</div>'+
+      '<div style="font-size:12.5px; color:var(--tx2); line-height:1.55; margin-bottom:12px;">Drag any driver to model the margin. Mix, overhead leverage, hospitality and construction-cost inflation recompute the 34.2% live; revenue scales the EBITDA value.</div>'+
+      presets + head + '<div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 22px;">'+rows+'</div>'+
+      '</div>';
+  }
+
+  var EB_PRESETS = {
+    up:   { revenue:12.4, mixPts: 0.9, overheadPts: 0.5, hospPts: 0.4, constInflBps: 0 },
+    down: { revenue:11.5, mixPts:-0.6, overheadPts:-0.4, hospPts:-0.2, constInflBps: 200 }
+  };
+
+  function bindEbitdaScenario(){
+    function repaint(){
+      var m=document.getElementById("main");
+      m.innerHTML=insightDetail();
+      bindEbitdaScenario();
+      Array.prototype.forEach.call(document.querySelectorAll(".back"),function(b){b.onclick=function(){go(b.getAttribute("data-b"));};});
+      Array.prototype.forEach.call(document.querySelectorAll(".askq"),function(b){b.onclick=function(){openChat(); pushMsg("user",b.getAttribute("data-q")); botRespond(b.getAttribute("data-q"));};});
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".ebsl"),function(sl){
+      var key=sl.getAttribute("data-k");
+      var unit=(EB_SLIDERS.filter(function(s){return s[0]===key;})[0])[5];
+      sl.addEventListener("input",function(){
+        EB[key]=parseFloat(sl.value);
+        var lbl=document.querySelector('.ebval[data-k="'+key+'"]');
+        if(lbl)lbl.textContent=ebFmt(EB[key],unit);
+      });
+      sl.addEventListener("change",repaint);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".ebpre"),function(btn){
+      btn.onclick=function(){
+        var p=btn.getAttribute("data-p");
+        if(p==="reset")EB=Object.assign({},EB_BASE);
+        else EB=Object.assign({},EB_BASE,EB_PRESETS[p]);
+        repaint();
+      };
+    });
   }
 
   /* ---------------- render: reports ---------------- */
@@ -860,8 +1002,6 @@ var DEMO_LINKS = {
   var aiProjects=[
     {id:"tiger",name:"Tiger — finance transformation",icon:"ti-briefcase",ramp:"c-blue",lead:"Partner-led program · Tiger",
      obj:"The flagship 3-wave, 44-use-case finance transformation program delivered with Tiger.",pill:["In delivery · Wave 1","success"]},
-    {id:"valuationiq",launch:"valuationiq",name:"ValuationIQ — M&A & data-center valuation co-pilot",icon:"ti-building-bank",ramp:"c-amber",lead:"Office of the CFO · Tiger",
-     obj:"Conversational CFO co-pilot for IRR / CAPEX, multi-method enterprise value, risk sensitivities and an investment-committee memo — voice or typed. Click to open the live co-pilot.",pill:["Live · launch co-pilot","info"]},
     {id:"liquidity",name:"AI liquidity forecasting",icon:"ti-chart-dots",ramp:"c-teal",lead:"Treasury · Tiger data science",
      obj:"Machine-learning 13-week and 12-month cash-flow forecasting across all entities and escrow cycles.",pill:["Pilot · 96% accuracy","info"],
      meta:{sponsor:"Group CFO",lead:"Treasury + Tiger DS",start:"Mar 2026",stage:"Pilot"},
@@ -889,7 +1029,7 @@ var DEMO_LINKS = {
   ];
   function aiProjectsHtml(){
     var cards=aiProjects.map(function(p){
-      return '<button class="aiproj card" data-id="'+p.id+'"'+(p.launch?' data-launch="'+p.launch+'"':'')+' style="text-align:left; cursor:pointer;">'+
+      return '<button class="aiproj card" data-id="'+p.id+'" style="text-align:left; cursor:pointer;">'+
         '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">'+
           '<div style="display:flex; align-items:center; gap:10px;"><div class="'+p.ramp+'" style="width:34px; height:34px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center;"><i class="ti '+p.icon+'" style="font-size:19px;" aria-hidden="true"></i></div>'+
           '<div><div style="font-size:14px; font-weight:500;">'+p.name+'</div><div style="font-size:11px; color:var(--tx3);">'+p.lead+'</div></div></div>'+
@@ -902,11 +1042,7 @@ var DEMO_LINKS = {
       '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">'+cards+'</div>';
   }
   function bindAiProjects(){
-    Array.prototype.forEach.call(document.querySelectorAll(".aiproj"),function(b){b.onclick=function(){
-      var lk=b.getAttribute("data-launch");
-      if(lk){ if(window.parent!==window){ window.parent.postMessage({__navTo:lk},'*'); } return; }
-      go("engagementDetail",b.getAttribute("data-id"));
-    };});
+    Array.prototype.forEach.call(document.querySelectorAll(".aiproj"),function(b){b.onclick=function(){go("engagementDetail",b.getAttribute("data-id"));};});
   }
   function aiProjectDetail(){
     if(S.aiProj==="tiger") return backBtn("engagements","All AI projects")+engagementsHtml();
@@ -1155,7 +1291,7 @@ var DEMO_LINKS = {
       homeHeading:"My performance &amp; KPIs",hdrSub:"Powered by Tiger · FP&A Analyst workspace · AED",
       voiceHint:'"What\'s due today?" · "Open forecasting" · "G&A variance" · "How am I doing?"',
       chips:["What's due today?","Open forecasting","G&A variance","How am I doing?"],
-      intro:"Hi — I'm Sage. Ask about your open activities, a workstream, or any department metric. Try 'what's due today' or 'open forecasting', or open an activity to complete it.",
+      intro:"Hi — I'm your Tiger assistant. Ask about your open activities, a workstream, or any department metric. Try 'what's due today' or 'open forecasting', or open an activity to complete it.",
       qa:[
         [/due|open activit|to.?do|my task|what.*do today|what.*work/,"You have 15 open activities, 8 due this week. Top priority: the Q3 rolling forecast refresh due today and the June budget-variance commentary due tomorrow. Reconciling the cost center master against ERP is overdue and blocked awaiting access from IT.",["Open activities","15 · 8 due this week","warning","Q3 forecast refresh due today"]],
         [/how am i|my performance|on.?time|productiv|am i doing/,"You are tracking well — 94 percent on-time delivery over the last 90 days, 28 tasks completed this month, average turnaround 1.8 days. Five queries are open, two ageing.",["On-time delivery","94%","success","28 done MTD · 1.8 day avg"]],
@@ -1165,7 +1301,7 @@ var DEMO_LINKS = {
       homeHeading:"My queue &amp; KPIs",hdrSub:"Powered by Tiger · Financial Shared Services workspace · AED",
       voiceHint:'"What\'s due today?" · "Open reconciliations" · "Open payments" · "How am I doing?"',
       chips:["What's due today?","Open reconciliations","Open payments","How am I doing?"],
-      intro:"Hi — I'm Sage. Ask about reconciliations, payments, exceptions or open items. Try 'what's due today' or 'open reconciliations', or open an activity to complete it.",
+      intro:"Hi — I'm your Tiger assistant. Ask about reconciliations, payments, exceptions or open items. Try 'what's due today' or 'open reconciliations', or open an activity to complete it.",
       wsShort:{recon:"Reconciliations",payments:"Payments",ar:"Receivables",master:"Master data"},
       kpis:[["Open items","37","12 due today","warning"],["Touchless AP","81%","rising","success"],["Invoices (MTD)","94k","processed","info"],["Auto-match rate","92%","reconciliations","success"],["Payment runs","14","this week","info"],["Open exceptions","210","18 ageing","warning"]],
       activities:[
@@ -1302,7 +1438,7 @@ var DEMO_LINKS = {
       homeHeading:"My close &amp; KPIs",hdrSub:"Powered by Tiger · Controllership workspace · AED",
       voiceHint:'"What\'s due today?" · "Open month-end close" · "Intercompany status" · "Close cycle"',
       chips:["What's due today?","Open month-end close","Intercompany status","Close cycle"],
-      intro:"Hi — I'm Sage. Ask about the close, intercompany, consolidation or statutory work. Try 'what's due today' or 'open month-end close', or open an activity to complete it.",
+      intro:"Hi — I'm your Tiger assistant. Ask about the close, intercompany, consolidation or statutory work. Try 'what's due today' or 'open month-end close', or open an activity to complete it.",
       wsShort:{close:"Month-end",intercompany:"Intercompany",consol:"Consolidation",statutory:"Statutory"},
       kpis:[["Close day","3 / 7","warning"],["Open activities","14","5 due this week","warning"],["IC unmatched","AED 34M","warning"],["Journals (MTD)","2.8k","info"],["Audit adjustments","3","success"],["Controls automated","57%","warning"]],
       activities:[
@@ -1561,6 +1697,185 @@ var DEMO_LINKS = {
       '<div class="secthead" style="margin-top:14px;">Ask about this report — by voice or text</div>'+askChips(d.qs);
   }
 
+  /* ---------------- render: forecasting accelerator + scenario planner ---------------- */
+  function fcChart(fc,plan,months){
+    var all=fc.concat(plan), mn=Math.min.apply(null,all), mx=Math.max.apply(null,all), r=(mx-mn)||1, w=560,h=160,pad=34;
+    function pts(arr){return arr.map(function(y,i){return (pad+i/(arr.length-1)*(w-pad-14)).toFixed(1)+","+((h-22)-((y-mn)/r)*(h-50)).toFixed(1);}).join(" ");}
+    var fpts=pts(fc), ppts=pts(plan), fill=pad+","+(h-22)+" "+fpts+" "+(w-14)+","+(h-22);
+    var grid="",g; for(g=0;g<3;g++){var gy=(28+g*(h-50)/2).toFixed(1),gv=(mx-g*r/2);grid+='<line x1="'+pad+'" y1="'+gy+'" x2="'+(w-10)+'" y2="'+gy+'" stroke="var(--bd3)" stroke-width="0.5"/><text x="'+(pad-4)+'" y="'+(parseFloat(gy)+3)+'" text-anchor="end" font-size="9" fill="var(--tx3)">'+(Math.round(gv*10)/10)+'</text>';}
+    var xl=months.map(function(c,i){return '<text x="'+(pad+i/(months.length-1)*(w-pad-14)).toFixed(1)+'" y="'+(h-6)+'" text-anchor="middle" font-size="9" fill="var(--tx3)">'+c+'</text>';}).join("");
+    return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" role="img" aria-label="Forecast closing cash vs plan">'+grid+
+      '<polygon points="'+fill+'" fill="var(--tx-info)" opacity="0.13"/>'+
+      '<polyline points="'+ppts+'" fill="none" stroke="var(--tx3)" stroke-width="2" stroke-dasharray="4 4"/>'+
+      '<polyline points="'+fpts+'" fill="none" stroke="var(--tx-info)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+xl+'</svg>'+
+      '<div style="display:flex; gap:16px; margin-top:6px; font-size:11px; color:var(--tx2);"><span><span style="display:inline-block; width:18px; height:2px; background:var(--tx-info); vertical-align:middle;"></span> Forecast</span><span><span style="display:inline-block; width:18px; height:0; border-top:2px dashed var(--tx3); vertical-align:middle;"></span> Plan</span></div>';
+  }
+  function driverPanel(dr,cls,meta){ meta=meta||driverMeta;
+    return '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px;">'+meta.map(function(m){
+      return '<div><div style="font-size:11px; color:var(--tx2); margin-bottom:3px;">'+m.label+' <span style="color:var(--tx3);">('+m.unit+')</span></div><input type="text" class="'+cls+'" data-key="'+m.key+'" value="'+m.disp(dr[m.key])+'" style="width:100%; height:34px; box-sizing:border-box;"/></div>';
+    }).join("")+'</div>';
+  }
+  function bindDrivers(cls,target,rer,metaArr){ metaArr=metaArr||driverMeta;
+    Array.prototype.forEach.call(document.querySelectorAll("."+cls),function(b){
+      b.addEventListener("change",function(){
+        var key=b.getAttribute("data-key"),meta=null,i;
+        for(i=0;i<metaArr.length;i++)if(metaArr[i].key===key)meta=metaArr[i];
+        var val=meta.parse(b.value); if(!isNaN(val))target[key]=val;
+        rer();
+      });
+    });
+  }
+  function bindCommon(){
+    Array.prototype.forEach.call(document.querySelectorAll(".back"),function(b){b.onclick=function(){go(b.getAttribute("data-b"));};});
+    Array.prototype.forEach.call(document.querySelectorAll(".askq"),function(b){b.onclick=function(){openChat(); pushMsg("user",b.getAttribute("data-q")); botRespond(b.getAttribute("data-q"));};});
+  }
+  function fcMetrics(dr){
+    var mo=computeModel(dr);
+    function sum(a){var s=0,i;for(i=0;i<a.length;i++)s+=a[i];return s;}
+    function last(a){return a[a.length-1];}
+    return {revenue:sum(mo.pnl.revenue),gross:sum(mo.pnl.revenue)-sum(mo.pnl.cogs),ebitda:sum(mo.pnl.ebitda),marginPct:mo.pnl.marginPct,netIncome:sum(mo.pnl.netIncome),
+      cash:last(mo.bs.cash),recv:last(mo.bs.receivables),escrow:last(mo.bs.escrow),debt:last(mo.bs.debt),equity:last(mo.bs.equity),
+      cfo:sum(mo.cf.cfo),cfi:sum(mo.cf.cfi),cff:sum(mo.cf.cff),closingCash:mo.headline.closingCash,liqMonths:mo.headline.liquidityMonths,covHeadroom:mo.headline.covenantHeadroom};
+  }
+  function forecastHtml(){
+    var mo=computeModel(S.drivers), h=mo.headline;
+    var kp=[
+      ["Closing cash","AED "+h.closingCash.toFixed(1)+"B",h.closingCash>=11.5?"success":"warning"],
+      ["Liquidity","~"+h.liquidityMonths.toFixed(1)+" months",h.liquidityMonths>=8.5?"success":"warning"],
+      ["Forecast accuracy",h.forecastAccuracyPct+"%","success"],
+      ["Variance vs plan",(h.varianceVsPlan>=0?"+":"")+"AED "+h.varianceVsPlan.toFixed(1)+"B",h.varianceVsPlan>=0?"success":"danger"]
+    ].map(function(x){return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:20px; font-weight:500; color:'+toneCol(x[2])+';">'+x[1]+'</div></div>';}).join("");
+    return '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px;">'+
+      '<div><div style="font-size:18px; font-weight:500; margin-bottom:3px;">Forecasting accelerator</div>'+
+      '<div style="font-size:13px; color:var(--tx2); max-width:620px;">Driver-based rolling reforecast across the 12-month horizon. Edit any driver to reforecast instantly.</div></div>'+
+      '<div style="flex-shrink:0; text-align:right;"><button class="btn-beta" id="fcBeta" style="white-space:nowrap;"><i class="ti ti-rocket" style="font-size:16px;" aria-hidden="true"></i> Open Forecasting &amp; Scenario Planning <span style="font-size:10px; background:rgba(255,255,255,0.24); color:#fff; padding:2px 8px; border-radius:99px; margin-left:2px; letter-spacing:0.4px; font-weight:500;">BETA</span></button><div id="fcBetaNote" style="display:none; font-size:11px; color:var(--tx3); margin-top:5px;">Link to be connected</div></div>'+
+      '</div>'+
+      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-bottom:14px;">'+kp+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Forecast vs plan — closing cash, AED B</div>'+fcChart(mo.cf.closingCash,FC.planCash,mo.months)+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Drivers · edit to reforecast</div>'+driverPanel(S.drivers,"fcDriver")+'</div>'+
+      '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;"><button class="btn" id="fcReset"><i class="ti ti-refresh" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Reset to baseline</button><button class="btn btn-primary" id="fcScenario"><i class="ti ti-git-branch" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Open scenario planner</button></div>'+
+      macroShockHtml()+
+      askChips(["Run the downside scenario","Model a regional conflict shock","How much idle cash can we mobilise?"]);
+  }
+  function macroShockHtml(){
+    var macro=MACRO.map(function(x){return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:16px; font-weight:500;">'+x[1]+'</div><div style="font-size:11px; color:'+toneCol(x[3])+';">'+x[2]+'</div></div>';}).join("");
+    var baseM=computeModel(S.scenarios.base), base=baseM.headline;
+    var keys=["war","recession","rate","energy","supply","peg"];
+    var rows=[["Base","AED "+base.closingCash.toFixed(1)+"B",baseM.pnl.marginPct.toFixed(1)+"%","~"+base.liquidityMonths.toFixed(1)+" mo",base.covenantHeadroom.toFixed(1)+"x"]];
+    keys.forEach(function(k){
+      var sh=FC_SHOCKS[k], m=computeModel(sh.d), hh=m.headline, dC=hh.closingCash-base.closingCash;
+      rows.push([sh.label,"AED "+hh.closingCash.toFixed(1)+"B ("+(dC>=0?"+":"")+dC.toFixed(1)+")",m.pnl.marginPct.toFixed(1)+"%","~"+hh.liquidityMonths.toFixed(1)+" mo",hh.covenantHeadroom.toFixed(1)+"x"]);
+    });
+    var matrix=brkTable({cols:["External shock","Closing cash","EBITDA margin","Liquidity","Covenant"],rows:rows});
+    var btns=keys.map(function(k){var s=FC_SHOCKS[k];return '<button class="fcShock btn" data-k="'+k+'" style="font-size:12px;"><i class="ti '+s.icon+'" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> '+s.label+'</button>';}).join(" ");
+    return '<div class="card" style="margin:14px 0;"><div class="secthead">Macro environment</div>'+
+        '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:8px; margin-bottom:8px;">'+macro+'</div>'+
+        '<div style="font-size:12px; color:var(--tx2); line-height:1.5;">Transmission to DAMAC: geopolitics and demand flow through sales velocity and collections; the AED peg imports US rates into financing cost; energy and supply chains drive construction-cost inflation; FX stress affects translation. Each shock below applies these as driver moves and reforecasts.</div></div>'+
+      '<div class="card" style="margin-bottom:14px; background:var(--bg-info); border:none;"><div class="secthead" style="color:var(--tx-info);">External shocks · stress the forecast</div>'+
+        '<div style="font-size:12.5px; color:var(--tx2); line-height:1.55; margin-bottom:10px;">Apply a shock to reforecast live, or read the impact matrix below (each shock vs base). Use “Reset to baseline” above to clear.</div>'+
+        '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">'+btns+'</div>'+
+        matrix+
+        '<div style="font-size:12px; color:var(--tx2); line-height:1.5; margin-top:10px;"><i class="ti ti-info-circle" style="font-size:13px; vertical-align:-2px;" aria-hidden="true"></i> Global recession and regional conflict hit closing cash hardest; conflict carries the sharpest margin compression (to ~31%). Covenant headroom stays positive across all modelled shocks but thins under stress.</div></div>';
+  }
+  function bindForecast(){
+    var rer=function(){var m=document.getElementById("main");m.innerHTML=forecastHtml();bindForecast();};
+    bindDrivers("fcDriver",S.drivers,rer);
+    var rb=document.getElementById("fcReset"); if(rb)rb.onclick=function(){S.drivers=fcClone(S.scenarios.base);rer();};
+    var sb=document.getElementById("fcScenario"); if(sb)sb.onclick=function(){go("scenario");};
+    var beta=document.getElementById("fcBeta"); if(beta)beta.onclick=function(){ if(typeof FC_BETA_LINK!=="undefined"&&FC_BETA_LINK){window.open(FC_BETA_LINK,"_blank");} else {var n=document.getElementById("fcBetaNote"); if(n)n.style.display="inline";} };
+    Array.prototype.forEach.call(document.querySelectorAll(".fcShock"),function(b){b.onclick=function(){S.drivers=fcClone(FC_SHOCKS[b.getAttribute("data-k")].d);rer();};});
+    bindCommon();
+  }
+  function scenarioHtml(){
+    var mB=fcMetrics(S.scenarios.base),mU=fcMetrics(S.scenarios.upside),mD=fcMetrics(S.scenarios.downside),mC=fcMetrics(S.scenarios.custom);
+    function d1(v){return v.toFixed(1);}
+    function dd(v,b){var x=v-b;return v.toFixed(1)+" ("+(x>=0?"+":"")+x.toFixed(1)+")";}
+    function ddp(v,b){var x=v-b;return v.toFixed(1)+"% ("+(x>=0?"+":"")+x.toFixed(1)+")";}
+    var pnl=brkTable({cols:["P&L · FY","Base","Upside","Downside","Custom"],rows:[
+      ["Revenue (AED B)",d1(mB.revenue),dd(mU.revenue,mB.revenue),dd(mD.revenue,mB.revenue),dd(mC.revenue,mB.revenue)],
+      ["Gross profit (AED B)",d1(mB.gross),dd(mU.gross,mB.gross),dd(mD.gross,mB.gross),dd(mC.gross,mB.gross)],
+      ["EBITDA (AED B)",d1(mB.ebitda),dd(mU.ebitda,mB.ebitda),dd(mD.ebitda,mB.ebitda),dd(mC.ebitda,mB.ebitda)],
+      ["EBITDA margin",mB.marginPct.toFixed(1)+"%",ddp(mU.marginPct,mB.marginPct),ddp(mD.marginPct,mB.marginPct),ddp(mC.marginPct,mB.marginPct)],
+      ["Net income (AED B)",d1(mB.netIncome),dd(mU.netIncome,mB.netIncome),dd(mD.netIncome,mB.netIncome),dd(mC.netIncome,mB.netIncome)]
+    ]});
+    var bs=brkTable({cols:["Balance sheet · FY-end","Base","Upside","Downside","Custom"],rows:[
+      ["Cash (AED B)",d1(mB.cash),dd(mU.cash,mB.cash),dd(mD.cash,mB.cash),dd(mC.cash,mB.cash)],
+      ["Receivables (AED B)",d1(mB.recv),dd(mU.recv,mB.recv),dd(mD.recv,mB.recv),dd(mC.recv,mB.recv)],
+      ["Escrow (AED B)",d1(mB.escrow),dd(mU.escrow,mB.escrow),dd(mD.escrow,mB.escrow),dd(mC.escrow,mB.escrow)],
+      ["Debt (AED B)",d1(mB.debt),dd(mU.debt,mB.debt),dd(mD.debt,mB.debt),dd(mC.debt,mB.debt)],
+      ["Equity (AED B)",d1(mB.equity),dd(mU.equity,mB.equity),dd(mD.equity,mB.equity),dd(mC.equity,mB.equity)]
+    ]});
+    var cf=brkTable({cols:["Cash flow · FY","Base","Upside","Downside","Custom"],rows:[
+      ["Operating (CFO)",d1(mB.cfo),dd(mU.cfo,mB.cfo),dd(mD.cfo,mB.cfo),dd(mC.cfo,mB.cfo)],
+      ["Investing (CFI)",d1(mB.cfi),dd(mU.cfi,mB.cfi),dd(mD.cfi,mB.cfi),dd(mC.cfi,mB.cfi)],
+      ["Financing (CFF)",d1(mB.cff),dd(mU.cff,mB.cff),dd(mD.cff,mB.cff),dd(mC.cff,mB.cff)],
+      ["Closing cash (AED B)",d1(mB.closingCash),dd(mU.closingCash,mB.closingCash),dd(mD.closingCash,mB.closingCash),dd(mC.closingCash,mB.closingCash)]
+    ]});
+    var sc=[["base","Base"],["upside","Upside"],["downside","Downside"],["custom","Custom"]];
+    var pills=sc.map(function(p){var on=S.activeScenario===p[0];return '<button class="scPill btn" data-s="'+p[0]+'" style="font-size:12px;'+(on?' background:var(--bg-info); color:var(--tx-info); border-color:var(--bd-info);':'')+'">'+p[1]+'</button>';}).join(" ");
+    var cov=[["Base",mB],["Upside",mU],["Downside",mD],["Custom",mC]].map(function(x){var hh=x[1].covHeadroom,tone=hh>=1.5?"success":hh>=0.5?"warning":"danger";return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:15px; font-weight:500;">'+x[1].liqMonths.toFixed(1)+' mo liquidity</div><div style="font-size:12px; color:'+toneCol(tone)+';"><i class="ti ti-shield-check" style="font-size:12px; vertical-align:-2px;" aria-hidden="true"></i> Covenant headroom '+hh.toFixed(1)+'x</div></div>';}).join("");
+    var bridge=renderChart({type:"varbars",data:[mU.closingCash-mB.closingCash,mD.closingCash-mB.closingCash,mC.closingCash-mB.closingCash],cats:["Upside","Downside","Custom"]},"var(--tx-info)","Closing cash delta vs base");
+    var custom=S.activeScenario==="custom"?'<div class="card" style="margin-bottom:14px;"><div class="secthead">Custom scenario · edit drivers</div>'+driverPanel(S.scenarios.custom,"scDriver")+'</div>':'';
+    return backBtn("forecast","Forecasting")+
+      '<div style="font-size:18px; font-weight:500; margin-bottom:3px;">Scenario planner — full three-statement &amp; cash flow</div>'+
+      '<div style="font-size:13px; color:var(--tx2); margin-bottom:12px; max-width:760px;">Base, upside, downside and a custom scenario, each a fully linked 12-month P&amp;L, balance sheet and cash flow. Deltas shown versus base.</div>'+
+      '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">'+pills+'</div>'+
+      custom+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Profit &amp; loss</div>'+pnl+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Balance sheet</div>'+bs+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Cash flow</div>'+cf+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Liquidity &amp; covenant headroom</div><div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;">'+cov+'</div></div>'+
+      '<div class="card" style="margin-bottom:6px;"><div class="secthead">Cash bridge — closing cash Δ vs base, AED B</div>'+bridge+'</div>'+
+      askChips(["Compare downside to base","What is the covenant headroom under stress?","Which driver moves cash the most?"]);
+  }
+  function bindScenario(){
+    var rer=function(){var m=document.getElementById("main");m.innerHTML=scenarioHtml();bindScenario();};
+    Array.prototype.forEach.call(document.querySelectorAll(".scPill"),function(b){b.onclick=function(){S.activeScenario=b.getAttribute("data-s");rer();};});
+    bindDrivers("scDriver",S.scenarios.custom,rer);
+    bindCommon();
+  }
+
+  /* ---------------- render: data centers (EDGNEX) ---------------- */
+  function datacenterHtml(){
+    S.dc=S.dc||fcClone(DC_BASE);
+    var r=dcCompute(S.dc), groupRev=24.0;
+    var kp=[
+      ["Live capacity",r.liveCap.toFixed(0)+" MW","info"],
+      ["Total ambition",r.total.toFixed(0)+" MW","info"],
+      ["Revenue run-rate","AED "+r.runRate.toFixed(1)+"B","success"],
+      ["Stabilised revenue","AED "+r.stabRevenue.toFixed(1)+"B","success"],
+      ["DC EBITDA margin",r.margin.toFixed(0)+"%","success"],
+      ["Development yield",r.devYield.toFixed(1)+"%",r.devYield>=8?"success":"warning"]
+    ].map(function(x){return '<div class="mcard"><div style="font-size:11px; color:var(--tx2);">'+x[0]+'</div><div style="font-size:19px; font-weight:500; color:'+toneCol(x[2])+';">'+x[1]+'</div></div>';}).join("");
+    var dcQ=["2026Q3","2026Q4","2027Q1","2027Q2","2027Q3","2027Q4","2028Q1","2028Q2"];
+    var contribPct=(100*r.stabRevenue/(groupRev+r.stabRevenue)).toFixed(0);
+    var sens=brkTable({cols:["Sensitivity","Driver move","Impact on DC"],rows:[
+      ["Power price spike","+20% energy cost","EBITDA margin -3 to -5 pts (PUE exposure)"],
+      ["Equipment / GPU lead times","+2 quarters","Ramp and revenue slip; yield deferred"],
+      ["Hyperscaler demand","Lease rate / utilisation","Each +$10/kW/mo ≈ +AED 0.3B stabilised revenue"],
+      ["Cost of capital","+100 bps","Development-yield spread compresses ~0.8 pts"]
+    ]});
+    return '<div style="font-size:18px; font-weight:500; margin-bottom:3px;">Data centers — EDGNEX forecast</div>'+
+      '<div style="font-size:13px; color:var(--tx2); margin-bottom:14px; max-width:780px;">Standalone build-out forecast for the data-center platform (EDGNEX) — a top strategic growth pillar. Capacity ramps from '+r.liveCap.toFixed(0)+' MW live toward '+r.total.toFixed(0)+' MW. Edit any driver to reforecast revenue, yield and capex.</div>'+
+      '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:14px;">'+kp+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Capacity build-out — MW</div>'+renderChart({type:"area",data:r.capSeries,cats:dcQ},"var(--tx-info)","Data center capacity build-out")+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Revenue ramp — AED B (annualised)</div>'+renderChart({type:"bars",data:r.revSeries,cats:dcQ},"var(--tx-success)","Data center revenue ramp")+'</div>'+
+      '<div class="card" style="margin-bottom:14px;"><div class="secthead">Drivers · edit to reforecast</div>'+driverPanel(S.dc,"dcDriver",dcDriverMeta)+'</div>'+
+      '<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">'+
+        '<div class="card" style="background:var(--bg-info); border:none;"><div class="secthead" style="color:var(--tx-info);">Capex & contribution to group</div>'+
+          '<div style="font-size:13px; color:var(--tx1); line-height:1.6;">Total build-out capex <span style="font-weight:500;">AED '+r.capex.toFixed(1)+'B</span> (~AED '+(r.capex/r.total*1000).toFixed(0)+'m per MW). At stabilisation DC adds <span style="font-weight:500;">AED '+r.stabRevenue.toFixed(1)+'B</span> revenue (~'+contribPct+'% of an enlarged group top line) and <span style="font-weight:500;">AED '+r.ebitda.toFixed(1)+'B</span> EBITDA at a '+r.devYield.toFixed(1)+'% development yield.</div></div>'+
+        '<div class="card"><div class="secthead">Macro & supply sensitivity</div>'+sens+'</div></div>'+
+      '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;"><button class="btn" id="dcReset"><i class="ti ti-refresh" style="font-size:14px; vertical-align:-2px;" aria-hidden="true"></i> Reset to baseline</button></div>'+
+      askChips(["What is the data center build-out plan?","How sensitive is DC to power prices?","What yield does the pipeline deliver?"]);
+  }
+  function bindDatacenter(){
+    S.dc=S.dc||fcClone(DC_BASE);
+    var rer=function(){var m=document.getElementById("main");m.innerHTML=datacenterHtml();bindDatacenter();};
+    bindDrivers("dcDriver",S.dc,rer,dcDriverMeta);
+    var rb=document.getElementById("dcReset"); if(rb)rb.onclick=function(){S.dc=fcClone(DC_BASE);rer();};
+    bindCommon();
+  }
+
   /* ---------------- router ---------------- */
   function renderMain(){
     var m=document.getElementById("main");
@@ -1576,9 +1891,12 @@ var DEMO_LINKS = {
       if(S.screen==="home"){m.innerHTML=homeHtml(); bindHome();}
       else if(S.screen==="tower"){m.innerHTML=towerPage();}
       else if(S.screen==="insights"){m.innerHTML=insightsHtml(); bindInsights();}
-      else if(S.screen==="insightDetail"){m.innerHTML=insightDetail();}
+      else if(S.screen==="insightDetail"){m.innerHTML=insightDetail(); if(S.insight==="ebitda")bindEbitdaScenario();}
       else if(S.screen==="engagements"){m.innerHTML=aiProjectsHtml(); bindAiProjects();}
       else if(S.screen==="engagementDetail"){m.innerHTML=aiProjectDetail();}
+      else if(S.screen==="forecast"){m.innerHTML=forecastHtml(); bindForecast(); var _bb=document.getElementById("fcBeta"); if(_bb){void _bb.offsetWidth; _bb.classList.add("pop");}}
+      else if(S.screen==="scenario"){m.innerHTML=scenarioHtml(); bindScenario();}
+      else if(S.screen==="datacenter"){m.innerHTML=datacenterHtml(); bindDatacenter();}
       else if(S.screen==="reports"){m.innerHTML=reportsHtml(); bindReports();}
       else if(S.screen==="reportDetail"){m.innerHTML=reportDetail();}
       else{m.innerHTML=threadsHtml(); bindThreads();}
@@ -1600,121 +1918,24 @@ var DEMO_LINKS = {
   var chipsByPersona={
     cfo:["How is liquidity?","Special AI projects","Which projects are at risk?","Open treasury"]
   };
-  /* ── CC Sage drag & expand ── */
-  var _ccExpanded=false,_ccDragged=false,_ccDragPos={left:0,top:0},_ccDS={active:false,startX:0,startY:0,initLeft:0,initTop:0};
-  function toggleCCExpand(){
-    _ccExpanded=!_ccExpanded;
-    var panel=document.getElementById("chatPanel");panel.classList.toggle("expanded",_ccExpanded);
-    var icon=document.getElementById("ccExpandIcon");if(!icon)return;
-    icon.innerHTML=_ccExpanded
-      ?'<path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>'
-      :'<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
-    document.getElementById("ccExpandBtn").title=_ccExpanded?"Collapse Sage":"Expand Sage";
-  }
-  function initCCSageDrag(){
-    var panel=document.getElementById("chatPanel"),head=document.getElementById("ccSageHead");if(!panel||!head)return;
-    function sD(cx,cy){var r=panel.getBoundingClientRect();_ccDS={active:true,startX:cx,startY:cy,initLeft:r.left,initTop:r.top};panel.style.transition="none";}
-    function mD(cx,cy){if(!_ccDS.active)return;var dx=cx-_ccDS.startX,dy=cy-_ccDS.startY;
-      if(!_ccDragged&&Math.abs(dx)+Math.abs(dy)>6){_ccDragged=true;panel.classList.add("dragged");panel.style.bottom="auto";panel.style.right="auto";}
-      if(_ccDragged){var w=panel.offsetWidth,h=panel.offsetHeight,l=Math.max(0,Math.min(window.innerWidth-w,_ccDS.initLeft+dx)),t=Math.max(0,Math.min(window.innerHeight-h,_ccDS.initTop+dy));panel.style.left=l+"px";panel.style.top=t+"px";_ccDragPos={left:l,top:t};}
-    }
-    function eD(){_ccDS.active=false;panel.style.transition=".34s cubic-bezier(.4,0,.2,1)";}
-    head.addEventListener("mousedown",function(e){if(e.target.closest(".cc-sage-x,.cc-sage-orb"))return;e.preventDefault();sD(e.clientX,e.clientY);});
-    document.addEventListener("mousemove",function(e){mD(e.clientX,e.clientY);});
-    document.addEventListener("mouseup",eD);
-    head.addEventListener("touchstart",function(e){if(e.target.closest(".cc-sage-x,.cc-sage-orb"))return;var t=e.touches[0];sD(t.clientX,t.clientY);},{passive:true});
-    document.addEventListener("touchmove",function(e){if(_ccDS.active){var t=e.touches[0];mD(t.clientX,t.clientY);}},{passive:true});
-    document.addEventListener("touchend",eD);
-  }
-  var _ccDragInit=false;
-  function openChat(){
-    var panel=document.getElementById("chatPanel");
-    if(_ccDragged){panel.style.left=_ccDragPos.left+"px";panel.style.top=_ccDragPos.top+"px";}
-    panel.classList.add("on");
-    if(!_ccDragInit){_ccDragInit=true;initCCSageDrag();}
-    renderChips(S.persona==="cfo"?chipsByPersona.cfo:op().chips);
-  }
-  function closeChat(){document.getElementById("chatPanel").classList.remove("on"); stopVoice(); window.speechSynthesis&&speechSynthesis.cancel();}
+  function openChat(){document.getElementById("chatPanel").style.transform="translateX(0)"; renderChips(S.persona==="cfo"?chipsByPersona.cfo:op().chips);}
+  function closeChat(){document.getElementById("chatPanel").style.transform="translateX(100%)"; stopVoice(); window.speechSynthesis&&speechSynthesis.cancel();}
   function renderChips(arr){
-    document.getElementById("chipRow").innerHTML=arr.map(function(c){return '<button class="qchip" data-q="'+c+'">'+c+'</button>';}).join("");
+    document.getElementById("chipRow").innerHTML=arr.map(function(c){return '<button class="qchip btn" data-q="'+c+'" style="font-size:11px; padding:3px 9px;">'+c+'</button>';}).join("");
     Array.prototype.forEach.call(document.querySelectorAll(".qchip"),function(b){b.onclick=function(){pushMsg("user",b.getAttribute("data-q")); botRespond(b.getAttribute("data-q"));};});
   }
   function pushMsg(role,text,content){msgs.push({role:role,text:text,content:content||""}); renderMsgs();}
-  function renderCCMd(t){
-    if(!t)return '';
-    // tables
-    t=t.replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g,function(_,hdr,rows){
-      var ths=hdr.split('|').filter(function(x){return x.trim();}).map(function(x){return '<th>'+x.trim()+'</th>';}).join('');
-      var trs=rows.trim().split('\n').map(function(r){return '<tr>'+r.split('|').filter(function(x){return x.trim();}).map(function(x){return '<td>'+x.trim()+'</td>';}).join('')+'</tr>';}).join('');
-      return '<table class="cc-tbl"><thead><tr>'+ths+'</tr></thead><tbody>'+trs+'</tbody></table>';
-    });
-    // lists
-    t=t.replace(/^(\s*[-*]\s+.+)(\n\s*[-*]\s+.+)*/gm,function(b){return '<ul>'+b.replace(/\s*[-*]\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ul>';});
-    t=t.replace(/^(\s*\d+\.\s+.+)(\n\s*\d+\.\s+.+)*/gm,function(b){return '<ol>'+b.replace(/\s*\d+\.\s+(.+)/g,function(_,i){return '<li>'+i+'</li>';})+'</ol>';});
-    // inline
-    t=t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>');
-    t=t.replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>');
-    return t;
-  }
   function renderMsgs(){
     var c=document.getElementById("msgs");
     c.innerHTML=msgs.map(function(m){
-      if(m.role==="user")return '<div class="cc-msg-user">'+m.text+'</div>';
-      return '<div class="cc-msg-bot"><div class="cc-msg-bot-bub">'+renderCCMd(m.text)+'</div>'+(m.content?'<div style="margin-top:7px;">'+m.content+'</div>':'')+'</div>';
+      if(m.role==="user")return '<div style="align-self:flex-end; max-width:85%; background:var(--tx1); color:var(--bg1); padding:8px 12px; border-radius:14px 14px 3px 14px; font-size:13px; line-height:1.5;">'+m.text+'</div>';
+      return '<div style="align-self:flex-start; max-width:92%;"><div style="background:var(--bg2); padding:8px 12px; border-radius:14px 14px 14px 3px; font-size:13px; line-height:1.55;">'+m.text+'</div>'+(m.content?'<div style="margin-top:7px;">'+m.content+'</div>':'')+'</div>';
     }).join("");
     c.scrollTop=c.scrollHeight;
   }
   function miniCard(title,val,tone,note){return '<div class="card" style="padding:0.55rem 0.75rem;"><div style="font-size:11px; color:var(--tx2);">'+title+'</div><div style="font-size:17px; font-weight:500; color:'+toneCol(tone)+';">'+val+'</div><div style="font-size:11px; color:var(--tx2); line-height:1.45; margin-top:2px;">'+note+'</div></div>';}
 
-  /* ── Claude API integration for Sage ── */
-  var _CC_DEFAULT_KEY='';  /* no hardcoded key — paste one via the Sage "connect" prompt (stored in localStorage only) */
-  var CC_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_CC_DEFAULT_KEY;}catch(e){return _CC_DEFAULT_KEY;}})();
-  function ccConnectAI(){
-    var btn=document.getElementById("ccAiMode");
-    if(CC_KEY && btn && btn.textContent.indexOf('live')>=0){
-      openChat();
-      pushMsg("bot","Connected to Claude Sonnet 4.6 — ask me anything about the financials, the Tiger program, or any use case.");
-      return;
-    }
-    var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage — never sent anywhere except the Anthropic API.',CC_KEY||'');
-    if(!k||!k.trim())return;
-    CC_KEY=k.trim();
-    var h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})})
-    .then(function(r){
-      if(r.ok){
-        try{localStorage.setItem('sage_api_key',CC_KEY);}catch(e){}
-        if(btn){btn.textContent="● Sonnet 4.6 · live";btn.classList.add("live");}
-        openChat();
-        pushMsg("bot","**Connected to Claude Sonnet 4.6.** I can now answer any question using the full data context — KPIs, finance functions, engagement status, and more.");
-      } else {CC_KEY=''; pushMsg("bot","API key check failed — please verify the key and try again.");}
-    }).catch(function(e){CC_KEY=''; pushMsg("bot","Connection failed: "+e.message);});
-  }
-  function ccSysPrompt(){
-    var kpiText=kpis.map(function(k){return k[0]+": "+k[1]+" ("+k[2]+")";}).join(", ");
-    var towerText=towers.map(function(t){return t.name+": "+t.metric+" — "+t.sum;}).join("\n");
-    var ucText=useCases.map(function(u){return u.n+" ("+u.fn+"): "+u.pct+"% complete, state: "+u.state+", scope: "+u.scope.join("; ");}).join("\n");
-    return "You are Sage, a finance AI assistant embedded in DAMAC Group's Finance AI Console, built by Tiger Analytics. You are precise, decisive, and grounded in the data below. Answer in 3-5 sentences in a senior CFO-advisor voice. Use **bold** for key figures.\n\nGROUP KPIs: "+kpiText+"\n\nFINANCE FUNCTIONS:\n"+towerText+"\n\nTIGER WAVE 1 USE CASES:\n"+ucText+"\n\nENGAGEMENT: "+prog.value+" program, "+prog.waves+" waves, "+prog.uc+" use cases, started "+prog.start+", sponsor: "+prog.sponsor+". Wave 1 is on track and on budget.\n\nRULES:\n- Ground every figure in the data above\n- If asked something outside this context, say so honestly\n- When asked for a recommendation, give one decisively";
-  }
-  function botRespondLive(q,fallback){
-    if(!CC_KEY){fallback();return;}
-    var h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-    var typing=document.createElement('div');typing.style.cssText='font-size:13px;color:var(--tx3);padding:4px 0;';typing.textContent='Sage is thinking…';
-    document.getElementById("msgs").appendChild(typing);
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:h,
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:600,system:ccSysPrompt(),messages:[{role:"user",content:q}]})
-    }).then(function(r){
-      typing.remove();
-      if(!r.ok){fallback();return;}
-      r.json().then(function(d){
-        var txt=(d.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join(' ').trim();
-        if(txt){pushMsg("bot",txt);speak(txt);}else{fallback();}
-      }).catch(function(){fallback();});
-    }).catch(function(){typing.remove();fallback();});
-  }
-
   function botRespond(q){
-    var qOrig=q;
     q=(q||"").toLowerCase();var text,content="";
     if(S.persona!=="cfo"){
       var o=op();
@@ -1744,9 +1965,18 @@ var DEMO_LINKS = {
       else if(/tiger/.test(q))navHit=["engagementDetail","tiger","Opening the Tiger transformation program."];
       else if(/engage|program|ai project|special project/.test(q))navHit=["engagements",null,"Opening special AI projects."];
       else if(/thread/.test(q))navHit=["threads",null,"Opening threads."];
-      else if(/home|command/.test(q))navHit=["home",null,"Back to the Finance AI Console."];
+      else if(/home|command/.test(q))navHit=["home",null,"Back to the command center."];
     }
-    if(navHit && S.persona!=="cfo" && (navHit[0]==="tower"||navHit[0]==="engagements"||navHit[0]==="engagementDetail")) navHit=null;
+    if(!navHit){
+      if(/data ?cent(er|re)|edgnex|data ?centre|\bdc\b/.test(q))navHit=["datacenter",null,"Opening the data centers forecast."];
+      else if(/forecast|reforecast|accelerator|macro/.test(q))navHit=["forecast",null,"Opening the forecasting accelerator."];
+      else if(/scenario|downside|upside|stress|what.?if|shock|war|conflict|recession/.test(q)){
+        if(/downside|stress|war|conflict|recession|shock/.test(q))S.activeScenario="downside";
+        else if(/upside/.test(q))S.activeScenario="upside";
+        navHit=["scenario",null,"Opening the scenario planner."];
+      }
+    }
+    if(navHit && S.persona!=="cfo" && (navHit[0]==="tower"||navHit[0]==="engagements"||navHit[0]==="engagementDetail"||navHit[0]==="forecast"||navHit[0]==="scenario"||navHit[0]==="datacenter")) navHit=null;
     if(navHit){go(navHit[0],navHit[1]); pushMsg("bot",navHit[2]); speak(navHit[2]); return;}
     /* use cases */
     if(/reconcil/.test(q)){text="The FSS reconciliation use case is delivered. The auto-match engine covers 60 plus bank accounts and escrow receipts, hitting a 92 percent auto-match rate in pilot — the rec cycle went from 5 days to same-day. It also surfaced 120 million dirhams of unapplied receipts now being cleared. Full rollout completes in week 8.";content=miniCard("FSS — Reconciliation","Delivered · 92% auto-match","success","Rec cycle: 5 days → same-day");}
@@ -1773,31 +2003,15 @@ var DEMO_LINKS = {
     else if(/fraud|duplicate|sod|control/.test(q)){text="Zero high-severity findings, but assurance is sample-based. 12 duplicate-payment alerts a month are caught after the fact — the payments use case moves that pre-release. 23 SoD conflicts are open. Continuous monitoring is the Wave 2 answer.";content=miniCard("Risk & controls","0 high findings","success","57% automated · 23 SoD conflicts open");}
     else if(/thread/.test(q)){text="Opened. This thread is voice-first — speak your ideas and attach images, video, documents or data. I can pull live numbers in as we go.";}
     else if(/help|what can you/.test(q)){text="Ask me anything on the numbers — liquidity, DSO, margins, escrow, funding — or the Tiger program and its use cases. I can also navigate: say 'open treasury' or 'show insights'. Turn on hands-free mode and we can just talk.";}
-    else{
-      // no scripted match — try Claude API live, then generic fallback
-      botRespondLive(qOrig,function(){pushMsg("bot","I can pull liquidity, collections, project margins, escrow, funding, or any Tiger use case — reconciliation, payments, trial balance scrutiny, variance analysis. Or say 'open treasury' to navigate. What would you like?");});
-      return;
-    }
+    else{text="I can pull liquidity, collections, project margins, escrow, funding, or any Tiger use case — reconciliation, payments, trial balance scrutiny, variance analysis. Or say 'open treasury' to navigate. What would you like?";}
     pushMsg("bot",text,content); speak(text);
   }
 
   /* speech synthesis */
   var speaking=false;
-  var CC_MUTED=false;
-  function toggleCCMute(){
-    CC_MUTED=!CC_MUTED;
-    if(CC_MUTED&&window.speechSynthesis)speechSynthesis.cancel();
-    var icon=document.getElementById("ccMuteIcon");
-    if(icon){
-      if(CC_MUTED){icon.innerHTML='<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';}
-      else{icon.innerHTML='<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/>';}
-    }
-    var btn=document.getElementById("ccMuteBtn");
-    if(btn)btn.style.color=CC_MUTED?"var(--tx-danger)":"";
-  }
   function speak(t){
     try{
-      if(!window.speechSynthesis||CC_MUTED)return;
+      if(!window.speechSynthesis)return;
       speechSynthesis.cancel();
       var u=new SpeechSynthesisUtterance(t);
       u.rate=1.04;
@@ -1814,12 +2028,12 @@ var DEMO_LINKS = {
   var recog=null,listening=false,convMode=false;
   function setState(s){
     var el=document.getElementById("voiceState");
-    if(el)el.textContent=s==="listening"?"· listening…":s==="speaking"?"· speaking…":"";
-    var orb=document.getElementById("ccSageOrb");
-    if(orb)orb.classList.toggle("speaking",s==="speaking");
+    el.textContent=s==="listening"?"listening…":s==="speaking"?"speaking…":"";
+    var dot=document.getElementById("voiceDot");
+    dot.style.background=s==="listening"?"var(--tx-danger)":s==="speaking"?"var(--tx-info)":"var(--tx3)";
+    dot.className=s==="listening"?"listening":"";
     var mb=document.getElementById("micBtn");
-    if(mb)mb.classList.toggle("cc-mic-btn",true);
-    if(mb)mb.classList.toggle("listening",s==="listening");
+    if(mb)mb.style.background=s==="listening"?"var(--bg-danger)":"";
   }
   function ensureRecog(){
     var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1875,21 +2089,15 @@ var DEMO_LINKS = {
     {id:"cfo",role:"Chief Financial Officer",name:"Group CFO",icon:"ti-user-star",ramp:"c-blue",
      focus:"Enterprise-wide view across every finance function and the Tiger program",
      fns:["All 8 functions","Board & investors","Capital allocation","Transformation"],live:true},
+    {id:"fpaanalyst",role:"FP&A — Analyst",name:"Senior FP&A Analyst",icon:"ti-chart-dots",ramp:"c-amber",
+     focus:"Variance analysis, budget support and report production",
+     fns:["Variance analysis","Budgeting","Reporting","Data prep"],live:true},
     {id:"fss",role:"Financial Shared Services",name:"FSS Lead",icon:"ti-stack-2",ramp:"c-teal",
      focus:"Reconciliations, payments and the transactional finance engine",
      fns:["Reconciliation","Payments","Receivables","Master data"],live:true},
     {id:"controllership",role:"Controllership",name:"Group Controller",icon:"ti-file-check",ramp:"c-purple",
      focus:"Month-end close, consolidation and the control environment",
-     fns:["Month-end closure","Consolidation","Statutory","Controls"],live:true},
-    {id:"mis",role:"MIS · Management Information",name:"MIS Lead",icon:"ti-layout-dashboard",ramp:"c-coral",
-     focus:"Management reporting, dashboards and business intelligence across the group",
-     fns:["MI reports","Dashboards","Data governance","Board pack"],live:false},
-    {id:"overheads",role:"Overheads · Cost Management",name:"Head of Overheads",icon:"ti-building",ramp:"c-pink",
-     focus:"G&A cost control, headcount planning and overhead variance management",
-     fns:["G&A tracking","Headcount","Cost centres","Overhead variance"],live:false},
-    {id:"fpaanalyst",role:"FP&A — Analyst",name:"Senior FP&A Analyst",icon:"ti-chart-dots",ramp:"c-amber",
-     focus:"Variance analysis, budget support and report production",
-     fns:["Variance analysis","Budgeting","Reporting","Data prep"],live:true}
+     fns:["Month-end closure","Consolidation","Statutory","Controls"],live:true}
   ];
   function renderPersonas(){
     document.getElementById("personaGrid").innerHTML=personas.map(function(p){
@@ -1939,12 +2147,10 @@ var DEMO_LINKS = {
       sh.style.display="block";
       sh.classList.add("fadein");
       document.getElementById("hdrSub").textContent=(S.persona==="cfo")?"Powered by Tiger · Group view · AED · FY2026":op().hdrSub;
-      var roleMap={cfo:"Chief Financial Officer",analyst:"FP&A Analyst",fssc:"FSSC Lead",controllership:"Group Controller",treasury:"Head of Treasury",tax:"Head of Tax",fpa:"Head of FP&A"};
-      document.getElementById("hdrRole").textContent=roleMap[S.persona]||"Group Controller";
       renderNav(); renderMain();
       msgs.length=0;
       pushMsg("bot",(S.persona==="cfo")
-        ? "Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the AI projects. Say “open treasury” to navigate, or turn on hands-free and we can just talk."
+        ? "Hi — I'm your Tiger assistant, available on every screen. Ask about any number, any function, or the AI projects. Say “open treasury” to navigate, or turn on hands-free and we can just talk."
         : op().intro);
     },3000);
   }
@@ -1982,22 +2188,9 @@ var DEMO_LINKS = {
   Array.prototype.forEach.call(document.querySelectorAll(".att"),function(b){b.onclick=function(){addAttach(b.getAttribute("data-t"));};});
   if(window.speechSynthesis)speechSynthesis.onvoiceschanged=function(){};
 
-  pushMsg("bot","Hi — I'm Sage, your finance assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
-  // auto-verify API key and mark button live
-  if(CC_KEY){
-    var _h={"Content-Type":"application/json","x-api-key":CC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:_h,body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:10,messages:[{role:"user",content:"ping"}]})})
-    .then(function(r){
-      var btn=document.getElementById("ccAiMode");
-      if(r.ok){
-        if(btn){btn.textContent="● Sonnet 4.6 · live";btn.classList.add("live");}
-        try{localStorage.setItem('sage_api_key',CC_KEY);}catch(e){}
-      } else {
-        if(btn){btn.textContent="● Sonnet 4.6 · key error";btn.style.color="var(--tx-danger)";btn.classList.remove("live");}
-      }
-    }).catch(function(){});
-  }
+  pushMsg("bot","Hi — I'm your Tiger assistant, available on every screen. Ask about any number, any function, or the engagement. Say 'open treasury' to navigate, or turn on hands-free and we can just talk.");
   renderNav();renderMain();renderChips(chipsByPersona.cfo);
+  fcSelfTest();
 })();
 </script>
 </body>
