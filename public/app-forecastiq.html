@@ -2374,6 +2374,16 @@ startTicker();
 (function(){
   if(window.parent===window) return;
   window.parent.postMessage({__showBar:true},'*');
+  function addBack(){
+    if(document.getElementById('__backToConsole')) return;
+    var a=document.createElement('button'); a.id='__backToConsole'; a.type='button';
+    a.innerHTML='&larr; Finance AI Console';
+    a.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483600;background:#1C1C1C;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:8px 13px;font:500 12.5px system-ui,-apple-system,Arial,sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);';
+    a.onmouseover=function(){a.style.background='#F08C1E';}; a.onmouseout=function(){a.style.background='#1C1C1C';};
+    a.onclick=function(){window.parent.postMessage({__navTo:'command'},'*');};
+    document.body.appendChild(a);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBack); else addBack();
 })();
 </script>
 </body>
