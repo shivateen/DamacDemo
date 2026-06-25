@@ -1669,10 +1669,9 @@ function fcPeriodSel(){
 function scnSelectorBar(){
   var opts='<option value="__base"'+(activeSavedId===null?' selected':'')+'>Base case</option>';
   opts+=SCN_SAVED.map(function(s){return '<option value="'+s.id+'"'+(activeSavedId===s.id?' selected':'')+'>'+s.name+'</option>';}).join('');
-  var note=(scnEnabled&&activeSavedId!==null)?'forecasting "'+activeScn().name+'" across all statements':'showing base case'+(SCN_SAVED.length?'':' — none saved yet; build one in Scenarios');
+  var note=(activeSavedId!==null)?'forecasting "'+activeScn().name+'" across all statements':'showing base case'+(SCN_SAVED.length?' — pick a saved scenario to apply':' — none saved yet; build one in Scenarios');
   return '<div class="scn-selbar fadein"><span class="lbl">Scenario</span>'
-    +'<select class="scn-select" onchange="selectScenario(this.value)"'+(scnEnabled?'':' disabled')+'>'+opts+'</select>'
-    +'<span class="scn-toggle'+(scnEnabled?' on':'')+'" onclick="toggleScnEnabled()" title="Apply the selected scenario to the forecast"><span class="scn-sw"></span>'+(scnEnabled?'Active':'Inactive')+'</span>'
+    +'<select class="scn-select" onchange="selectScenario(this.value)">'+opts+'</select>'
     +'<span style="font-size:11px;color:var(--ink-3)">'+note+'</span>'
     +fcPeriodSel()+'</div>';
 }
@@ -1684,7 +1683,6 @@ function scnWorkspaceBar(){
   return '<div class="scn-selbar fadein" style="margin-bottom:14px"><span class="lbl">Scenario workspace</span>'
     +'<input id="scnSaveName" class="scn-save-inp" placeholder="Name this scenario…" onkeydown="if(event.key===\'Enter\')saveCurrentScenario()">'
     +'<button class="btn-act" onclick="saveCurrentScenario()">💾 Save as template</button>'
-    +'<span class="scn-toggle'+(scnEnabled?' on':'')+'" onclick="toggleScnEnabled()" title="Active applies the selected scenario across all tabs"><span class="scn-sw"></span>'+(scnEnabled?'Active':'Inactive')+'</span>'
     +'<div class="scn-saved-row" style="flex-basis:100%">'+chips+'</div></div>';
 }
 
