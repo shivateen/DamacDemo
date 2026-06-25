@@ -2252,18 +2252,33 @@ function renderMd(t){
 var _FIQ_KEY='';  /* no hardcoded key — paste one via the Sage "connect" prompt (stored in localStorage only) */
 var FIQ_KEY=(function(){try{return localStorage.getItem('sage_api_key')||_FIQ_KEY;}catch(e){return _FIQ_KEY;}})();
 var _sageProbed=false;
-function setMode(live){var m=el('sageMode');if(!m)return;if(live){m.classList.add('live');m.textContent='● Sonnet 4.6 · live';}else{m.classList.remove('live');m.textContent='● offline';}}
-function sageHeaders(){return {"Content-Type":"application/json","x-api-key":FIQ_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};}
+/* Sage is provider-aware: an OpenAI key (sk-…) calls OpenAI Chat Completions;
+   an Anthropic key (sk-ant-…) calls Claude. Key is entered via the connect
+   prompt and stored in browser localStorage only — never hardcoded/committed. */
+function sageIsAnthropic(){return /^sk-ant-/.test(FIQ_KEY);}
+function sageModelName(){return sageIsAnthropic()?'Sonnet 4.6':'GPT-4o mini';}
+function setMode(live){var m=el('sageMode');if(!m)return;if(live){m.classList.add('live');m.textContent='● '+sageModelName()+' · live';}else{m.classList.remove('live');m.textContent='● offline';}}
+function sageUrl(){return sageIsAnthropic()?"https://api.anthropic.com/v1/messages":"https://api.openai.com/v1/chat/completions";}
+function sageHeaders(){return sageIsAnthropic()
+  ?{"Content-Type":"application/json","x-api-key":FIQ_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}
+  :{"Content-Type":"application/json","Authorization":"Bearer "+FIQ_KEY};}
+function sageReq(q,maxTok){return sageIsAnthropic()
+  ?JSON.stringify({model:"claude-sonnet-4-6",max_tokens:maxTok,system:fiqSysPrompt(),messages:[{role:"user",content:q}]})
+  :JSON.stringify({model:"gpt-4o-mini",max_tokens:maxTok,messages:[{role:"system",content:fiqSysPrompt()},{role:"user",content:q}]});}
+function sageParse(d){return sageIsAnthropic()
+  ?(d.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join(' ').trim()
+  :((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'').trim();}
 function sageProbe(){
   if(!FIQ_KEY)return;
-  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:8,messages:[{role:"user",content:"ping"}]})})
+  fetch(sageUrl(),{method:"POST",headers:sageHeaders(),body:sageReq("ping",8)})
     .then(function(r){if(r.ok)setMode(true);}).catch(function(){});
 }
 function sageConnect(){
-  var k=prompt('Paste your Anthropic API key (sk-ant-…).\nStored in browser localStorage only — sent only to the Anthropic API.',FIQ_KEY||'');
+  var k=prompt('Paste your OpenAI (sk-…) or Anthropic (sk-ant-…) API key.\nStored in your browser (localStorage) only — sent directly to the provider.',FIQ_KEY||'');
   if(!k||!k.trim())return;FIQ_KEY=k.trim();
-  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:8,messages:[{role:"user",content:"ping"}]})})
-    .then(function(r){if(r.ok){try{localStorage.setItem('sage_api_key',FIQ_KEY);}catch(e){}setMode(true);pushSage('<strong>Connected to Claude Sonnet 4.6.</strong> Ask me anything about the live forecast.','bot');}else{setMode(false);pushSage('API key check failed — verify the key and try again.','bot');}})
+  fetch(sageUrl(),{method:"POST",headers:sageHeaders(),body:sageReq("ping",8)})
+    .then(function(r){if(r.ok){try{localStorage.setItem('sage_api_key',FIQ_KEY);}catch(e){}setMode(true);pushSage('<strong>Connected to '+sageModelName()+'.</strong> Ask me anything about the live forecast.','bot');}
+      else{setMode(false);r.json().then(function(e){pushSage('Connection failed — '+((e.error&&e.error.message)||'verify the key and try again')+'.','bot');}).catch(function(){pushSage('API key check failed — verify the key and try again.','bot');});}})
     .catch(function(e){setMode(false);pushSage('Connection failed: '+e.message,'bot');});
 }
 function fiqSysPrompt(){
@@ -2289,13 +2304,12 @@ function sageLive(q){
   if(!FIQ_KEY){fallback();return;}
   var b=el('sageBody');var typing=document.createElement('div');typing.className='sage-typing';typing.textContent='Sage is analysing the forecast…';b.appendChild(typing);b.scrollTop=b.scrollHeight;
   setActive(['INGEST','MODEL','COMMENTARY']);
-  fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:sageHeaders(),
-    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:900,system:fiqSysPrompt(),messages:[{role:"user",content:q}]})
+  fetch(sageUrl(),{method:"POST",headers:sageHeaders(),body:sageReq(q,900)
   }).then(function(r){
     typing.remove();setActive([]);
     if(!r.ok){r.json().then(function(e){emit('COMMENTARY','Sage API error — using offline model','warn');}).catch(function(){});fallback();return;}
     r.json().then(function(d){
-      var txt=(d.content||[]).filter(function(x){return x.type==='text';}).map(function(x){return x.text;}).join(' ').trim();
+      var txt=sageParse(d);
       if(txt){pushSage(renderMd(txt),'bot');setMode(true);emit('COMMENTARY','Sage answered a CFO query — grounded in the live model','ok');}else fallback();
     }).catch(fallback);
   }).catch(function(){typing.remove();setActive([]);fallback();});
