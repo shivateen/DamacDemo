@@ -116,6 +116,10 @@ input,textarea{font-family:var(--font);background:none;border:none;outline:none;
 .ae-inp.num{text-align:right;max-width:84px}
 .ae-inp.wide{max-width:none}
 .ae-inp:focus{outline:none;border-color:var(--orange)}
+/* scenario comparison board */
+.cmp-tbl tr.cmp-grp td{background:var(--panel-2);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-family:var(--mono);font-weight:700;padding-top:9px}
+.cmp-tbl td.cmp-best{background:rgba(46,168,109,.16);font-weight:700}
+.cmp-tbl td.cmp-worst{background:rgba(224,82,82,.13)}
 .reforecast-banner{display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:var(--orange-tint);border:1px solid var(--orange-dim);border-radius:10px;padding:11px 14px;margin-bottom:12px}
 .reforecast-banner .rf-k{font-size:10px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em}
 .reforecast-banner .rf-v{font-size:14px;font-weight:600;color:var(--ink)}
@@ -1813,57 +1817,95 @@ function scnMetrics(){
 }
 var baselineSnap=null;
 function saveBaseline(){var M=scnMetrics();baselineSnap=Object.assign({},M.custom);baselineSnap.label='Baseline';showToast('Baseline saved — Live now compares against it');emit('REPORT','Baseline snapshot saved for version comparison','ok');renderScnCompare();}
+/* ── Scenario Comparison Board (picker-driven) ── */
+var CMP_COLORS=['var(--ok)','var(--risk)','var(--orange-soft)','var(--info)'];
+var cmpSel=null;
+function bsFor(m){
+  var B0=refModel();
+  var dCash=m.cash-B0.cash,dContract=(m.pipe-B0.pipe)*0.5+(m.contract-B0.contract)*0.3,dNP=m.np-B0.np;
+  var ov={'Cash & Equivalents (free)':4200+dCash},assetSum=0;
+  BS.forEach(function(r){if(r.grp==='asset'){var v=ov[r.line]!==undefined?ov[r.line]:r.f26;assetSum+=v;}});
+  return {assets:assetSum,equity:22060+dNP,netDebt:10400-(4200+dCash),contractLiab:24100+dContract};
+}
+function scnFull(state){
+  var snap=snapState();restoreState(state||null);
+  var m=modelCompute(),b=bsFor(m);
+  restoreState(snap);
+  return {rev:m.rev,ebitda:m.ebitda,margin:m.ebitda/m.rev*100,np:m.np,opCash:m.cash,trough:m.minCash,assets:b.assets,equity:b.equity,netDebt:b.netDebt,contractLiab:b.contractLiab};
+}
+function toggleCmp(id){
+  var i=cmpSel.indexOf(id);
+  if(i>=0)cmpSel.splice(i,1);
+  else{if(cmpSel.length>=3){showToast('Up to 3 scenarios beside Base — deselect one first');return;}cmpSel.push(id);}
+  renderScnCompare();
+}
+function cmpNarr(cols){
+  if(cols.length<2)return 'Pick one or more saved scenarios above to compare them against the base case across P&amp;L, cash and the balance sheet.';
+  var scen=cols.slice(1),base=cols[0].data;
+  var bestE=scen.slice().sort(function(a,b){return b.data.ebitda-a.data.ebitda;})[0];
+  var tightest=scen.slice().sort(function(a,b){return a.data.trough-b.data.trough;})[0];
+  var diverge=scen.filter(function(c){return c.data.ebitda>=base.ebitda*0.9 && c.data.opCash<=base.opCash*0.78;}).sort(function(a,b){return a.data.opCash-b.data.opCash;})[0];
+  var s='<strong>'+bestE.name+'</strong> delivers the strongest EBITDA at <strong>'+bn(Math.round(bestE.data.ebitda))+'</strong> ('+(bestE.data.ebitda/bestE.data.rev*100).toFixed(1)+'% margin); <strong>'+tightest.name+'</strong> runs the tightest liquidity with a Q3 trough of <strong>'+bn(Math.round(tightest.data.trough))+'</strong>'+(tightest.data.trough<800?' — below the AED 800M floor, needing the standby facility':'')+'. ';
+  if(diverge)s+='Watch <strong>'+diverge.name+'</strong>: EBITDA holds near base ('+bn(Math.round(diverge.data.ebitda))+') yet operating cash falls to <strong>'+bn(Math.round(diverge.data.opCash))+'</strong> — <strong>profit ≠ liquidity</strong>, a timing / working-capital problem rather than an earnings one.';
+  else s+='Across this set, operating cash tracks EBITDA — the differences are earnings-driven rather than timing-driven.';
+  return s;
+}
 function renderScnCompare(){
-  var M=scnMetrics();
-  var cols=[['base','Base','var(--ink-2)'],['stress','Pessimistic','var(--risk)'],['upside','Optimistic','var(--ok)'],['custom','Live','var(--orange-soft)']];
-  if(baselineSnap){M.baseline=baselineSnap;cols.splice(1,0,['baseline','Saved baseline','var(--info)']);}
-  var rows=[['Revenue','rev','amt'],['EBITDA','ebitda','amt'],['EBITDA margin','margin','pct'],['Net Profit','np','amt'],['Operating Cash','cash','amt'],['Q3 cash trough','minCash','trough']];
+  refModel();  // warm the fixed reference before snapshotting state
+  if(cmpSel===null)cmpSel=SCN_SAVED.slice(0,3).map(function(s){return s.id;});
+  cmpSel=cmpSel.filter(function(id){return SCN_SAVED.some(function(s){return s.id===id;});});
+  var colDefs=[{id:'__base',name:'Base case',color:'var(--ink-2)',data:scnFull(null)}];
+  cmpSel.forEach(function(id,i){var s=SCN_SAVED.find(function(x){return x.id===id;});if(s)colDefs.push({id:id,name:s.name,color:CMP_COLORS[i%CMP_COLORS.length],data:scnFull(s.state)});});
   function fv(kind,v){return kind==='pct'?v.toFixed(1)+'%':bn(Math.round(v));}
-  function fd(kind,v,b){var d=v-b;if(Math.abs(d)<0.05)return '<span class="scn-delta" style="color:var(--ink-3)">— base</span>';
+  function fd(kind,v,b){var d=v-b;if(Math.abs(d)<0.5)return ' <span class="scn-delta" style="color:var(--ink-3)">— base</span>';
     var up=d>=0,col=up?'var(--ok)':'var(--risk)';
     var txt=kind==='pct'?((d>=0?'+':'')+d.toFixed(1)+'pp'):((d>=0?'+':'−')+bn(Math.round(Math.abs(d))));
-    return '<span class="scn-delta" style="color:'+col+'">'+(up?'▲ ':'▼ ')+txt+'</span>';}
-  var h='<div class="sec-h fadein"><h2>Scenario Comparison — Pessimistic · Base · Optimistic · Live</h2><button class="btn-ghost" onclick="saveBaseline()">💾 Save current as baseline</button></div>';
+    return ' <span class="scn-delta" style="color:'+col+'">'+(up?'▲':'▼')+txt+'</span>';}
+  var h='<div class="sec-h fadein"><h2>Scenario Comparison Board</h2><span class="meta">Base + up to 3 saved scenarios · P&amp;L · Cash · Balance Sheet</span></div>';
+  h+='<div class="scn-selbar fadein"><span class="lbl">Compare</span><span class="scn-saved-chip on" style="cursor:default;opacity:.85">Base case</span>'
+    +(SCN_SAVED.length?SCN_SAVED.map(function(s){return '<span class="scn-saved-chip'+(cmpSel.indexOf(s.id)>=0?' on':'')+'" onclick="toggleCmp(\''+s.id+'\')">'+s.name+'</span>';}).join(''):'<span style="font-size:11.5px;color:var(--ink-3)">No saved scenarios yet — build one on the Equalizer.</span>')
+    +'<span style="font-size:11px;color:var(--ink-3);margin-left:auto">pick up to 3</span></div>';
+  var groups=[
+    ['P&L',[['Revenue','rev','amt',1],['EBITDA','ebitda','amt',1],['EBITDA margin','margin','pct',1],['Net Profit','np','amt',1]]],
+    ['Cash Flow',[['Operating Cash','opCash','amt',1],['Q3 Cash Trough','trough','trough',1]]],
+    ['Balance Sheet',[['Total Assets','assets','amt',1],['Equity','equity','amt',1],['Net Debt','netDebt','amt',-1],['Contract Liabilities','contractLiab','amt',1]]]
+  ];
   h+='<div class="tbl-wrap fadein"><table class="cmp-tbl"><thead><tr><th>Metric</th>'
-    +cols.map(function(c){return '<th class="num" style="color:'+c[2]+'">'+c[1]+'</th>';}).join('')+'</tr></thead><tbody>';
-  rows.forEach(function(r){
-    h+='<tr><td style="font-weight:600">'+r[0]+'</td>';
-    cols.forEach(function(c){
-      var v=M[c[0]][r[1]],base=M.base[r[1]],tone='';
-      if(r[2]==='trough')tone='color:'+(v<800?'var(--risk)':v<1800?'var(--warn)':'var(--ok)');
-      h+='<td class="num" style="'+tone+'">'+fv(r[2],v)+(c[0]==='base'?'':fd(r[2],v,base))+'</td>';
+    +colDefs.map(function(c){return '<th class="num" style="color:'+c.color+'">'+c.name.split(' — ')[0]+'</th>';}).join('')+'</tr></thead><tbody>';
+  groups.forEach(function(g){
+    h+='<tr class="cmp-grp"><td colspan="'+(colDefs.length+1)+'">'+g[0]+'</td></tr>';
+    g[1].forEach(function(r){
+      var key=r[1],kind=r[2],dir=r[3];
+      var vals=colDefs.map(function(c){return c.data[key];});
+      var best=dir>0?Math.max.apply(null,vals):Math.min.apply(null,vals);
+      var worst=dir>0?Math.min.apply(null,vals):Math.max.apply(null,vals);
+      h+='<tr><td style="font-weight:600">'+r[0]+'</td>';
+      colDefs.forEach(function(c){
+        var v=c.data[key],cls='';
+        if(colDefs.length>2){if(Math.abs(v-best)<0.5)cls='cmp-best';else if(Math.abs(v-worst)<0.5)cls='cmp-worst';}
+        var tone=kind==='trough'?'color:'+(v<800?'var(--risk)':v<1800?'var(--warn)':'var(--ok)'):'';
+        h+='<td class="num '+cls+'" style="'+tone+'">'+fv(kind,v)+(c.id==='__base'?'':fd(kind,v,colDefs[0].data[key]))+'</td>';
+      });
+      h+='</tr>';
     });
-    h+='</tr>';
   });
   h+='</tbody></table></div>';
-  // narrative — version movement + upside/downside
-  var vt=revVersionTotals();
-  var optD=M.upside.rev-M.base.rev, pessD=M.base.rev-M.stress.rev;
-  h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage — the version story</h3><span class="badge">AI narrative</span></div>'
-    +'<p style="font-size:12px">We <strong>started the year at AED '+(vt.budget/1000).toFixed(2)+'B</strong> (budget) and sit at <strong>AED '+(M.base.rev/1000).toFixed(2)+'B</strong> today. The <strong>Optimistic</strong> case adds <strong>+AED '+optD.toLocaleString()+'M</strong> (velocity +15%, price +8%) and lifts operating cash to '+bn(M.upside.cash)+'; the <strong>Pessimistic</strong> case removes <strong>−AED '+pessD.toLocaleString()+'M</strong> and pulls the Q3 trough to '+bn(M.stress.minCash)+' — below the AED 800M comfort floor, so it would need the standby facility. The Live column tracks whatever you set on the Equalizer'+(baselineSnap?', measured against your saved baseline.':'; save a baseline to lock a reference point.')+'</p></div>';
-  // trough chart vs floor + driver assumptions
-  h+='<div class="grid-2"><div class="block fadein"><h3>Q3 Cash Trough vs AED 800M Floor</h3><div class="h-sub">lowest projected liquidity point under each case</div>';
-  var mxs=5000,floorPct=800/mxs*100;
+  // trough vs floor + profit-vs-liquidity visual
+  h+='<div class="grid-2"><div class="block fadein"><h3>Q3 Cash Trough vs AED 800M Floor</h3><div class="h-sub">lowest projected liquidity point per scenario</div>';
+  var mxs=5500,floorPct=800/mxs*100;
   h+='<div class="chart" style="position:relative">';
   h+='<div style="position:absolute;left:0;right:0;bottom:'+floorPct+'%;border-top:1.5px dashed var(--risk);z-index:2"><span style="position:absolute;right:0;top:-13px;font-size:9px;color:var(--risk);font-family:var(--mono)">800M floor</span></div>';
-  cols.forEach(function(c){var v=M[c[0]].minCash,hp=Math.max(v/mxs*100,1);
-    h+='<div class="bar-col"><div class="bar-val">'+bnShort(v)+'</div><div class="bar-stack"><div class="bar" style="height:'+hp+'%;background:'+c[2]+';opacity:.88"></div></div><div class="bar-lbl">'+c[1].replace(' / Custom','')+'</div></div>';});
+  colDefs.forEach(function(c){var v=c.data.trough,hp=Math.max(v/mxs*100,1);
+    h+='<div class="bar-col"><div class="bar-val">'+bnShort(v)+'</div><div class="bar-stack"><div class="bar" style="height:'+hp+'%;background:'+c.color+';opacity:.9"></div></div><div class="bar-lbl" style="font-size:8px">'+c.name.split(' — ')[0]+'</div></div>';});
   h+='</div></div>';
-  h+='<div class="block fadein"><h3>Driver Assumptions by Scenario</h3><div class="h-sub">what differs under the hood · Live = portfolio-weighted from the Equalizer</div><table style="width:100%"><thead><tr><th>Driver</th><th class="num">Base</th><th class="num" style="color:var(--risk)">Pessimistic</th><th class="num" style="color:var(--ok)">Optimistic</th><th class="num" style="color:var(--orange-soft)">Live</th></tr></thead><tbody>';
-  DRIVERS.forEach(function(d){
-    function pv(v){return (v>0&&d.unit!=='mo'&&d.id!=='cancel'&&d.id!=='constcost'?'+':'')+v+(d.unit==='%'?'%':d.unit==='bps'?'bp':d.unit==='mo'?'mo':'');}
-    h+='<tr><td style="font-size:11.5px">'+d.n+'</td><td class="num">'+pv(SCN_PRESETS.base[d.id])+'</td><td class="num">'+pv(SCN_PRESETS.stress[d.id])+'</td><td class="num">'+pv(SCN_PRESETS.upside[d.id])+'</td><td class="num" style="color:var(--orange-soft)">'+pv(liveDriver(d.id))+'</td></tr>';
+  h+='<div class="block fadein"><h3>Profit vs Liquidity</h3><div class="h-sub">EBITDA vs Operating Cash — watch where they diverge</div><div class="chart">';
+  var mx2=Math.max.apply(null,colDefs.map(function(c){return Math.max(c.data.ebitda,c.data.opCash);}))*1.12;
+  colDefs.forEach(function(c){
+    h+='<div class="bar-col"><div class="bar-stack" style="flex-direction:row;gap:3px;align-items:flex-end"><div class="bar" style="height:'+(c.data.ebitda/mx2*100)+'%;width:42%;background:var(--info)" title="EBITDA"></div><div class="bar" style="height:'+(c.data.opCash/mx2*100)+'%;width:42%;background:var(--orange)" title="Op cash"></div></div><div class="bar-lbl" style="font-size:8px">'+c.name.split(' — ')[0]+'</div></div>';
   });
-  h+='</tbody></table></div></div>';
-  // narratives side by side
-  h+='<div class="grid-3">';
-  [['base'],['stress'],['upside']].forEach(function(s){
-    var sc=SCENARIOS[s[0]];
-    h+='<div class="block fadein"><h3>'+sc.n+'</h3><div class="h-sub">'+sc.d+'</div><p style="font-size:11.5px;color:var(--ink-2);line-height:1.6;margin-top:8px">'+sc.narrative+'</p></div>';
-  });
-  h+='</div>';
-  // Stress presets now live on the Equalizer alongside the revenue & cost levers
-  h+='<button class="btn-ghost fadein" style="width:100%;margin-top:14px" onclick="setScnMode(\'plan\')">↳ Back to the Equalizer — levers, presets &amp; save as template</button>';
+  h+='</div><div class="legend"><span><i style="background:var(--info)"></i>EBITDA</span><span><i style="background:var(--orange)"></i>Operating cash</span></div></div></div>';
+  h+='<div class="acard fadein"><div class="acard-head"><div class="acard-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 2.4 1.2 4.5 3 5.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3c1.8-1.2 3-3.3 3-5.7a7 7 0 00-7-7z"/></svg></div><h3>Sage — reading the comparison</h3><span class="badge">AI narrative</span></div><p style="font-size:12px">'+cmpNarr(colDefs)+'</p></div>';
+  h+='<button class="btn-ghost fadein" style="width:100%;margin-top:14px" onclick="setScnMode(\'plan\')">↳ Back to the Equalizer — adjust levers &amp; save a scenario</button>';
   el('scnInner').innerHTML=h;
 }
 function renderDrivers(){
