@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # DAMAC × Tiger — Finance AI Platform
 
 **Tiger Analytics** · A consolidated three-layer finance AI platform for DAMAC Group
@@ -271,6 +270,3 @@ Not for distribution outside Tiger Analytics or authorised client engagements.
 ---
 
 *CloseIQ v2.4.1 · Tiger Analytics · Built with Claude Sonnet 4.6*
-=======
-# CloseIQ
->>>>>>> 1ecfe1249755425ded3eb6dfbc79852e4cabd41c
